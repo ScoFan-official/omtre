@@ -34,6 +34,7 @@ import { spawnSync } from "node:child_process";
 import { loadTaskRecord } from "@mindfoldhq/trellis-core/task";
 
 import { listProviders, type Provider } from "./channel/adapters/index.js";
+import { resolveWorkerGuardConfig } from "./channel/guard.js";
 import { parseDuration } from "./channel/wait.js";
 import { resolveSupportedPython } from "./init.js";
 import { openLedger, type LedgerInput } from "./run/ledger.js";
@@ -77,6 +78,14 @@ export interface RunnerPorts {
    * callers branch on it, never on the human `reason` prose.
    */
   deliveryGate(ref: string): { allow: boolean; reason: string; tier: string; code: string };
+  /**
+   * CLAI-10: may these paths go into an automated commit? The rule list lives
+   * in `task.py check-commit`, not here — the runner and an agent committing
+   * by hand answer to one authority. An unreadable answer counts as a refusal.
+   */
+  commitGuard(paths: string[]): { ok: boolean; offending: string[] };
+  /** The interpreter this CLI uses for its own `task.py` calls, for prompt text. */
+  pythonCommand(): string;
   /** Read one top-level string field of the main repo's copy of a ticket. */
   taskField(dir: string, field: string): string | null;
   /**
@@ -181,7 +190,7 @@ function plannedActions(opts: RunOptions, delivery: string): string[] {
  * their context from the entry point, so the ticket's own documents travel with
  * the prompt instead of being assumed.
  */
-function buildPrompt(dir: string, docs: string[], worktree: string): string {
+function buildPrompt(dir: string, docs: string[], worktree: string, pythonCmd: string): string {
   return [
     `You are the unattended implementation worker for Trellis ticket \`${dir}\`.`,
     `Your working directory is that ticket's own worktree: ${worktree}`,
@@ -198,7 +207,7 @@ function buildPrompt(dir: string, docs: string[], worktree: string): string {
     `   board bookkeeping belongs to the orchestrating session, not to this`,
     `   worker, and a domain-layer anchor check will reject your commit anyway.`,
     `4. Before finishing, run the ticket's own contract:`,
-    `   python ./.trellis/scripts/task.py run-verify ${dir}`,
+    `   ${pythonCmd} ./.trellis/scripts/task.py run-verify ${dir}`,
     `   If it fails, fix it or say so plainly — do not record a passing run you`,
     `   did not observe.`,
   ].join("\n");
@@ -214,39 +223,6 @@ function curateContext(dir: string, worktree: string, ports: RunnerPorts): void 
       );
     }
   }
-}
-
-/**
- * Paths an unattended run must never put in front of a reviewer. The runner
- * stages by explicit pathspec (never `git add -A`) and refuses these on the way
- * in; the same list is then checked against what the branch actually carries,
- * because the worker commits on its own and its choices are not ours to ship.
- * A board file or a secret is a human's call, not an automated delivery's.
- *
- * Match secret *shapes*, not the word "secret": since the list also gates
- * delivery, an over-broad fragment no longer costs one ticket — it halts the
- * whole line. `use-secret-store.ts` is application code; `secrets.yaml` is not.
- */
-const PROTECTED_FRAGMENTS = [
-  ".trellis/domains/",
-  ".env",
-  ".pem",
-  ".key",
-  "id_rsa",
-  ".git-credentials",
-  "credentials.json",
-  ".keystore",
-  "secrets/",
-  ".secrets",
-  "secrets.yaml",
-  "secrets.yml",
-  "secrets.json",
-  "secret.json",
-];
-
-export function isProtectedPath(p: string): boolean {
-  const lower = p.toLowerCase().replace(/\\/g, "/");
-  return PROTECTED_FRAGMENTS.some((frag) => lower.includes(frag));
 }
 
 /** `git status --porcelain` → the changed paths, renames resolved to target. */
@@ -311,11 +287,11 @@ function runnerFallbackCommit(
         : `no_work(only task bookkeeping changed: ${changed.length} path(s); the worker committed nothing)`,
     };
   }
-  const blocked = paths.filter(isProtectedPath);
-  if (blocked.length > 0) {
+  const blocked = ports.commitGuard(paths);
+  if (!blocked.ok) {
     return {
       ok: false,
-      reason: `protected_path_in_tree(${blocked.slice(0, 3).join(", ")}; stage by hand)`,
+      reason: `protected_path_in_tree(${blocked.offending.slice(0, 3).join(", ")}; stage by hand)`,
     };
   }
 
@@ -405,7 +381,7 @@ async function runAttempt(
   const outcome = await ports.worker({
     ticket: dir,
     cwd: worktree,
-    prompt: buildPrompt(dir, docs, worktree),
+    prompt: buildPrompt(dir, docs, worktree, ports.pythonCommand()),
     provider: opts.provider,
     agent: opts.agent,
     model: opts.model,
@@ -461,12 +437,13 @@ async function runAttempt(
   // about to stage. A headless worker that committed `.env` or a board file
   // itself would otherwise sail straight through to push + PR.
   const landed = ports.git(["diff", "--name-only", `${base}..HEAD`], worktree);
-  const offender = landed.stdout
+  const touched = landed.stdout
     .split(/\r?\n/)
     .map((p) => p.trim())
-    .filter((p) => p.length > 0)
-    .find(isProtectedPath);
-  if (offender) {
+    .filter((p) => p.length > 0);
+  const carried = ports.commitGuard(touched);
+  if (!carried.ok) {
+    const offender = carried.offending[0] ?? "(check-commit unreadable)";
     return {
       kind: "stop",
       reason: "always_stop",
@@ -539,7 +516,7 @@ async function runAttempt(
       "--title",
       entry.title ?? dir,
       "--body",
-      `Unattended run for ticket \`${dir}\`. Verify: \`python ./.trellis/scripts/task.py run-verify ${dir}\`.`,
+      `Unattended run for ticket \`${dir}\`. Verify: \`${ports.pythonCommand()} ./.trellis/scripts/task.py run-verify ${dir}\`.`,
     ]);
     if (pr.status !== 0) {
       return { kind: "failed", reason: `pr_open_failed(${firstLine(pr.stderr || pr.stdout)})` };
@@ -743,8 +720,8 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 // Real ports — thin adapters over subprocess and fs. No policy lives here.
 // -----------------------------------------------------------------------------
 
-function run(cmd: string, args: string[], cwd: string): CommandResult {
-  const res = spawnSync(cmd, args, { cwd, encoding: "utf-8" });
+function run(cmd: string, args: string[], cwd: string, input?: string): CommandResult {
+  const res = spawnSync(cmd, args, { cwd, encoding: "utf-8", input });
   if (res.error && (res.error as NodeJS.ErrnoException).code === "ENOENT") {
     return { status: 127, stdout: "", stderr: `${cmd}: not found on PATH` };
   }
@@ -760,6 +737,13 @@ export function realPorts(
 ): RunnerPorts {
   const python = resolveSupportedPython().command;
   const taskPy = path.join(root, ".trellis", "scripts", "task.py");
+  // R5: the worker inherits the channel supervisor's guard policy, so a wedged
+  // worker is given up on after `channel.worker_guard.idle_timeout` rather than
+  // burning the whole wall clock, and the precedence (flag > env > config >
+  // default) is the one place `channel run` already implements.
+  // `maxLiveWorkers` is deliberately not consulted: the loop works one ticket at
+  // a time, so at most one worker is ever live.
+  const guard = resolveWorkerGuardConfig({ cwd: root });
 
   return {
     task(args, cwd) {
@@ -800,6 +784,33 @@ export function realPorts(
           code: "unreadable",
         };
       }
+    },
+    commitGuard(paths) {
+      if (paths.length === 0) return { ok: true, offending: [] };
+      // Paths travel over stdin: a wide diff would otherwise hit an
+      // argument-length limit right at the moment we least want a silent
+      // failure. The question goes to the orchestrator's own script so the rule
+      // has one version, not one per worktree.
+      const res = run(
+        python,
+        [taskPy, "check-commit", "--from-stdin", "--json"],
+        root,
+        `${paths.join("\n")}\n`,
+      );
+      try {
+        const parsed = JSON.parse(res.stdout) as { ok?: boolean; offending?: string[] };
+        return {
+          ok: parsed.ok === true && res.status === 0,
+          offending: parsed.offending ?? [],
+        };
+      } catch {
+        // Unreadable verdict, refused in full: a rule we cannot read is a rule
+        // we cannot rely on.
+        return { ok: false, offending: paths };
+      }
+    },
+    pythonCommand() {
+      return python;
     },
     taskField(dir, field) {
       try {
@@ -843,7 +854,12 @@ export function realPorts(
         .map((name) => path.join(taskDir, name))
         .filter((p) => fs.existsSync(p));
     },
-    worker: oneShotWorker,
+    worker(req) {
+      return oneShotWorker({
+        ...req,
+        idleTimeoutMs: req.idleTimeoutMs ?? guard.idleTimeoutMs,
+      });
+    },
     ledgerAppend,
     log,
   };

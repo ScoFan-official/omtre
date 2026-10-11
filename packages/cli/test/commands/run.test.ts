@@ -14,7 +14,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  isProtectedPath,
   normalizeOptions,
   parsePorcelain,
   runLoop,
@@ -54,6 +53,10 @@ interface Script {
   gate?: { allow?: boolean; reason?: string; tier?: string; code?: string };
   /** Paths the branch carries relative to base (`git diff --name-only`). */
   branchFiles?: string[];
+  /** Paths CLAI-10 `check-commit` should report as forbidden (fake rule list). */
+  guardOffending?: string[];
+  /** Make `check-commit` unanswerable — the runner must treat that as refusal. */
+  guardUnreadable?: boolean;
   /** Make the Nth `git push` (1-based) fail. */
   pushFail?: number;
   /** What `gh pr create` prints. Default: a real-looking PR URL. */
@@ -67,6 +70,7 @@ interface Harness {
   gitCalls: { args: string[]; cwd?: string }[];
   ghCalls: string[][];
   gateCalls: string[];
+  guardQueries: string[];
   workerRequests: WorkerRequest[];
   pushed: string[][];
   stagingCalls: string[][];
@@ -94,6 +98,7 @@ function harness(script: Script = {}): Harness {
     gitCalls: [],
     ghCalls: [],
     gateCalls: [],
+    guardQueries: [],
     workerRequests: [],
     pushed: [],
     stagingCalls: [],
@@ -214,6 +219,20 @@ function harness(script: Script = {}): Harness {
         tier: script.gate?.tier ?? "hands-off",
         code: script.gate?.code ?? derived,
       };
+    },
+    /**
+     * The fake plays `task.py check-commit` (CLAI-10). Production code holds no
+     * copy of the rule list, so neither may the harness invent one: it either
+     * reports the paths a test nominated, or cannot answer at all.
+     */
+    commitGuard(paths) {
+      h.guardQueries.push(paths.join("\n"));
+      if (script.guardUnreadable === true) return { ok: false, offending: paths };
+      const offending = paths.filter((p) => (script.guardOffending ?? []).includes(p));
+      return { ok: offending.length === 0, offending };
+    },
+    pythonCommand() {
+      return "python";
     },
     taskField(dir, field) {
       const table = script.fields?.[dir];
@@ -500,6 +519,7 @@ describe("runLoop — the stop lines", () => {
       ready: [{ dir: "01-01-alpha" }],
       remote: true,
       branchFiles: ["src/app.ts", ".env"],
+      guardOffending: [".env"],
       gate: { allow: true, reason: "whitelist(feature/*)", tier: "supervised-delivery" },
     });
     const result = await runLoop(baseOptions(), h.ports);
@@ -510,6 +530,23 @@ describe("runLoop — the stop lines", () => {
     expect(h.ghCalls).toEqual([]);
     expect(h.taskCalls.some((c) => c.args[0] === "archive")).toBe(false);
     expect(h.ledger.some((l) => l.action === "stop" && /always_stop/.test(l.reason ?? ""))).toBe(true);
+    expect(h.guardQueries.some((q) => q.includes(".env"))).toBe(true);
+  });
+
+  it("refuses delivery when the commit gate cannot answer", async () => {
+    // Fail closed: an unreadable `check-commit` verdict is a refusal, not a
+    // pass, and every path it was asked about is reported as offending.
+    const h = harness({
+      ready: [{ dir: "01-01-alpha" }],
+      remote: true,
+      branchFiles: ["src/app.ts"],
+      guardUnreadable: true,
+      gate: { allow: true, reason: "whitelist(feature/*)", tier: "supervised-delivery" },
+    });
+    const result = await runLoop(baseOptions(), h.ports);
+
+    expect(result.stopped).toBe("always_stop");
+    expect(h.pushed).toEqual([]);
   });
 
   it("delivers normally when the branch touches nothing protected", async () => {
@@ -704,6 +741,7 @@ describe("runLoop — the stop lines", () => {
       ready: [{ dir: "01-01-alpha" }],
       commitsAhead: 0,
       dirty: [".env.local", "src/app.ts"],
+      guardOffending: [".env.local"],
     });
     const result = await runLoop({ ...baseOptions(), failThreshold: 1 }, h.ports);
 
@@ -727,7 +765,7 @@ describe("runLoop — the stop lines", () => {
   });
 });
 
-describe("parsePorcelain / isProtectedPath — the fallback commit's inputs", () => {
+describe("parsePorcelain — the fallback commit's input", () => {
   it("reads modified, untracked and renamed paths", () => {
     expect(
       parsePorcelain([" M src/a.ts", "?? greet.txt", "R  old.ts -> new.ts", ""].join("\n")),
@@ -738,16 +776,9 @@ describe("parsePorcelain / isProtectedPath — the fallback commit's inputs", ()
     expect(parsePorcelain('?? "my file.txt"')).toEqual(["my file.txt"]);
   });
 
-  it("flags board files and credential-shaped names", () => {
-    expect(isProtectedPath(".trellis/domains/deap/README.md")).toBe(true);
-    expect(isProtectedPath(".env.local")).toBe(true);
-    expect(isProtectedPath("keys/deploy.pem")).toBe(true);
-    expect(isProtectedPath("config/secrets.yaml")).toBe(true);
-    expect(isProtectedPath("src/greeting.ts")).toBe(false);
-    // The word "secret" in application code must not halt a delivery lane.
-    expect(isProtectedPath("src/use-secret-store.ts")).toBe(false);
-    expect(isProtectedPath(".trellis/tasks/10-09-greet/prd.md")).toBe(false);
-  });
+  // Which paths are forbidden is `task.py check-commit`'s decision (CLAI-10),
+  // asserted against the real script in clai10-check-commit.integration.test.ts:
+  // a second copy of that list in TS is exactly the drift this removes.
 });
 
 describe("normalizeOptions — the CLI surface refuses ambiguity", () => {

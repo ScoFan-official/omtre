@@ -211,6 +211,42 @@ describe("run-verify", () => {
     expect(r.status).toBe(1);
     expect(r.stdout).toContain("No verification contract");
   });
+
+  it("kills a hung command's whole tree instead of blocking on the orphan", () => {
+    // The hazard `subprocess.run(shell=True, timeout=…)` leaves behind: the
+    // timeout kills the SHELL, the grandchild survives holding the captured
+    // pipes open, and the post-kill collect then waits for it — so `archive`
+    // hangs on the very command the timeout exists to bound. The orphan sleeps
+    // 120s here; this must come back in seconds, not after the orphan exits.
+    fs.writeFileSync(
+      path.join(repo, "sleeper.py"),
+      "import time\ntime.sleep(120)\n",
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.join(repo, "hang.py"),
+      'import subprocess, sys, time\nsubprocess.Popen([sys.executable, "sleeper.py"])\ntime.sleep(120)\n',
+      "utf-8",
+    );
+    const dir = createTask("r-four");
+    expect(runTask("add-verify", dir, "python hang.py", "--timeout", "2").status).toBe(0);
+
+    const started = Date.now();
+    const r = spawnSync(PYTHON as string, [".trellis/scripts/task.py", "run-verify", dir, "--json"], {
+      cwd: repo,
+      encoding: "utf-8",
+      env,
+      timeout: 60_000, // a regression must fail this test, not hang the suite
+    });
+    const elapsed = Date.now() - started;
+
+    expect(r.status).toBe(1);
+    const out = JSON.parse(r.stdout);
+    expect(out.verified).toBe(false);
+    expect(out.results[0].exit_code).toBeNull();
+    expect(out.results[0].passed).toBe(false);
+    expect(elapsed).toBeLessThan(45_000);
+  });
 });
 
 describe("archive gate", () => {

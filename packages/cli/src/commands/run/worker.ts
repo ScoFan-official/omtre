@@ -38,6 +38,14 @@ export interface WorkerRequest {
   workerName?: string;
   model?: string;
   timeoutMs: number;
+  /**
+   * Idle budget from the channel supervisor's guard policy
+   * (`channel.worker_guard.idle_timeout`, same precedence as `channel run`).
+   * A worker that produces no events at all is a different failure from one
+   * that ran long: it can be given up on in minutes instead of the full wall
+   * clock. `0` disables idle cleanup, exactly as it does for the supervisor.
+   */
+  idleTimeoutMs?: number;
   /** Context files handed to the worker (ticket docs + spec indexes). */
   files?: string[];
   jsonls?: string[];
@@ -81,19 +89,54 @@ function finalMessage(channelName: string, workerName: string): string {
   return (candidate as { text?: string } | undefined)?.text ?? "";
 }
 
-async function waitForTerminal(
+/**
+ * Wait for the worker's terminal event. Two independent clocks:
+ *
+ *   wall clock (`timeoutMs`)  — the ticket may legitimately run long.
+ *   idle clock (`idleTimeoutMs`) — no event AT ALL for this long means the
+ *     worker is wedged, and waiting out the wall clock for it is waste.
+ *
+ * The idle timer re-arms on every event, so a busy worker is never judged idle,
+ * and `0` disables it, which is the same knob the channel supervisor exposes.
+ * `source` is injectable so the idle path can be driven without a real channel.
+ */
+export async function waitForTerminal(
   channelName: string,
   workerName: string,
   timeoutMs: number,
+  opts: {
+    idleTimeoutMs?: number;
+    source?: (signal: AbortSignal) => AsyncIterable<ChannelEvent>;
+  } = {},
 ): Promise<{ ok: boolean; error?: string }> {
+  const idleTimeoutMs = opts.idleTimeoutMs ?? 0;
   const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), timeoutMs);
+  let expired: "wall" | "idle" | undefined;
+  let idle: ReturnType<typeof setTimeout> | undefined;
+
+  const armIdle = (): void => {
+    if (idleTimeoutMs <= 0) return;
+    if (idle !== undefined) clearTimeout(idle);
+    idle = setTimeout(() => {
+      expired = "idle";
+      abort.abort();
+    }, idleTimeoutMs);
+  };
+
+  const wall = setTimeout(() => {
+    expired = "wall";
+    abort.abort();
+  }, timeoutMs);
+
+  const source =
+    opts.source ??
+    ((signal: AbortSignal) =>
+      watchEvents(channelName, { self: "main", from: [workerName] }, { signal }));
+
   try {
-    for await (const ev of watchEvents(
-      channelName,
-      { self: "main", from: [workerName] },
-      { signal: abort.signal },
-    )) {
+    armIdle();
+    for await (const ev of source(abort.signal)) {
+      armIdle();
       if (ev.kind === "done") return { ok: true };
       if (ev.kind === "error") {
         const msg = (ev as { message?: string }).message ?? "(no message)";
@@ -104,12 +147,19 @@ async function waitForTerminal(
         return { ok: false, error: `worker ${workerName} killed: ${reason}` };
       }
     }
+    if (expired === "idle") {
+      return {
+        ok: false,
+        error: `idle for ${idleTimeoutMs}ms — no event from ${workerName} (channel.worker_guard.idle_timeout)`,
+      };
+    }
     return {
       ok: false,
       error: `timeout after ${timeoutMs}ms waiting for ${workerName} done`,
     };
   } finally {
-    clearTimeout(timer);
+    clearTimeout(wall);
+    if (idle !== undefined) clearTimeout(idle);
   }
 }
 
@@ -141,7 +191,9 @@ export async function oneShotWorker(
 
     await channelSend(name, { as: "main", to: workerName, text: req.prompt });
 
-    const wait = await waitForTerminal(name, workerName, req.timeoutMs);
+    const wait = await waitForTerminal(name, workerName, req.timeoutMs, {
+      idleTimeoutMs: req.idleTimeoutMs,
+    });
     const text = finalMessage(name, workerName);
     if (!wait.ok) {
       return {

@@ -79,6 +79,18 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             `pr_url` (the review pointer `gh pr create` prints). Path must exist
             as a directory, URL must be http(s) — a refusal means a typo, not a
             state the runner can legitimately be in.
+    CLAI-10 task.py check-commit <path>... [--from-stdin] [--json]
+            The mechanical face of the commit discipline `workflow.md` states in
+            prose (Phase 3.4 / finish-work: files you did not edit this session
+            NEVER enter a commit; board files land in their own close-out
+            commit). `trellis run` asks this one question instead of carrying a
+            second copy of the rule list, and an agent driving commits by hand
+            can ask the same verb — one authority. Answers with a machine code
+            (`ok` + `offending`); refuses rather than warns, because in an
+            unattended run a warning is read by nobody. Secret matching is on
+            SHAPES (`secrets.yaml`, `.env*`, key material), not the substring
+            "secret": this list also gates delivery, so a false positive halts
+            an entire line, and `src/use-secret-store.ts` is application code.
 
 Writer identity (own-writer matching): `TRELLIS_WRITER` env var wins; otherwise
 `{platform}-{hostname}`, the platform read from the repo's own config dirs
@@ -1125,3 +1137,82 @@ def cmd_set_pr(args: argparse.Namespace) -> int:
         return 1
     print(colored(f"✓ pr_url → {value.strip()}", Colors.GREEN))
     return 0
+
+
+# CLAI-10 — the commit-discipline rule list, owned here so `trellis run` and an
+# agent committing by hand answer to the same authority.
+PROTECTED_PATH_FRAGMENTS = (
+    ".trellis/domains/",
+    ".env",
+    ".pem",
+    ".key",
+    "id_rsa",
+    ".git-credentials",
+    "credentials.json",
+    ".keystore",
+    "secrets/",
+    ".secrets",
+    "secrets.yaml",
+    "secrets.yml",
+    "secrets.json",
+    "secret.json",
+)
+
+
+def is_protected_path(path: str) -> bool:
+    """Does this path belong in an automated commit? True means it does NOT.
+
+    Board files (`.trellis/domains/**`) land in a human close-out commit under
+    the writer's own flag; key material never lands anywhere unreviewed.
+    """
+    norm = str(path or "").replace("\\", "/").lower()
+    return any(frag in norm for frag in PROTECTED_PATH_FRAGMENTS)
+
+
+def cmd_check_commit(args: argparse.Namespace) -> int:
+    """`task.py check-commit <path>... [--from-stdin] [--json]` (CLAI-10).
+
+    The mechanical form of what `workflow.md` Phase 3.4 says in prose. Exit 0
+    when every path is clear, 1 when any is not — a refusal, not a warning:
+    nobody is watching an unattended run, and this list also gates delivery, so
+    the answer has to be usable as a decision.
+    """
+    paths = [str(p) for p in (getattr(args, "paths", None) or []) if str(p).strip()]
+    if getattr(args, "from_stdin", False):
+        try:
+            raw = sys.stdin.read()
+        except Exception as exc:  # unreadable input is an unanswerable question
+            print(colored(f"Error: cannot read stdin: {exc}", Colors.RED), file=sys.stderr)
+            return 1
+        paths += [line.strip() for line in raw.splitlines() if line.strip()]
+
+    if not paths:
+        print(
+            colored("Error: nothing to check — pass paths or --from-stdin", Colors.RED),
+            file=sys.stderr,
+        )
+        print("Usage: python3 task.py check-commit <path>... [--from-stdin] [--json]")
+        return 1
+
+    offending = [p for p in paths if is_protected_path(p)]
+
+    if getattr(args, "json", False):
+        print(
+            json.dumps(
+                {
+                    "ok": not offending,
+                    "checked": len(paths),
+                    "offending": offending,
+                    "rule": "always-stop paths never enter an automated commit",
+                },
+                ensure_ascii=False,
+            )
+        )
+    elif offending:
+        print(colored(f"✗ {len(offending)} of {len(paths)} path(s) must not enter this commit:", Colors.RED))
+        for p in offending[:20]:
+            print(f"    {p}")
+        print("  Board files belong to a human close-out commit; key material belongs to nobody.")
+    else:
+        print(colored(f"✓ {len(paths)} path(s) clear", Colors.GREEN))
+    return 1 if offending else 0

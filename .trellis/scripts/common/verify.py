@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -31,7 +32,12 @@ from .config import coerce_config_bool
 from .log import Colors, colored
 from .paths import FILE_TASK_JSON, get_repo_root
 from .io import describe_json_read_failure, read_json_checked, write_json
-from .task_utils import resolve_task_dir
+from .task_utils import (
+    HOOK_KILL_GRACE_SECONDS,
+    _decode_hook_output,
+    _kill_hook_tree,
+    resolve_task_dir,
+)
 
 DEFAULT_TIMEOUT = 600
 
@@ -90,6 +96,56 @@ def verify_specs(task_data: dict) -> tuple[list[dict], list[str]]:
     return _coerce(task_data.get("verify"))
 
 
+def _run_bounded(
+    cmd: str, repo_root: Path, timeout: int
+) -> tuple[int | None, str]:
+    """Run one contract command; on timeout kill its WHOLE process tree.
+
+    ``subprocess.run(timeout=…)`` kills only the shell, and with ``shell=True``
+    the shell is never the real work: grandchildren survive, keep the inherited
+    stdout/stderr pipes open, and the post-kill collect then blocks for as long
+    as the orphan lives — a daemon means forever. That hangs `run-verify`, which
+    hangs `archive`, which hangs the unattended loop, i.e. the exact command the
+    timeout was there to bound. (script-conventions.md → "Wrong — timeout that
+    kills only the shell".) Returns (exit_code, output); exit_code is None on
+    timeout.
+    """
+    # A fresh session puts the shell and every descendant in one process group,
+    # which is what lets the timeout kill the tree rather than its outermost
+    # member. Windows walks the tree with `taskkill /F /T` instead.
+    popen_kwargs: dict = {}
+    if os.name == "posix":
+        popen_kwargs["start_new_session"] = True
+
+    proc: subprocess.Popen[str] = subprocess.Popen(  # noqa: S602 - repo-local contract, mirrors CI
+        cmd,
+        shell=True,
+        cwd=repo_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        **popen_kwargs,
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+        return proc.returncode, (stderr or stdout or "")
+    except subprocess.TimeoutExpired as exc:
+        _kill_hook_tree(proc)
+        out = _decode_hook_output(exc.stdout)
+        err = _decode_hook_output(exc.stderr)
+        try:
+            # Bounded a second time on purpose: an orphan that escaped the kill
+            # must not convert a timeout into a hang.
+            rest_out, rest_err = proc.communicate(timeout=HOOK_KILL_GRACE_SECONDS)
+            out = rest_out or out
+            err = rest_err or err
+        except (subprocess.TimeoutExpired, OSError, ValueError):
+            pass
+        return None, (err or out)
+
+
 def run_verify(
     task_dir: Path,
     specs: list[dict],
@@ -106,23 +162,8 @@ def run_verify(
     for spec in specs:
         if not quiet:
             print(f"  $ {spec['cmd']}")
-        completed = None
-        timed_out = False
-        try:
-            completed = subprocess.run(  # noqa: S602 - repo-local contract, mirrors CI
-                spec["cmd"],
-                shell=True,
-                cwd=repo_root,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=spec["timeout"],
-            )
-            exit_code = completed.returncode
-        except subprocess.TimeoutExpired:
-            exit_code = None
-            timed_out = True
+        exit_code, output = _run_bounded(spec["cmd"], repo_root, spec["timeout"])
+        timed_out = exit_code is None
 
         passed = (not timed_out) and exit_code == spec["expect_exit"]
         all_passed = all_passed and passed
@@ -143,10 +184,7 @@ def run_verify(
             print(colored(f"    ✓ {outcome}", Colors.GREEN))
         else:
             print(colored(f"    ✗ {outcome} (expected {spec['expect_exit']})", Colors.RED))
-            detail = ""
-            if completed is not None:
-                detail = (completed.stderr or completed.stdout or "").strip()
-            for line in detail.splitlines()[-5:]:
+            for line in output.strip().splitlines()[-5:]:
                 print(f"      {line}")
 
     return all_passed, results

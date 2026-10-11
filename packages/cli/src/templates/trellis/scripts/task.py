@@ -593,6 +593,7 @@ Usage:
   python3 task.py set-worktree <dir> <path>|-        Record (or clear) the ticket's git worktree
   python3 task.py set-pr <dir> <url>                 Record the review PR for the ticket
   python3 task.py delivery-gate <ref> [--json]        Decide whether this repo may push <ref> (CLAI-8)
+  python3 task.py check-commit <path>... [--from-stdin] [--json]  Refuse always-stop paths in a commit (CLAI-10)
   python3 task.py set-meta <dir> <key> <value>       Set/overwrite a task metadata key
   python3 task.py rename <dir> <new-slug>            Rename task, identity fields and references
   python3 task.py archive <task-dir>                 Archive completed task
@@ -804,6 +805,16 @@ def main() -> int:
     p_gate.add_argument("ref", help="Ref name to decide on, e.g. a ticket branch")
     p_gate.add_argument("--json", action="store_true", help="Output machine-readable JSON")
 
+    # check-commit (CLAI-10 — the mechanical commit-discipline gate)
+    p_chkcommit = subparsers.add_parser(
+        "check-commit", help="Refuse always-stop paths before committing"
+    )
+    p_chkcommit.add_argument("paths", nargs="*", help="Paths about to be committed")
+    p_chkcommit.add_argument(
+        "--from-stdin", action="store_true", help="Read additional paths, one per line, from stdin"
+    )
+    p_chkcommit.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+
     # set-meta
     p_setmeta = subparsers.add_parser("set-meta", help="Set/overwrite a task metadata key")
     p_setmeta.add_argument("dir", help="Task directory")
@@ -906,6 +917,7 @@ def main() -> int:
         "set-worktree": clai_delta.cmd_set_worktree,
         "set-pr": clai_delta.cmd_set_pr,
         "delivery-gate": clai_delta.cmd_delivery_gate,
+        "check-commit": clai_delta.cmd_check_commit,
         "set-meta": cmd_set_meta,
         "rename": cmd_rename,
         "archive": cmd_archive,
