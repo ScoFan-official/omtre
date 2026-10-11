@@ -171,12 +171,15 @@ describe("template shape lint", () => {
     .join("\n");
 
   it("catches every layout of the shape it bans, and nothing benign (self-check)", () => {
+    // Verbatim from `9246fabc~1` — the shipped `run-verify` before the bounded
+    // tree kill. The replay evidence is this fixture, not an ad-hoc shell run.
     const blackFormatted = [
-      '        completed = subprocess.run(  # noqa: S602',
+      '        completed = subprocess.run(  # noqa: S602 - repo-local contract, mirrors CI',
       '            spec["cmd"],',
       "            shell=True,",
       "            cwd=repo_root,",
       "            capture_output=True,",
+      "            text=True,",
       '            encoding="utf-8",',
       '            errors="replace",',
       '            timeout=spec["timeout"],',
