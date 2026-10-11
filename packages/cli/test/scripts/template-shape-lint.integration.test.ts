@@ -12,9 +12,12 @@
  *    shell: the orphan keeps the pipes and the post-kill collect blocks forever
  *    (`script-conventions.md` → "Wrong — timeout that kills only the shell").
  *    `run-verify` shipped in that shape, blocking `archive`, then the loop.
- *    Banned across every template script — the predicate tests `shell=True` and
- *    either capture style, so list-form calls (which kill their own child) stay
- *    clean and nothing has to be excluded.
+ *    Banned across every template script, for the three spellings that wait
+ *    internally (`run` / `check_output` / `call`). `Popen` is deliberately not
+ *    in the set: with a bounded `communicate` plus a tree kill it IS the fix,
+ *    and both live `shell=True` sites use it that way. String literals and `#`
+ *    comments are masked before scanning, so prose quoting the Wrong example
+ *    cannot turn CI red and a paren inside a literal cannot cut the scan short.
  * 3. A config key that is not documented is a key users route around:
  *    `verify_required` flipped `archive` from warning to refusal while missing
  *    from `config.yaml` entirely. Checked in the documented shape (a commented
@@ -34,32 +37,83 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
-import { unreachable } from "../../scripts/fork-release-carries.js";
-
 const CLI_ROOT = path.resolve(__dirname, "../..");
-const SCRIPTS = path.join(CLI_ROOT, "src/templates/trellis/scripts");
-const CONFIG_YAML = path.join(CLI_ROOT, "src/templates/trellis/config.yaml");
-const RUN_TS = path.join(CLI_ROOT, "src/commands/run.ts");
+const TEMPLATES = path.join(CLI_ROOT, "src/templates");
+const SCRIPTS = path.join(TEMPLATES, "trellis/scripts");
+const CONFIG_YAML = path.join(TEMPLATES, "trellis/config.yaml");
+const RUNNER_SRC = path.join(CLI_ROOT, "src/commands");
 
 const read = (p: string): string => fs.readFileSync(p, "utf-8");
 
-function walkPy(dir: string): string[] {
+function walk(dir: string, ext: string): string[] {
   const out: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walkPy(p));
-    else if (entry.name.endsWith(".py")) out.push(p);
+    if (entry.isDirectory()) out.push(...walk(p, ext));
+    else if (entry.name.endsWith(ext)) out.push(p);
   }
   return out;
+}
+
+/** The runner is `run.ts` plus its `run/` helpers; a verb called from any of
+ *  them has to be registered, so all of them are read. */
+function runnerSources(): string[] {
+  const files = [path.join(RUNNER_SRC, "run.ts")];
+  const sub = path.join(RUNNER_SRC, "run");
+  if (fs.existsSync(sub)) files.push(...walk(sub, ".ts"));
+  return files;
+}
+
+/**
+ * Blank the contents of string literals and `#` comments, positions preserved.
+ * Scanning raw text reads prose as code: `verify.py` and `task_utils.py` both
+ * document the Wrong example in prose, so an unmasked check goes red on a
+ * comment (and gets "fixed" by deleting the comment, which is how a guard dies).
+ * Masking also stops a paren inside a literal from ending the argument scan.
+ */
+function maskLiterals(src: string): string {
+  const out = src.split("");
+  const blank = (from: number, to: number): void => {
+    for (let j = Math.max(from, 0); j < to; j += 1) if (out[j] !== "\n") out[j] = " ";
+  };
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === "#") {
+      let j = i;
+      while (j < src.length && src[j] !== "\n") j += 1;
+      blank(i, j);
+      i = j;
+      continue;
+    }
+    const triple = src.slice(i, i + 3);
+    if (triple === '"""' || triple === "'''") {
+      const end = src.indexOf(triple, i + 3);
+      const stop = end < 0 ? src.length : end + 3;
+      blank(i + 3, stop - 3);
+      i = stop;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < src.length && src[j] !== c && src[j] !== "\n") {
+        if (src[j] === "\\") j += 1;
+        j += 1;
+      }
+      blank(i + 1, j);
+      i = j + 1;
+      continue;
+    }
+    i += 1;
+  }
+  return out.join("");
 }
 
 /**
  * Argument text of each `call` occurrence, by balancing parentheses from the open
  * paren instead of guessing where the call ends: the real call sites are both
  * black-formatted (closing paren on its own line) and inline one-liners, and a
- * pattern that matches only one layout reports green on the other. Known limit:
- * a paren inside a string literal ends the scan early — it can only shrink what
- * a call reports, never invent a flag.
+ * pattern that matches only one layout reports green on the other.
  */
 function callArguments(src: string, call: string): string[] {
   const out: string[] = [];
@@ -80,23 +134,43 @@ function callArguments(src: string, call: string): string[] {
   return out;
 }
 
-/** Shell-mediated calls that capture output AND set a timeout — the hang shape. */
+/**
+ * Shell-mediated calls that capture output AND set a timeout — the hang shape.
+ * The set is the three entry points that wait internally; `Popen` returns at
+ * once and its timeout lives in `communicate`, which is the shape the fix uses.
+ * Limit worth naming: arguments built through a `**spec` splat are invisible to
+ * a textual rule, as is `from subprocess import run`.
+ */
+const SHELL_WAIT_CALLS = ["subprocess.run(", "subprocess.check_output(", "subprocess.call("];
+
+const shellTrue = (args: string): boolean => /(^|[\s(])shell\s*=\s*True/.test(args);
+const withTimeout = (args: string): boolean => /(^|[\s(])timeout\s*=/.test(args);
+const capturesOutput = (args: string): boolean =>
+  /capture_output\s*=\s*True/.test(args) ||
+  (/(^|[\s(])stdout\s*=\s*subprocess\.PIPE/.test(args) &&
+    /(^|[\s(])stderr\s*=\s*subprocess\.PIPE/.test(args));
+
 function shellTimeoutCaptures(src: string): string[] {
-  return callArguments(src, "subprocess.run(").filter(
-    (args) =>
-      /(^|[\s(])shell\s*=\s*True/.test(args) &&
-      (/capture_output\s*=\s*True/.test(args) ||
-        (/stdout\s*=\s*subprocess\.PIPE/.test(args) &&
-          /stderr\s*=\s*subprocess\.PIPE/.test(args))) &&
-      /(^|[\s(])timeout\s*=/.test(args),
+  const code = maskLiterals(src);
+  return SHELL_WAIT_CALLS.flatMap((call) =>
+    callArguments(code, call).filter(
+      (args) =>
+        shellTrue(args) &&
+        // `check_output` returns the captured stdout by definition; it needs no
+        // capture kwarg to be holding the orphan's pipe.
+        (call === "subprocess.check_output(" || capturesOutput(args)) &&
+        withTimeout(args),
+    ),
   );
 }
 
 describe("template shape lint", () => {
   const taskPy = read(path.join(SCRIPTS, "task.py"));
-  const runTs = read(RUN_TS);
+  const runnerSrc = runnerSources()
+    .map((f) => read(f))
+    .join("\n");
 
-  it("catches both layouts of the shape it bans, and nothing benign (self-check)", () => {
+  it("catches every layout of the shape it bans, and nothing benign (self-check)", () => {
     const blackFormatted = [
       '        completed = subprocess.run(  # noqa: S602',
       '            spec["cmd"],',
@@ -111,19 +185,37 @@ describe("template shape lint", () => {
     const inline = "subprocess.run(cmd, shell=True, capture_output=True, timeout=60)";
     const pipesVariant =
       "subprocess.run(\n  cmd,\n  shell=True,\n  stdout=subprocess.PIPE,\n  stderr=subprocess.PIPE,\n  timeout=30,\n)";
+    const checkOutput = "subprocess.check_output(cmd, shell=True, timeout=30)";
+    const callForm =
+      "subprocess.call(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)";
     const listForm = "subprocess.run(args, capture_output=True, timeout=20)";
     const noTimeout = "subprocess.run(cmd, shell=True, capture_output=True)";
+    // The fix, and the only two live `shell=True` sites in the templates.
+    const popenFix =
+      "proc = subprocess.Popen(\n  cmd,\n  shell=True,\n  stdout=subprocess.PIPE,\n  stderr=subprocess.PIPE,\n)\nstdout, stderr = proc.communicate(timeout=30)";
+    // A guard that reads prose goes red on documentation, and then gets deleted.
+    const inComment = `# Wrong: ${inline}`;
+    const inDocstring = ['"""Counter-example kept for documentation:', "", inline, '"""'].join(
+      "\n",
+    );
 
     expect(shellTimeoutCaptures(blackFormatted)).toHaveLength(1);
     expect(shellTimeoutCaptures(inline)).toHaveLength(1);
     expect(shellTimeoutCaptures(pipesVariant)).toHaveLength(1);
+    expect(shellTimeoutCaptures(checkOutput)).toHaveLength(1);
+    expect(shellTimeoutCaptures(callForm)).toHaveLength(1);
     expect(shellTimeoutCaptures(listForm)).toHaveLength(0);
     expect(shellTimeoutCaptures(noTimeout)).toHaveLength(0);
+    expect(shellTimeoutCaptures(popenFix)).toHaveLength(0);
+    expect(shellTimeoutCaptures(inComment)).toHaveLength(0);
+    expect(shellTimeoutCaptures(inDocstring)).toHaveLength(0);
   });
 
   it("bans the shell-only timeout shape in every template script", () => {
-    const files = walkPy(SCRIPTS);
-    expect(files.length).toBeGreaterThanOrEqual(20); // the scan has to actually scan
+    const files = walk(TEMPLATES, ".py");
+    // Scripts, shared hooks and the platform hook copies — a shape ban with an
+    // exemption list is a shape ban that nobody reads.
+    expect(files.length).toBeGreaterThanOrEqual(35);
 
     const offenders = files
       .filter((f) => shellTimeoutCaptures(read(f)).length > 0)
@@ -137,9 +229,14 @@ describe("template shape lint", () => {
 
   it("registers every task.py verb the runner calls, as a real subcommand", () => {
     const called = new Set<string>();
-    for (const m of runTs.matchAll(/ports\.task\(\s*\["([a-z][a-z-]*)"/g)) called.add(m[1]);
-    for (const m of runTs.matchAll(/\[\s*"([a-z][a-z-]*)",?\s*(?:"--json"|opts\.)/g)) called.add(m[1]);
-    for (const m of runTs.matchAll(/\[taskPy,\s*"([a-z][a-z-]*)"/g)) called.add(m[1]);
+    // Verbs are read out of real task invocations only. Scanning every
+    // array-shaped literal in the runner would demand a subparser for the
+    // `git`/`gh` argv too, i.e. a check that turns red for the wrong reason.
+    // Out of reach: a verb assembled into a variable before the call.
+    for (const args of callArguments(runnerSrc, "ports.task(")) {
+      for (const m of args.matchAll(/\[\s*"([a-z][a-z-]*)"/g)) called.add(m[1]);
+    }
+    for (const m of runnerSrc.matchAll(/\[\s*taskPy,\s*"([a-z][a-z-]*)"/g)) called.add(m[1]);
 
     // Extraction must be working: an empty or tiny set would make the loop below
     // pass by checking nothing.
@@ -156,28 +253,33 @@ describe("template shape lint", () => {
 
   it("documents each fork-owned config key as a commented example", () => {
     const yaml = read(CONFIG_YAML);
-    const documented = (key: string): boolean =>
-      new RegExp(`^\\s*#.*\\b${key}\\b`, "m").test(yaml);
+    // A commented MAPPING line (`#   key:`), not the key mentioned in any
+    // sentence: prose already contains "`delivery.auto_push_refs`" inside the
+    // tier description, so a substring test passes with the example block gone.
+    const documented = (src: string, key: string): boolean =>
+      new RegExp(`^\\s*#\\s+${key}\\s*:`, "m").test(src);
+
+    const prose = "# the delivery gate is orthogonal to autonomy\n";
+    expect(documented(prose, "delivery"), "prose mention is not documentation").toBe(false);
+    expect(documented("#   delivery:\n", "delivery")).toBe(true);
 
     for (const key of ["autonomy", "verify_required", "delivery", "auto_push_refs", "protected_refs"]) {
-      expect(documented(key), `config.yaml has no documented example for "${key}"`).toBe(true);
+      expect(documented(yaml, key), `config.yaml has no documented example for "${key}"`).toBe(true);
     }
   });
 
   it("flags no test fixture that plants a flag with an absolute date", () => {
-    const dir = path.join(CLI_ROOT, "test");
-    const files: string[] = [];
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        for (const f of fs.readdirSync(p)) if (f.endsWith(".test.ts")) files.push(path.join(p, f));
-      }
-    }
-    expect(files.length).toBeGreaterThanOrEqual(10);
+    const files = walk(path.join(CLI_ROOT, "test"), ".test.ts");
+    expect(files.length).toBeGreaterThanOrEqual(12);
 
-    const absolute = (src: string): boolean => /旗: [^"\n]*自 20\d\d-\d\d-\d\d \d\d:\d\d/.test(src);
-    expect(absolute('const flag = `旗: devin-H · 10-09-p · 自 2026-10-09 10:00\\n`;')).toBe(true);
+    // Both colon widths, because `_FLAG_PREFIXES` in clai_delta.py accepts both.
+    const absolute = (src: string): boolean =>
+      /旗[:：][^\n]*自\s*20\d\d-\d\d-\d\d[ T]\d\d:\d\d/.test(src);
+    expect(absolute("旗: devin-H · 10-09-p · 自 2026-10-09 10:00")).toBe(true);
+    expect(absolute("旗：devin-H · 10-09-p · 自 2026-10-09T10:00")).toBe(true);
     expect(absolute("flagStamp(minutesAgo)")).toBe(false);
+    // Limit worth naming: a fixture that builds the date in a helper and injects
+    // it is invisible here — that is the shape a textual rule cannot reach.
 
     const here = path.join(__dirname, path.basename(__filename));
     const offenders = files
@@ -194,23 +296,8 @@ describe("template shape lint", () => {
   });
 
   it("keeps the protected-path rule in one language", () => {
-    expect(runTs).not.toMatch(/PROTECTED_FRAGMENTS|isProtectedPath/);
+    expect(runnerSrc).not.toMatch(/PROTECTED_FRAGMENTS|isProtectedPath/);
     expect(read(path.join(SCRIPTS, "common/clai_delta.py"))).toContain("PROTECTED_PATH_FRAGMENTS");
     expect(taskPy).toMatch(/add_parser\(\s*\n?\s*"check-commit"/);
-  });
-});
-
-describe("fork-release-carries", () => {
-  it("reports every unreachable sha, and fails closed on missing arguments", () => {
-    const known = new Set(["aaa", "bbb"]);
-    const fake = (ref: string, sha: string): boolean => ref === "origin/main" && known.has(sha);
-
-    expect(unreachable({ ref: "origin/main", shas: ["aaa", "bbb"], run: fake })).toEqual({
-      ok: true,
-      missing: [],
-    });
-    expect(unreachable({ ref: "origin/main", shas: ["aaa", "zzz"], run: fake }).missing).toEqual(["zzz"]);
-    expect(unreachable({ ref: "", shas: ["aaa"], run: fake }).usage).toBe(true);
-    expect(unreachable({ ref: "origin/main", shas: [], run: fake }).usage).toBe(true);
   });
 });

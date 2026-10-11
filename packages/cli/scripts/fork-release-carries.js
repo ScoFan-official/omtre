@@ -17,7 +17,7 @@
  *   node packages/cli/scripts/fork-release-carries.js --ref origin/main --sha a,b,c
  * Exit 0 when every SHA is reachable from the ref, 1 otherwise (CI-failable).
  */
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -43,7 +43,10 @@ export function unreachable({ ref, shas, run = defaultRun }) {
 
 function defaultRun(ref, sha) {
   try {
-    execSync(`git merge-base --is-ancestor ${sha} ${ref}`, { stdio: "ignore" });
+    // No shell: an interpolating `git … ${ref}` answers "yes" to
+    // `--ref "origin/main || echo x"` for a SHA that is not on main, which turns
+    // a release gate that is supposed to fail closed into one that lies.
+    execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], { stdio: "ignore" });
     return true;
   } catch {
     return false;
