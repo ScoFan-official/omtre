@@ -92,16 +92,35 @@ points at the pack repo root (`gh:ScoFan-official/oh-my-trellis`); custom
 
 ### Release procedure
 
-1. Tag this fork at the release commit and push:
-   `git tag v<upstream>-ohmy.<N> && git push origin v<upstream>-ohmy.<N>`
-   (e.g. `v0.6.17-ohmy.2`).
-2. On the pack repo (`ScoFan-official/oh-my-trellis`), tag the matching
+`main` is a **protected branch**: changes arrive by merged PR only. Settings as read back from
+the API — required status check `build` (the only job in `ci.yml`), `strict: true` (the branch
+must be up to date before merge), `enforce_admins: true`. The admin toggle is the whole point:
+`trellis run` and this machine push with that same admin token, so a protection an admin could
+bypass would guard nothing. Verified by probe, not assumption — an unreferenced commit pushed as
+`<sha>:refs/heads/main` came back `remote rejected (protected branch hook declined)` with
+`GH006 … Required status check "build" is expected`.
+
+1. Land the version bump as a PR: a hand-written commit touching
+   `packages/cli/package.json` only → PR → CI `build` green → **a human merges**. (`pnpm release`
+   cannot do this here — see below — so the commit is written by hand either way.)
+2. Tag **the merge commit** on `main` and push:
+   `git tag v<upstream>-ohmy.<N> <merge-sha> && git push origin v<upstream>-ohmy.<N>`
+   (e.g. `v0.6.17-ohmy.2`). The tag belongs on the commit CI just validated, not on a branch tip
+   that has since moved.
+3. On the pack repo (`ScoFan-official/oh-my-trellis`), tag the matching
    `cli-` alias and push:
    `git tag cli-v<upstream>-ohmy.<N> && git push origin cli-v<upstream>-ohmy.<N>`
-3. The pack's `.github/workflows/cli-release.yml` fires on `cli-v*`, clones
+4. The pack's `.github/workflows/cli-release.yml` fires on `cli-v*`, clones
    this fork at the matching `v<upstream>-ohmy.<N>` tag
    (`${GITHUB_REF_NAME#cli-}`), runs `pnpm --filter oh-my-trellis build`,
    `pnpm pack`, and `gh release create` with the tarball.
+
+One consequence worth naming: upstream's own `.trellis/spec/cli/backend/release-process.md:108`
+still tells you to `git add . && git commit … && git push origin main`. That file is
+**upstream-owned** (it is in the `upstream-0.6.17` baseline, and its recent commits are upstream's),
+so the fork leaves it alone rather than patching upstream tooling — but the instruction does not
+work here: a direct push to `main` is refused. For this fork's releases, **this file is the
+authority**, not that spec.
 
 No PAT needed — the pack workflow clones the public fork anonymously.
 `.github/workflows/release.yml` here is demoted to `workflow_dispatch`
@@ -109,7 +128,7 @@ No PAT needed — the pack workflow clones the public fork anonymously.
 
 What the fork's release route does **not** do, and why:
 
-- **`pnpm release` is unusable here.** `release.js` gates on `release-preflight check-versions`, which requires cli and core to share a version — `-ohmy.N` breaks that on purpose (see below) — and it refuses to cut a stable release from any branch but `main`. The fork's releases are a hand-written version commit on `main` (touching `packages/cli/package.json` only) plus the two tags. Upstream's `verify-packed-cli` is wired only inside `publish.yml`, which this fork reduced to
+- **`pnpm release` is unusable here.** `release.js` gates on `release-preflight check-versions`, which requires cli and core to share a version — `-ohmy.N` breaks that on purpose (see below) — and it refuses to cut a stable release from any branch but `main`. The fork's releases are a hand-written version commit that reaches `main` **by merged PR** (`main` is protected; a direct push is refused even for the admin token) plus the two tags. Upstream's `verify-packed-cli` is wired only inside `publish.yml`, which this fork reduced to
 `workflow_dispatch` — so it runs when a human starts it, never on a release.
 - **Reconcile before burning the number.** A version, once published, cannot be reused. Before tagging, check the ref actually carries the work the ticket names: `node packages/cli/scripts/fork-release-carries.js --ref origin/main --sha <a>,<b>,…`. This is also why the fork merges PRs as merge commits: a squash rewrites the branch SHAs away and that reconciliation silently loses its ground.
 - **Template wording is pinned by tests.** `test/templates/trellis.test.ts` asserts golden strings taken from `workflow.md`; rewording contract text turns CI red after the push. Grep the tests for the sentence before changing it.
