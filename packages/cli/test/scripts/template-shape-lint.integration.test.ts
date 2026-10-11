@@ -10,6 +10,10 @@
  *    shell; the orphan keeps the pipes and the post-kill collect blocks forever
  *    (`script-conventions.md` → "Wrong — timeout that kills only the shell").
  *    `run-verify` sat in that shape, and it blocks `archive`, then the loop.
+ *    Scoped to the scripts this fork owns: two upstream files still hold the
+ *    shape, and a check that fails on inherited code is one people learn to
+ *    ignore, so those get reported upstream instead. The lint carries a
+ *    self-check, because a pattern that quietly matches nothing also passes.
  * 3. A config key nobody documented is a key nobody can find, so users invent
  *    workarounds — `verify_required` (which flips `archive` from warning to
  *    refusal) shipped without existing in `config.yaml` at all.
@@ -30,21 +34,43 @@ const SCRIPTS = path.join(CLI_ROOT, "src/templates/trellis/scripts");
 const CONFIG_YAML = path.join(CLI_ROOT, "src/templates/trellis/config.yaml");
 const RUN_TS = path.join(CLI_ROOT, "src/commands/run.ts");
 
-function walkPy(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walkPy(p));
-    else if (entry.name.endsWith(".py")) out.push(p);
-  }
-  return out;
-}
-
 const read = (p: string): string => fs.readFileSync(p, "utf-8");
+
+/**
+ * Every `subprocess.run(...)` call in `src` that asks for captured output AND a
+ * timeout - the shape that kills only the shell. Scan up to the call's own
+ * closing paren at line start: the real call spans several lines, and a
+ * pattern that only matches one-liners reports green on the sick case, which
+ * is worse than having no check at all.
+ */
+function shellTimeoutRuns(src: string): string[] {
+  const found: string[] = [];
+  const re = /subprocess\.run\(([\s\S]{0,800}?)\n\s*\)/g;
+  for (const m of src.matchAll(re)) {
+    if (m[1].includes("capture_output=True") && m[1].includes("timeout=")) found.push(m[1]);
+  }
+  return found;
+}
 
 describe("template shape lint", () => {
   const taskPy = read(path.join(SCRIPTS, "task.py"));
   const runTs = read(RUN_TS);
+
+  it("catches the shape it bans (self-check, so a vacuous lint cannot pass)", () => {
+    const sick = [
+      "        completed = subprocess.run(  # noqa: S602",
+      "            spec[\"cmd\"],",
+      "            shell=True,",
+      "            cwd=repo_root,",
+      "            capture_output=True,",
+      "            timeout=spec[\"timeout\"],",
+      "        )",
+      "        exit_code = completed.returncode",
+    ].join("\n");
+
+    expect(shellTimeoutRuns(sick)).toHaveLength(1);
+    expect(shellTimeoutRuns("x = subprocess.run(cmd, shell=True)")).toHaveLength(0);
+  });
 
   it("registers every task.py verb the runner calls", () => {
     const called = new Set<string>();
@@ -63,17 +89,20 @@ describe("template shape lint", () => {
     expect(missing, `task.py never registers: ${missing.join(", ")}`).toEqual([]);
   });
 
-  it("ships no subprocess timeout that kills only the shell", () => {
-    const offenders: string[] = [];
-    for (const file of walkPy(SCRIPTS)) {
-      const src = read(file);
-      for (const m of src.matchAll(/subprocess\.run\(([\s\S]{0,400}?)\)\s*[;,)]/g)) {
-        const call = m[1];
-        if (call.includes("capture_output=True") && call.includes("timeout=")) {
-          offenders.push(path.relative(CLI_ROOT, file));
-        }
-      }
-    }
+  it("keeps the fork-owned scripts free of the shell-only timeout shape", () => {
+    // Scoped to the surface this fork writes: upstream `common/git.py` and
+    // `common/session_context.py` still hold the same call shape, and a check
+    // that fails on inherited code teaches everyone to ignore it. Those two are
+    // reported upstream instead; the list below is the part we own.
+    const FORK_OWNED = [
+      path.join(SCRIPTS, "task.py"),
+      path.join(SCRIPTS, "common", "clai_delta.py"),
+      path.join(SCRIPTS, "common", "frontier.py"),
+      path.join(SCRIPTS, "common", "verify.py"),
+    ];
+    const offenders = FORK_OWNED.filter((f) => shellTimeoutRuns(read(f)).length > 0).map((f) =>
+      path.relative(CLI_ROOT, f),
+    );
     expect(
       offenders,
       "use Popen + tree kill + bounded collect (see verify._run_bounded); " +
