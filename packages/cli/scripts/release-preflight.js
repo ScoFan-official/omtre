@@ -34,6 +34,12 @@
  *                                    registry visibility problem fails the
  *                                    release pipeline instead of being fixed
  *                                    by a local publish.
+ *   verify-carries --ref <ref> --sha a,b,c
+ *                                    Fork release reconciliation (channel A):
+ *                                    assert every named commit is reachable
+ *                                    from the ref being released from, so a
+ *                                    release that quietly omits a slice fails
+ *                                    before the version number is burned.
  *
  * Idempotency rule: a CI rerun on the same tag must not republish an
  * already-published version, but must also never silently paper over a
@@ -138,6 +144,37 @@ async function retry(label, fn) {
 function fail(msg) {
   console.error(`${RED}x ${msg}${RESET}`);
   process.exit(1);
+}
+
+/**
+ * The fork's release reconciliation: prove the ref being released from actually
+ * carries the work the ticket names. Fork releases are cut by hand (channel A),
+ * so nothing else checks "this release includes CLAI-8, D5, D8 …".
+ *
+ * Reachability is the question merge commits answer for free — a squash merge
+ * rewrites the branch SHAs away and the reconciliation silently loses its
+ * ground, which is why the fork merges PRs rather than squashing them.
+ */
+function verifyCarries({ ref, shas }) {
+  if (!ref || shas.length === 0) {
+    fail("usage: verify-carries --ref <ref> --sha <sha>[,<sha>…]");
+  }
+  const missing = [];
+  for (const sha of shas) {
+    try {
+      execSync(`git merge-base --is-ancestor ${sha} ${ref}`, { stdio: "ignore" });
+    } catch {
+      missing.push(sha);
+    }
+  }
+  if (missing.length > 0) {
+    fail(
+      `${missing.length} commit(s) not reachable from ${ref}:\n  ${missing.join(
+        "\n  ",
+      )}\nReleasing now would ship without them.`,
+    );
+  }
+  console.log(`${GREEN}✓ ${shas.length} commit(s) reachable from ${ref}${RESET}`);
 }
 
 function checkVersions({ requireTag, quiet = false }) {
@@ -304,8 +341,24 @@ async function main() {
         `  npm-tag\n` +
         `  publish-plan [--json|--github]\n` +
         `  verify-packed-cli\n` +
-        `  verify-npm [--package all|core|cli]\n`,
+        `  verify-npm [--package all|core|cli]\n` +
+        `  verify-carries --ref <ref> --sha <sha>[,<sha>…]\n`,
     );
+    return;
+  }
+  if (cmd === "verify-carries") {
+    const refIndex = rest.indexOf("--ref");
+    const shaIndex = rest.indexOf("--sha");
+    verifyCarries({
+      ref: refIndex >= 0 ? (rest[refIndex + 1] ?? "") : "",
+      shas:
+        shaIndex >= 0 && rest[shaIndex + 1]
+          ? rest[shaIndex + 1]
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+    });
     return;
   }
   if (cmd === "check-versions") {

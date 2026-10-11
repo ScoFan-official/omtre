@@ -25,6 +25,8 @@ Customization lives in these files (all under `packages/cli/` unless noted):
 | Managed workflow id | `src/commands/init.ts`, `src/commands/workflow.ts`, `src/commands/update.ts`, `src/configurators/workflow.ts` (oh-my is hash-managed; `native` is user-managed in this fork) |
 | Devin templates | `src/templates/devin/` (start override, oh-my-update workflow, check skill dispatch note in `src/configurators/devin.ts`) |
 | CLI identity | `packages/cli/package.json`, `src/commands/upgrade.ts`, `src/commands/update.ts` (GitHub releases lookup), `src/cli/index.ts` (help text) |
+| Delivery layer (CLAI-1…10) | `src/templates/trellis/scripts/common/clai_delta.py` (all Python divergence, thin call sites elsewhere) + the two zero-conflict new files `common/frontier.py`, `common/verify.py`; the runner is new CLI surface: `src/commands/run.ts`, `src/commands/run/{worker,ledger}.ts` |
+| Breadcrumb injection | `src/templates/shared-hooks/inject-workflow-state.py` **and** its installed copies under the platform dirs (`.claude/`, `.codex/`, `.opencode/`) — the `next:` line lives there, not only in the workflow text |
 | Tests | `test/` — a few upstream tests assert `native`-managed semantics and are patched to the fork's `oh-my` contract |
 | Docs | `docs/fork-sync.md` (this file) |
 
@@ -45,7 +47,7 @@ Customization lives in these files (all under `packages/cli/` unless noted):
 5. Rerun the template diff checks (the customizations must still be present):
    - `git diff upstream/main -- packages/cli/src/templates/trellis/agents/` shows only the role-card rewrite
    - `git diff upstream/main -- packages/cli/src/templates/trellis/scripts/common/task_store.py` shows only the `.devin` block + comment lines
-   - `packages/cli/src/templates/trellis/workflow.md` (native) shows **no** diff — the fork workflow lives in `workflow-oh-my.md`
+   - `packages/cli/src/templates/trellis/workflow.md` (native) carries the fork's autonomy tiers and routing text — **it is not diff-free** (both variants are maintained: `workflow.md` and `workflow-oh-my.md`, and the fork's own `.trellis/workflow.md` is a third copy kept in step)
 6. Rebuild and test:
    `pnpm install && pnpm --filter oh-my-trellis build && pnpm --filter oh-my-trellis test`
    Then the e2e: `cd packages/cli && pnpm pack`, `npm i -g ./oh-my-trellis-*.tgz`, and in a scratch dir
@@ -89,6 +91,12 @@ points at the pack repo root (`gh:ScoFan-official/oh-my-trellis`); custom
 No PAT needed — the pack workflow clones the public fork anonymously.
 `.github/workflows/release.yml` here is demoted to `workflow_dispatch`
 (internal tarball testing only); fork-hosted releases are deprecated.
+
+What the fork's release route does **not** do, and why:
+
+- **`pnpm release` is unusable here.** `release.js` gates on `release-preflight check-versions`, which requires cli and core to share a version — `-ohmy.N` breaks that on purpose (see below) — and it refuses to cut a stable release from any branch but `main`. The fork's releases are a hand-written version commit on `main` (touching `packages/cli/package.json` only) plus the two tags. Upstream's `verify-packed-cli` is likewise unwired for the same version reason.
+- **Reconcile before burning the number.** A version, once published, cannot be reused. Before tagging, check the ref actually carries the work the ticket names: `node packages/cli/scripts/release-preflight.js verify-carries --ref origin/main --sha <a>,<b>,…`. This is also why the fork merges PRs as merge commits: a squash rewrites the branch SHAs away and that reconciliation silently loses its ground.
+- **Template wording is pinned by tests.** `test/templates/trellis.test.ts` asserts golden strings taken from `workflow.md`; rewording contract text turns CI red after the push. Grep the tests for the sentence before changing it.
 
 `.github/workflows/publish.yml` is upstream's npm pipeline and is dormant on
 the fork: its `on:` block was changed to `workflow_dispatch` only, because
