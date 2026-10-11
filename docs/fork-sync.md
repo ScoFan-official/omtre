@@ -93,12 +93,19 @@ points at the pack repo root (`gh:ScoFan-official/oh-my-trellis`); custom
 ### Release procedure
 
 `main` is a **protected branch**: changes arrive by merged PR only. Settings as read back from
-the API — required status check `build` (the only job in `ci.yml`), `strict: true` (the branch
-must be up to date before merge), `enforce_admins: true`. The admin toggle is the whole point:
-`trellis run` and this machine push with that same admin token, so a protection an admin could
-bypass would guard nothing. Verified by probe, not assumption — an unreferenced commit pushed as
-`<sha>:refs/heads/main` came back `remote rejected (protected branch hook declined)` with
-`GH006 … Required status check "build" is expected`.
+the API — `required_status_checks: null`, `required_pull_request_reviews.required_approving_review_count: 0`,
+`enforce_admins: true`. The admin toggle is the whole point: `trellis run` and this machine push
+with that same admin token, so a protection an admin could bypass would guard nothing. Verified by
+probe, not assumption — an unreferenced commit pushed as `<sha>:refs/heads/main` came back
+`remote rejected (protected branch hook declined)`, exit 1.
+
+No **required status check**, and that is deliberate: `.github/workflows/ci.yml` triggers
+`pull_request` with a `paths:` filter that excludes `docs/**`, so a docs-only PR never reports
+`build` at all — requiring that check deadlocks exactly the PR that edits this file (it did:
+`mergeStateStatus: BLOCKED` with `no checks reported`, until the requirement was dropped).
+`ci.yml` is upstream-owned (present in the `upstream-0.6.17` baseline), so the fix belongs in our
+protection settings, not in their workflow. Green CI before a human merges stays the rule — read
+it with `gh pr checks`, which does run for code and version-bump PRs (they touch `packages/cli/**`).
 
 1. Land the version bump as a PR: a hand-written commit touching
    `packages/cli/package.json` only → PR → CI `build` green → **a human merges**. (`pnpm release`
