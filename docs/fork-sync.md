@@ -28,6 +28,7 @@ Customization lives in these files (all under `packages/cli/` unless noted):
 | Delivery layer (CLAI-1…10) | `src/templates/trellis/scripts/common/clai_delta.py` (all Python divergence, thin call sites elsewhere) + the two zero-conflict new files `common/frontier.py`, `common/verify.py`; the runner is new CLI surface: `src/commands/run.ts`, `src/commands/run/{worker,ledger}.ts` |
 | Breadcrumb injection | `src/templates/shared-hooks/inject-workflow-state.py` **and** its installed copies under the platform dirs (`.claude/`, `.codex/`, `.opencode/`) — the `next:` line lives there, not only in the workflow text |
 | Tests | `test/` — a few upstream tests assert `native`-managed semantics and are patched to the fork's `oh-my` contract |
+| Fork release checks | `packages/cli/scripts/fork-release-carries.js` — its own file: upstream `scripts/release-preflight.js` is left untouched, because editing upstream tooling is what step 4 below calls a delta leak |
 | Docs | `docs/fork-sync.md` (this file) |
 
 `packages/core` is intentionally untouched — the fork keeps the
@@ -95,7 +96,7 @@ No PAT needed — the pack workflow clones the public fork anonymously.
 What the fork's release route does **not** do, and why:
 
 - **`pnpm release` is unusable here.** `release.js` gates on `release-preflight check-versions`, which requires cli and core to share a version — `-ohmy.N` breaks that on purpose (see below) — and it refuses to cut a stable release from any branch but `main`. The fork's releases are a hand-written version commit on `main` (touching `packages/cli/package.json` only) plus the two tags. Upstream's `verify-packed-cli` is likewise unwired for the same version reason.
-- **Reconcile before burning the number.** A version, once published, cannot be reused. Before tagging, check the ref actually carries the work the ticket names: `node packages/cli/scripts/release-preflight.js verify-carries --ref origin/main --sha <a>,<b>,…`. This is also why the fork merges PRs as merge commits: a squash rewrites the branch SHAs away and that reconciliation silently loses its ground.
+- **Reconcile before burning the number.** A version, once published, cannot be reused. Before tagging, check the ref actually carries the work the ticket names: `node packages/cli/scripts/fork-release-carries.js --ref origin/main --sha <a>,<b>,…`. This is also why the fork merges PRs as merge commits: a squash rewrites the branch SHAs away and that reconciliation silently loses its ground.
 - **Template wording is pinned by tests.** `test/templates/trellis.test.ts` asserts golden strings taken from `workflow.md`; rewording contract text turns CI red after the push. Grep the tests for the sentence before changing it.
 
 `.github/workflows/publish.yml` is upstream's npm pipeline and is dormant on
