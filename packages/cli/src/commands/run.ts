@@ -33,10 +33,17 @@ import { spawnSync } from "node:child_process";
 
 import { loadTaskRecord } from "@mindfoldhq/trellis-core/task";
 
-import { listProviders, type Provider } from "./channel/adapters/index.js";
+import { isProvider, listProviders, type Provider } from "./channel/adapters/index.js";
+import { loadAgent } from "./channel/agent-loader.js";
 import { resolveWorkerGuardConfig } from "./channel/guard.js";
 import { parseDuration } from "./channel/wait.js";
 import { resolveSupportedPython } from "./init.js";
+import {
+  loadWorkerDefault,
+  resolveDispatch,
+  type AgentCardInfo,
+  type TicketDispatch,
+} from "./run/dispatch.js";
 import { openLedger, type LedgerInput } from "./run/ledger.js";
 import { oneShotWorker, type WorkerOutcome, type WorkerRequest } from "./run/worker.js";
 
@@ -88,6 +95,21 @@ export interface RunnerPorts {
   pythonCommand(): string;
   /** Read one top-level string field of the main repo's copy of a ticket. */
   taskField(dir: string, field: string): string | null;
+  /**
+   * Read the ticket's task.json `meta` object for dispatch resolution
+   * (`meta.worker` / `meta.model` / `meta.effort`). `{}` when unreadable —
+   * `taskField` cannot see it because `meta` is not a top-level string.
+   */
+  taskMeta(dir: string): Record<string, unknown>;
+  /**
+   * The dispatch-relevant slice of `.trellis/agents/<name>.md` frontmatter,
+   * read in the orchestrating repo. `null` when the card is missing or
+   * unreadable — spawn re-reads the card inside the ticket worktree, so an
+   * uncommitted card is undispatchable.
+   */
+  agentCard(name: string): AgentCardInfo | null;
+  /** `.trellis/config.yaml` `worker_default:`; null when unset. */
+  workerDefault(): string | null;
   /**
    * Whether the ticket's own branch exists but no longer carries the task dir —
    * i.e. a previous run already closed it there. The orchestrating copy lags
@@ -143,10 +165,54 @@ export interface RunResult {
   ledgerFile?: string;
 }
 
-type TicketStep =
-  | { kind: "archived" }
-  | { kind: "failed"; reason: string }
-  | { kind: "stop"; reason: StopReason; detail: string };
+/** What `run-verify` observed, when the attempt got that far. */
+export interface VerifySummary {
+  verified: boolean;
+  reason?: string;
+  exit: number;
+}
+
+export type TicketStep =
+  | { kind: "archived"; verify?: VerifySummary }
+  | { kind: "failed"; reason: string; verify?: VerifySummary }
+  | { kind: "stop"; reason: StopReason; detail: string; verify?: VerifySummary };
+
+/** The machine-readable outcome vocabulary of a single-ticket run. */
+export type TicketOutcome = "delivered" | "failed" | "stop-line" | "delivery_deferred";
+
+/**
+ * The structured result `trellis run --ticket` prints (one JSON line) and
+ * mirrors into the run ledger (`ticket_result`). The orchestrator reads this
+ * row; `attempt_started`/`attempt_finished` are the lifecycle pair it uses to
+ * spot an attempt that never reported back.
+ */
+export interface TicketResult {
+  dir: string;
+  outcome: TicketOutcome;
+  /** Machine reason code (`worker_failed`, `always_stop`, `delivered`, …). */
+  code: string;
+  /** Human-readable detail behind the code. */
+  detail: string;
+  /** Consecutive failures this invocation observed — a single attempt: 0 or 1. */
+  strikes: number;
+  verify?: VerifySummary;
+  /** The dispatch triple the ticket ran (or was asked to run) under. */
+  dispatch: TicketDispatch;
+}
+
+export interface TicketRun {
+  step: TicketStep;
+  result: TicketResult;
+}
+
+/** Per-invocation extras for `runTicket` — the loop passes frontier metadata. */
+export interface RunTicketOptions {
+  workerTimeoutMs?: number;
+  /** Ticket title, used as the PR title when the run pushes one. */
+  title?: string;
+  /** Frontier priority, recorded on the `ticket_start` ledger line. */
+  priority?: string;
+}
 
 function firstLine(text: string): string {
   const line = (text ?? "").split("\n").find((l) => l.trim());
@@ -312,11 +378,12 @@ function runnerFallbackCommit(
 }
 
 async function processOne(
-  entry: FrontierEntry,
-  opts: RunOptions,
+  dir: string,
+  info: { title?: string; priority?: string },
+  dispatch: TicketDispatch,
+  workerTimeoutMs: number,
   ports: RunnerPorts,
 ): Promise<TicketStep> {
-  const dir = entry.dir;
   const branch = ports.taskField(dir, "branch");
   const base = ports.taskField(dir, "base_branch");
   if (!branch || !base) {
@@ -346,7 +413,7 @@ async function processOne(
   }
 
   try {
-    return await runAttempt(dir, entry, branch, base, worktree, opts, ports);
+    return await runAttempt(dir, info, branch, base, worktree, dispatch, workerTimeoutMs, ports);
   } finally {
     // The worktree is always transient — it would otherwise make the ticket
     // ungrabbable and the strike counter could never reach the threshold. The
@@ -360,11 +427,12 @@ async function processOne(
 
 async function runAttempt(
   dir: string,
-  entry: FrontierEntry,
+  info: { title?: string; priority?: string },
   branch: string,
   base: string,
   worktree: string,
-  opts: RunOptions,
+  dispatch: TicketDispatch,
+  workerTimeoutMs: number,
   ports: RunnerPorts,
 ): Promise<TicketStep> {
   ports.task(["set-worktree", dir, worktree], worktree);
@@ -375,17 +443,17 @@ async function runAttempt(
   if (started.status !== 0) {
     return { kind: "failed", reason: `start_refused(${firstLine(started.stderr || started.stdout)})` };
   }
-  ports.ledgerAppend({ ticket: dir, action: "ticket_start", detail: `priority=${entry.priority ?? "-"} branch=${branch}` });
+  ports.ledgerAppend({ ticket: dir, action: "ticket_start", detail: `priority=${info.priority ?? "-"} branch=${branch}` });
 
   const docs = ports.ticketDocs(dir).map((doc) => path.join(worktree, ".trellis", "tasks", dir, path.basename(doc)));
   const outcome = await ports.worker({
     ticket: dir,
     cwd: worktree,
     prompt: buildPrompt(dir, docs, worktree, ports.pythonCommand()),
-    provider: opts.provider,
-    agent: opts.agent,
-    model: opts.model,
-    timeoutMs: opts.workerTimeoutMs,
+    provider: dispatch.provider,
+    agent: dispatch.agent,
+    model: dispatch.model,
+    timeoutMs: workerTimeoutMs,
     files: docs,
   });
   if (!outcome.ok) {
@@ -461,6 +529,7 @@ async function runAttempt(
   } catch {
     verifyReason = "unreadable_output";
   }
+  const verifySummary: VerifySummary = { verified, reason: verifyReason, exit: verify.status };
   ports.ledgerAppend({
     ticket: dir,
     action: "verify",
@@ -470,7 +539,11 @@ async function runAttempt(
     reason: verified ? undefined : (verifyReason ?? `exit_${verify.status}`),
   });
   if (!verified) {
-    return { kind: "failed", reason: `verify_failed(${verifyReason ?? `exit_${verify.status}`})` };
+    return {
+      kind: "failed",
+      reason: `verify_failed(${verifyReason ?? `exit_${verify.status}`})`,
+      verify: verifySummary,
+    };
   }
 
   if (ports.hasRemote()) {
@@ -497,11 +570,16 @@ async function runAttempt(
         detail: adjudicate
           ? `push of ${branch} refused by delivery-gate (${gate.reason}) — the line stops here for a human`
           : `${dir} verified at ${oid} but ${gate.reason} — the work stands on ${branch}, unarchived`,
+        verify: verifySummary,
       };
     }
     const pushed = ports.git(["push", "-u", "origin", branch], worktree);
     if (pushed.status !== 0) {
-      return { kind: "failed", reason: `push_failed(${firstLine(pushed.stderr || pushed.stdout)})` };
+      return {
+        kind: "failed",
+        reason: `push_failed(${firstLine(pushed.stderr || pushed.stdout)})`,
+        verify: verifySummary,
+      };
     }
     // No `--draft`: the 定版 rule is that the runner opens a PR that is already
     // ready for review (gh opens ready by default), and no `--ready` either —
@@ -514,18 +592,23 @@ async function runAttempt(
       "--base",
       base,
       "--title",
-      entry.title ?? dir,
+      info.title ?? dir,
       "--body",
       `Unattended run for ticket \`${dir}\`. Verify: \`${ports.pythonCommand()} ./.trellis/scripts/task.py run-verify ${dir}\`.`,
     ]);
     if (pr.status !== 0) {
-      return { kind: "failed", reason: `pr_open_failed(${firstLine(pr.stderr || pr.stdout)})` };
+      return {
+        kind: "failed",
+        reason: `pr_open_failed(${firstLine(pr.stderr || pr.stdout)})`,
+        verify: verifySummary,
+      };
     }
     const url = firstLine(pr.stdout);
     if (!/^https?:\/\//.test(url)) {
       return {
         kind: "failed",
         reason: `pr_url_unreadable(gh printed: ${url || "(nothing)"}; the branch is pushed, open the PR by hand)`,
+        verify: verifySummary,
       };
     }
     ports.task(["set-pr", dir, url], worktree);
@@ -546,7 +629,11 @@ async function runAttempt(
   ports.task(["set-worktree", dir, "-"], worktree);
   const archived = ports.task(["archive", dir], worktree);
   if (archived.status !== 0) {
-    return { kind: "failed", reason: `archive_refused(${firstLine(archived.stderr || archived.stdout)})` };
+    return {
+      kind: "failed",
+      reason: `archive_refused(${firstLine(archived.stderr || archived.stdout)})`,
+      verify: verifySummary,
+    };
   }
 
   // The archive commit is what carries `pr_url` and moves the task dir, so the
@@ -560,6 +647,7 @@ async function runAttempt(
       return {
         kind: "failed",
         reason: `post_archive_push_failed(${firstLine(afterArchive.stderr || afterArchive.stdout)}; the ticket is closed locally only)`,
+        verify: verifySummary,
       };
     }
   }
@@ -570,7 +658,126 @@ async function runAttempt(
     commit: oid,
     detail: `branch tip ${ports.git(["rev-parse", "HEAD"], worktree).stdout.trim().slice(0, 8)}`,
   });
-  return { kind: "archived" };
+  return { kind: "archived", verify: verifySummary };
+}
+
+/** `worker_failed(timeout 1800s)` → `worker_failed` — the machine prefix of a reason. */
+function reasonCode(reason: string): string {
+  const paren = reason.indexOf("(");
+  return (paren === -1 ? reason : reason.slice(0, paren)).trim();
+}
+
+/**
+ * The step a ticket took → the result row an orchestrator reads. `outcome`
+ * folds the step vocabulary into four terminal classes; `code` keeps the
+ * machine reason for anything that did not deliver.
+ */
+function ticketResult(dir: string, dispatch: TicketDispatch, step: TicketStep): TicketResult {
+  const base = {
+    dir,
+    dispatch,
+    strikes: step.kind === "failed" ? 1 : 0,
+    ...(step.verify ? { verify: step.verify } : {}),
+  };
+  if (step.kind === "archived") {
+    return { ...base, outcome: "delivered", code: "delivered", detail: `archived on the ticket branch` };
+  }
+  if (step.kind === "failed") {
+    return { ...base, outcome: "failed", code: reasonCode(step.reason), detail: step.reason };
+  }
+  if (step.reason === "delivery_deferred") {
+    return { ...base, outcome: "delivery_deferred", code: "delivery_deferred", detail: step.detail };
+  }
+  return { ...base, outcome: "stop-line", code: step.reason, detail: step.detail };
+}
+
+/**
+ * Run exactly one ticket through the mechanical pipeline:
+ * worktree → start → worker → always-stop ×2 → verify → delivery-gate →
+ * push/pr → archive. `dispatch` is the resolved provider/agent/model triple;
+ * resolving it is `resolveDispatch`'s job (fail-closed roster chain).
+ *
+ * Every call writes `attempt_started` + `attempt_finished` (a started row
+ * with no finished row means the runner died mid-attempt — the orchestrator's
+ * takeover signal) and one `ticket_result` row carrying the structured
+ * result. Nothing here writes durable task state — `meta.triage` and blocked
+ * rows stay `task.py`'s, strikes stay the loop's in-memory count.
+ */
+export async function runTicket(
+  dir: string,
+  dispatch: TicketDispatch,
+  ports: RunnerPorts,
+  opts: RunTicketOptions = {},
+): Promise<TicketRun> {
+  const resultRow = (result: TicketResult): void => {
+    ports.ledgerAppend({
+      ticket: dir,
+      action: "ticket_result",
+      reason: `${result.outcome}:${result.code}`,
+      detail: JSON.stringify(result),
+    });
+  };
+  // An attempt that never started gets no started/finished pair — the pair is
+  // the crash-detection contract, and a refusal is not a crashed attempt. It
+  // still gets the result row so the refusal is visible.
+  const refuse = (reason: string): TicketRun => {
+    const step: TicketStep = { kind: "failed", reason };
+    const result = ticketResult(dir, dispatch, step);
+    resultRow(result);
+    return { step, result };
+  };
+  const emit = (step: TicketStep): TicketRun => {
+    const result = ticketResult(dir, dispatch, step);
+    ports.ledgerAppend({
+      ticket: dir,
+      action: "attempt_finished",
+      reason: `${result.outcome}:${result.code}`,
+    });
+    resultRow(result);
+    return { step, result };
+  };
+
+  // Fail closed before a worktree exists: a dispatch that cannot name a
+  // worker or a registered provider would only burn a spawn to fail anyway.
+  if (!dispatch.agent && !dispatch.provider) {
+    return refuse(
+      "dispatch_invalid(agent or provider required — resolve a dispatch card first)",
+    );
+  }
+  if (dispatch.provider !== undefined && !isProvider(dispatch.provider)) {
+    return refuse(
+      `dispatch_invalid(unknown provider ${dispatch.provider}; known: ${listProviders().join(", ")})`,
+    );
+  }
+
+  ports.ledgerAppend({
+    ticket: dir,
+    action: "attempt_started",
+    worker: dispatch.agent ?? dispatch.provider,
+    detail:
+      `provider=${dispatch.provider ?? "-"} agent=${dispatch.agent ?? "-"} ` +
+      `model=${dispatch.model ?? "-"} effort=${dispatch.effort ?? "-"}`,
+  });
+
+  let step: TicketStep;
+  try {
+    step = await processOne(
+      dir,
+      { title: opts.title, priority: opts.priority },
+      dispatch,
+      opts.workerTimeoutMs ?? DEFAULT_WORKER_TIMEOUT_MS,
+      ports,
+    );
+  } catch (error) {
+    // The pipeline is written to return steps, not throw — an escape here is
+    // a bug. Still leave the ledger pair so the attempt is not mistaken for
+    // a crashed runner mid-flight.
+    step = {
+      kind: "failed",
+      reason: `internal_error(${firstLine(error instanceof Error ? error.message : String(error))})`,
+    };
+  }
+  return emit(step);
 }
 
 export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<RunResult> {
@@ -674,7 +881,13 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 
     attempted += 1;
     ports.log(`→ ${head.dir} (${head.priority ?? "-"})`);
-    const step = await processOne(head, opts, ports);
+    const ticketRun = await runTicket(
+      head.dir,
+      { provider: opts.provider, agent: opts.agent, model: opts.model },
+      ports,
+      { workerTimeoutMs: opts.workerTimeoutMs, title: head.title, priority: head.priority },
+    );
+    const step = ticketRun.step;
 
     if (step.kind === "stop") {
       // The machine reason leads the ledger line: "why did the line stop" has
@@ -824,6 +1037,36 @@ export function realPorts(
         return null;
       }
     },
+    taskMeta(dir) {
+      try {
+        const record = loadTaskRecord({
+          taskDir: path.join(root, ".trellis", "tasks", dir),
+          cwd: root,
+        }) as unknown as { meta?: Record<string, unknown> };
+        return record.meta ?? {};
+      } catch {
+        return {};
+      }
+    },
+    agentCard(name) {
+      try {
+        // The raw frontmatter value matters: `provider: acp` must survive to
+        // the registry check — the loader's normalized field drops it, which
+        // would turn a typo or a not-yet-registered provider into a silent
+        // "missing provider" instead of a named refusal.
+        const agent = loadAgent(name, root);
+        return {
+          provider: agent.raw.provider?.trim() || undefined,
+          model: agent.model,
+          effort: agent.raw.effort?.trim() || undefined,
+        };
+      } catch {
+        return null;
+      }
+    },
+    workerDefault() {
+      return loadWorkerDefault(root);
+    },
     worktreePath(dir) {
       return path.join(root, ".trellis", ".runtime", "worktrees", dir);
     },
@@ -937,4 +1180,146 @@ export async function runCommand(
   const ports = realPorts(opts.root, append);
   const result = await runLoop(opts, ports);
   return ledger ? { ...result, ledgerFile: ledger.file } : result;
+}
+
+// -----------------------------------------------------------------------------
+// `trellis run --ticket <dir>` — one ticket, one attempt, one result row.
+// -----------------------------------------------------------------------------
+
+export interface TicketCommandOptions {
+  root: string;
+  dir: string;
+  dryRun: boolean;
+  worker?: string;
+  provider?: Provider;
+  model?: string;
+  workerTimeoutMs: number;
+}
+
+export interface TicketCommandResult {
+  /** `null` only for a dry run, which prints a plan instead of a result. */
+  result: TicketResult | null;
+  ledgerFile?: string;
+}
+
+/**
+ * The ticket-mode option surface is intentionally smaller than the loop's:
+ * one ticket, and dispatch overrides that apply to this invocation only.
+ * `--agent` is refused outright so it cannot be silently mistaken for the
+ * card override — ticket mode calls it `--worker`.
+ */
+export function normalizeTicketOptions(
+  raw: Record<string, unknown>,
+  root: string,
+): { ok: true; options: TicketCommandOptions } | { ok: false; error: string } {
+  const dir = typeof raw.ticket === "string" && raw.ticket.trim() ? raw.ticket.trim() : "";
+  if (!dir) {
+    return { ok: false, error: "--ticket needs a task dir name (e.g. --ticket 10-12-run-ticket)" };
+  }
+  if (typeof raw.agent === "string" && raw.agent) {
+    return { ok: false, error: "--agent is not valid with --ticket — name the dispatch card with --worker" };
+  }
+  const provider = typeof raw.provider === "string" && raw.provider ? raw.provider : undefined;
+  if (provider && !isProvider(provider)) {
+    return {
+      ok: false,
+      error: `unknown --provider "${provider}" (known: ${listProviders().join(", ")})`,
+    };
+  }
+  const timeout = parseDuration(typeof raw.timeout === "string" ? raw.timeout : undefined);
+  return {
+    ok: true,
+    options: {
+      root,
+      dir,
+      dryRun: raw.dryRun === true,
+      worker: typeof raw.worker === "string" && raw.worker ? raw.worker : undefined,
+      provider: provider as Provider | undefined,
+      model: typeof raw.model === "string" && raw.model ? raw.model : undefined,
+      workerTimeoutMs: timeout ?? DEFAULT_WORKER_TIMEOUT_MS,
+    },
+  };
+}
+
+/**
+ * Run exactly one ticket and report back a machine-readable result. Dispatch
+ * is resolved inside the runner (`resolveDispatch`): ticket meta → agent card
+ * → `worker_default` → refuse. A refusal still writes a `ticket_result`
+ * ledger row so an unattended caller can see why nothing ran.
+ */
+export async function runTicketCommand(
+  raw: Record<string, unknown>,
+  root: string = process.cwd(),
+): Promise<TicketCommandResult> {
+  if (!fs.existsSync(path.join(root, ".trellis", "scripts", "task.py"))) {
+    throw new Error(
+      "no .trellis/scripts/task.py here — `trellis run` drives a Trellis-managed repo",
+    );
+  }
+  const normalized = normalizeTicketOptions(raw, root);
+  if (!normalized.ok) {
+    throw new Error(normalized.error);
+  }
+  const opts = normalized.options;
+
+  const ledger = opts.dryRun ? null : openLedger(opts.root);
+  const append: (input: LedgerInput) => void = ledger
+    ? (input): void => {
+        ledger.append(input);
+      }
+    : (): void => undefined;
+  const ports = realPorts(opts.root, append);
+
+  const resolved = resolveDispatch(
+    opts.dir,
+    { worker: opts.worker, provider: opts.provider, model: opts.model },
+    ports,
+  );
+
+  if (opts.dryRun) {
+    // A dry run must not create runs/ — the plan is printed and nothing is
+    // appended to any ledger.
+    ports.log(
+      JSON.stringify(
+        {
+          ticket: opts.dir,
+          dispatch: resolved.ok ? resolved.dispatch : null,
+          ...(resolved.ok ? {} : { dispatch_error: resolved.error }),
+          actions: resolved.ok
+            ? ["worktree:add", "ticket:start", "worker", "verify:run-verify", "delivery-gate", "archive"]
+            : ["dispatch_refused"],
+        },
+        null,
+        2,
+      ),
+    );
+    return { result: null, ledgerFile: ledger?.file };
+  }
+
+  ports.ledgerAppend({ ticket: opts.dir, action: "run_start", detail: `ticket=${opts.dir}` });
+
+  if (!resolved.ok) {
+    const result: TicketResult = {
+      dir: opts.dir,
+      outcome: "failed",
+      code: "dispatch_refused",
+      detail: resolved.error,
+      strikes: 0,
+      dispatch: resolved.partial,
+    };
+    ports.ledgerAppend({
+      ticket: opts.dir,
+      action: "ticket_result",
+      reason: `${result.outcome}:${result.code}`,
+      detail: JSON.stringify(result),
+    });
+    ports.log(`✗ ${opts.dir}: dispatch refused — ${resolved.error}`);
+    return { result, ledgerFile: ledger?.file };
+  }
+
+  ports.log(`→ ${opts.dir} as ${resolved.dispatch.agent ?? resolved.dispatch.provider}`);
+  const ticketRun = await runTicket(opts.dir, resolved.dispatch, ports, {
+    workerTimeoutMs: opts.workerTimeoutMs,
+  });
+  return { result: ticketRun.result, ledgerFile: ledger?.file };
 }

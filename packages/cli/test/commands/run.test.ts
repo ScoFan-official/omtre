@@ -21,6 +21,7 @@ import {
   type RunOptions,
   type RunnerPorts,
 } from "../../src/commands/run.js";
+import type { AgentCardInfo } from "../../src/commands/run/dispatch.js";
 import type { LedgerInput } from "../../src/commands/run/ledger.js";
 import type { WorkerOutcome, WorkerRequest } from "../../src/commands/run/worker.js";
 
@@ -62,6 +63,12 @@ interface Script {
   /** What `gh pr create` prints. Default: a real-looking PR URL. */
   ghOutput?: string;
   ghExit?: number;
+  /** dir → task.json `meta` object for dispatch resolution. */
+  meta?: Record<string, Record<string, unknown>>;
+  /** Agent-card frontmatter slice per name (`null` entry = unreadable card). */
+  cards?: Record<string, AgentCardInfo | null>;
+  /** config.yaml `worker_default` value. */
+  workerDefault?: string;
 }
 
 interface Harness {
@@ -241,6 +248,15 @@ function harness(script: Script = {}): Harness {
       if (field === "base_branch") return "main";
       return null;
     },
+    taskMeta(dir) {
+      return script.meta?.[dir] ?? {};
+    },
+    agentCard(name) {
+      return script.cards?.[name] ?? null;
+    },
+    workerDefault() {
+      return script.workerDefault ?? null;
+    },
     worktreePath: wtOf,
     worktreeOccupied: (dir) => (script.existingWorktrees ?? []).includes(wtOf(dir)),
     ticketClosedOnBranch: (_branch, dir) => archivedDirs.has(dir),
@@ -295,12 +311,15 @@ describe("runLoop — the success path", () => {
     expect(archive?.cwd).toBe(wtOf("01-01-alpha"));
     expect(h.ledger.map((l) => l.action)).toEqual([
       "run_start",
+      "attempt_started",
       "worktree",
       "ticket_start",
       "worker",
       "verify",
       "delivery",
       "archived",
+      "attempt_finished",
+      "ticket_result",
       "stop",
     ]);
   });

@@ -12,7 +12,10 @@ import {
   runWorkflowCommand,
   WorkflowCommandError,
 } from "../commands/workflow.js";
-import { runCommand as runLoopCommand } from "../commands/run.js";
+import {
+  runCommand as runLoopCommand,
+  runTicketCommand,
+} from "../commands/run.js";
 import { listProviders } from "../commands/channel/adapters/index.js";
 import { registerChannelCommand } from "../commands/channel/index.js";
 import { DIR_NAMES } from "../constants/paths.js";
@@ -406,6 +409,8 @@ program
   )
   .option("--until-empty", "Keep taking tickets until the frontier has nothing ready")
   .option("--board <slug>", "Restrict the loop to one domain board (meta.domain)")
+  .option("--ticket <dir>", "Run exactly one ticket (dispatch resolved from meta.worker → agent card → worker_default)")
+  .option("--worker <name>", "With --ticket: agent card to run as, overriding meta.worker for this invocation")
   .option("--max-tickets <n>", "Ticket attempts per run (default 5)")
   .option("--max-failures <n>", "Consecutive failures on one ticket before the line halts (default 3)")
   .option("--dry-run", "Print the selected ticket and the planned actions; write nothing at all")
@@ -418,6 +423,18 @@ program
   .option("--timeout <duration>", "Per-worker timeout, e.g. 20m (default 30m)")
   .action(async (options: Record<string, unknown>) => {
     try {
+      if (typeof options.ticket === "string" && options.ticket) {
+        // Single-ticket mode: one attempt, one JSON result line as the last
+        // stdout emission — orchestrators parse that line, not the summary.
+        const ticket = await runTicketCommand(options, cwd);
+        if (ticket.result) {
+          console.log(JSON.stringify(ticket.result));
+          if (ticket.result.outcome === "failed" || ticket.result.outcome === "stop-line") {
+            process.exitCode = 1;
+          }
+        }
+        return;
+      }
       const result = await runLoopCommand(options, cwd);
       console.log(
         `stopped=${result.stopped} attempted=${result.attempted} ` +
