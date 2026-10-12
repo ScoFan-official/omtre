@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHECK_AXES,
+  loadAgent,
   resolveCheckAxisCard,
 } from "../../src/commands/channel/agent-loader.js";
 
@@ -87,5 +88,63 @@ describe("resolveCheckAxisCard", () => {
 
   it("CHECK_AXES names exactly the two known axes", () => {
     expect([...CHECK_AXES].sort()).toEqual(["spec", "standards"]);
+  });
+});
+
+// Tickets run inside `git worktree` checkouts — on Windows with
+// `core.autocrlf` every committed card lands on disk as CRLF. The flat
+// frontmatter parser must tolerate \r\n or every key (provider,
+// acp_target, ...) silently drops and spawn fails downstream.
+describe("loadAgent line endings", () => {
+  function withCard(content: string, fn: (cwd: string) => void): void {
+    const tmp = fs.mkdtempSync(
+      path.join(fs.realpathSync(os.tmpdir()), "crlf-card-"),
+    );
+    try {
+      const p = path.join(tmp, ".trellis", "agents", "worker.md");
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      fs.writeFileSync(p, content);
+      fn(tmp);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  const CARD = [
+    "---",
+    "name: worker",
+    "description: |",
+    "  multiline card",
+    "  description",
+    "provider: acp",
+    "acp_target: grok-build",
+    "model: grok-4.7",
+    "---",
+    "",
+    "body",
+  ];
+
+  it("parses frontmatter identically for LF and CRLF cards", () => {
+    const lf = CARD.join("\n") + "\n";
+    const crlf = CARD.join("\r\n") + "\r\n";
+    const expected = {
+      name: "worker",
+      description: "multiline card\ndescription",
+      provider: "acp",
+      acp_target: "grok-build",
+      model: "grok-4.7",
+    };
+    for (const [label, content] of [
+      ["lf", lf],
+      ["crlf", crlf],
+    ] as const) {
+      withCard(content, (cwd) => {
+        const agent = loadAgent("worker", cwd);
+        expect(agent.provider, label).toBe("acp");
+        expect(agent.model, label).toBe("grok-4.7");
+        expect(agent.raw, label).toEqual(expected);
+        expect(agent.systemPrompt, label).toBe("body");
+      });
+    }
   });
 });

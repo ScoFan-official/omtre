@@ -180,7 +180,9 @@ function parseFrontmatter(text: string): Record<string, string> {
     string,
     string
   >;
-  const lines = text.split("\n");
+  // CRLF-tolerant: worktree checkouts under `core.autocrlf` deliver \r\n
+  // files, and `key: value\r` must still parse (`.*` cannot cross \r).
+  const lines = text.split("\n").map((l) => l.replace(/\r$/, ""));
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
