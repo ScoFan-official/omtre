@@ -45,10 +45,19 @@ The success event `spawned` records `pid`, `provider`, `agent`, the injected
 ## Agent Cards
 
 `--agent <name>` resolves to `.trellis/agents/<name>.md`. The card name must
-match `[A-Za-z0-9._-]+`. The default Trellis install ships two cards:
+match `[A-Za-z0-9._-]+`. The default Trellis install ships four cards:
 
-- `.trellis/agents/check.md` — code-quality reviewer.
+- `.trellis/agents/check.md` — code-quality reviewer (dual axis; see below).
 - `.trellis/agents/implement.md` — coding worker for implementation runs.
+- `.trellis/agents/research.md` — research worker; persists findings to the
+  task's `research/` directory.
+- `.trellis/agents/orchestrator.md` — the card `.trellis/config.yaml`'s
+  `orchestrator.agent` names for unattended runs.
+
+Check-axis specialization (dispatch roster): `check.standards.md` /
+`check.spec.md` are OPTIONAL sub-cards — when present, dispatchers prefer
+`--agent check.standards` / `--agent check.spec` and fall back to `check`
+per axis. A missing `check` card is an error, never an improvisation.
 
 ```yaml
 ---
@@ -57,6 +66,10 @@ description: Code quality check expert.
 provider: claude
 ---
 ```
+
+ACP cards add `provider: acp` plus `acp_target:` (a registry id — currently
+`grok-build` | `codex` | `claude` — or an unlisted id paired with an explicit
+`acp_command:` override), and optional `model:` / `effort:` / `acp_args:`.
 
 Frontmatter fields populate `spawn` defaults (provider, model, `as`); the
 markdown body becomes the worker's system-prompt role. Cards do **not**

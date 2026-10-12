@@ -78,6 +78,27 @@ export function findAgentFile(
   return null;
 }
 
+/**
+ * Dispatch-roster check specialization: the `check` role is the one role with
+ * OPTIONAL axis sub-cards. `check.standards` / `check.spec` (when present in
+ * `.trellis/agents/`) take precedence over the generic `check` card, so the
+ * two axes can be dispatched to different executors. An absent sub-card falls
+ * back to `check` — the card then runs both axes serially per its own rules.
+ * No other fallback exists: an unresolvable card name still fails loudly at
+ * spawn time via {@link loadAgent}.
+ */
+export const CHECK_AXES = ["standards", "spec"] as const;
+export type CheckAxis = (typeof CHECK_AXES)[number];
+
+export function resolveCheckAxisCard(
+  axis: CheckAxis,
+  cwd: string,
+  trustedRoots: string[] = [],
+): string {
+  const name = `check.${axis}`;
+  return findAgentFile(name, cwd, trustedRoots) !== null ? name : "check";
+}
+
 export function loadAgent(
   name: string,
   cwd: string = process.cwd(),

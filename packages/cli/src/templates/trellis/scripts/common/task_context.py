@@ -27,6 +27,7 @@ from pathlib import Path
 
 from . import clai_delta
 from . import frontier
+from . import roster
 from . import verify
 from .config import get_context_injection_limits
 from .git import branch_exists_locally
@@ -225,6 +226,16 @@ def cmd_validate(args: argparse.Namespace) -> int:
                 )
             )
             print()
+
+    # Dispatch-roster schema: ticket meta.worker and the config's
+    # worker_default/orchestrator.agent must resolve to real agent cards, and
+    # an ACP card must declare a registered target (or carry an explicit
+    # acp_command). Static rejection here beats a spawn-time failure inside a
+    # detached supervisor on an unattended run.
+    if verify_source is not None:
+        for problem in roster.roster_problems(verify_source, repo_root):
+            print(colored(f"Error: {problem}", Colors.RED))
+            total_errors += 1
 
     for jsonl_name in ["implement.jsonl", "check.jsonl"]:
         jsonl_file = target_dir / jsonl_name

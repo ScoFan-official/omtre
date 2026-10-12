@@ -21,6 +21,7 @@ import {
   type AcpCtx,
 } from "../../src/commands/channel/adapters/acp.js";
 import { getAdapter, isProvider, listProviders } from "../../src/commands/channel/adapters/index.js";
+import { commonRoster } from "../../src/templates/trellis/index.js";
 
 function parse(
   line: Record<string, unknown> | string,
@@ -125,6 +126,45 @@ describe("ACP target registry", () => {
     expect(() => resolveAcpTarget({ target: "bogus" })).toThrow(
       /Unknown acp_target 'bogus'.*grok-build.*codex.*claude/s,
     );
+  });
+
+  it("accepts an unlisted target when the card supplies an acp_command override", () => {
+    // Dispatch-roster schema: `acp_target` must be a registry id OR pair an
+    // unlisted id with an explicit `acp_command:` — the card then carries the
+    // whole launch contract and the runtime must not guess one.
+    const t = resolveAcpTarget({
+      target: "zed",
+      command: "zed-acp",
+      args: ["--experimental"],
+    });
+    expect(t.id).toBe("zed");
+    expect(t.command).toBe("zed-acp");
+    expect(t.args).toEqual(["--experimental"]);
+    // No registry row → no env presets, no post-session config, and no
+    // known config-option ids (model/effort selects are silently skipped).
+    expect(t.env).toEqual({});
+    expect(t.postSessionConfig).toEqual([]);
+    expect(t.modelOptionId).toBeUndefined();
+    expect(t.effortOptionId).toBeUndefined();
+  });
+
+  it("unlisted target + command override still rejects when only args are given", () => {
+    expect(() =>
+      resolveAcpTarget({ target: "zed", args: ["--x"] }),
+    ).toThrow(/Unknown acp_target 'zed'/);
+  });
+
+  it("roster.py KNOWN_ACP_TARGETS stays in sync with the shipped registry", () => {
+    // `task.py validate` cannot reach this registry at user runtime — it
+    // embeds the id list in templates/trellis/scripts/common/roster.py. A
+    // registry row added here without the Python mirror means validate
+    // wrongly rejects a target the runtime would happily spawn.
+    const match = /KNOWN_ACP_TARGETS\s*=\s*\(([^)]*)\)/.exec(commonRoster);
+    expect(match, "roster.py must declare KNOWN_ACP_TARGETS").toBeTruthy();
+    const pyIds = [...(match?.[1] ?? "").matchAll(/"([^"]+)"/g)]
+      .map((m) => m[1])
+      .sort();
+    expect(pyIds).toEqual([...listAcpTargets()].sort());
   });
 
   it("rejects a missing target (provider acp requires acp_target)", () => {

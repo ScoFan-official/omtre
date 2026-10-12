@@ -77,7 +77,7 @@ Reconciliation priority (fixed): git history > worklog entries > README `## 进�
 |---|---|
 | New feature / unclear requirements | `trellis-brainstorm` (main session) |
 | Implement code (Phase 2.1) | `run_subagent` — `trellis-implement` role card `.trellis/agents/implement.md` |
-| Done coding / quality check (Phase 2.2) | `run_subagent` — `trellis-check` role card `.trellis/agents/check.md` |
+| Done coding / quality check (Phase 2.2) | `run_subagent` — `trellis-check` role card, resolved per axis: `.trellis/agents/check.standards.md` / `check.spec.md` when present, else `.trellis/agents/check.md` |
 | Stuck / fixed same bug multiple times | `trellis-break-loop` |
 | Learned something worth capturing | `trellis-update-spec` |
 

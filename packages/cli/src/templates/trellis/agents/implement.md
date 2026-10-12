@@ -3,6 +3,16 @@ name: implement
 description: |
   Implement sub-agent for Trellis. Reads specs and task artifacts, then implements test-first in vertical slices (mattpocock workflow). No git commit allowed.
 provider: claude
+# ACP dispatch-roster fields (optional — uncomment to run on an ACP agent):
+#   provider: acp
+#   acp_target: claude     # id in the bundled acp-agents.json registry
+#                          # (grok-build | codex | claude); an unlisted id is
+#                          # only valid together with `acp_command:` below
+#   model: <model-id>      # applied via the target's model config option
+#   effort: high           # optional; via the target's effort config option
+#   acp_command: <cmd>     # explicit executable override (required when the
+#                          # target is not a registry id)
+#   acp_args: ["a", "b"]   # explicit launch args (JSON array or split string)
 labels: [trellis, implement]
 ---
 

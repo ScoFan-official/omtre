@@ -10,7 +10,7 @@ import {
  * on Devin, Phase 2.2 runs as a `run_subagent` dispatch (per the `[Devin]`
  * block in workflow.md), not as an inline checklist.
  */
-const DEVIN_CHECK_DISPATCH_NOTE = `> **Dispatch mode (this repo):** inside an active Trellis task, Phase 2.2 runs as a sub-agent — dispatch \`run_subagent\` with a prompt starting \`Active task: <path>\` + "read \`.trellis/agents/check.md\` and follow it exactly" (see \`.trellis/workflow.md\` Phase 2 \`[Devin]\` block). Run this checklist inline only for a manual one-off check outside a task.`;
+const DEVIN_CHECK_DISPATCH_NOTE = `> **Dispatch mode (this repo):** inside an active Trellis task, Phase 2.2 runs as a sub-agent — dispatch \`run_subagent\` with a prompt starting \`Active task: <path>\` + "read the resolved check card — \`.trellis/agents/check.<axis>.md\` if it exists, else \`.trellis/agents/check.md\` — and follow it exactly" (see \`.trellis/workflow.md\` Phase 2 \`[Devin]\` block). Run this checklist inline only for a manual one-off check outside a task.`;
 
 /**
  * The Devin (formerly Windsurf) file set — written at init and diffed by

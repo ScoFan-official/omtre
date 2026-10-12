@@ -3,6 +3,16 @@ name: check
 description: |
   Check sub-agent for Trellis. Reviews uncommitted diffs on two axes (Standards + Spec), normally dispatched as two parallel workers — one axis each. The standards worker is writable (self-fixes mechanical issues, runs project verification); the spec worker is read-only (report only). No git commit allowed.
 provider: claude
+# ACP dispatch-roster fields (optional — uncomment to run on an ACP agent):
+#   provider: acp
+#   acp_target: claude     # id in the bundled acp-agents.json registry
+#                          # (grok-build | codex | claude); an unlisted id is
+#                          # only valid together with `acp_command:` below
+#   model: <model-id>      # applied via the target's model config option
+#   effort: high           # optional; via the target's effort config option
+#   acp_command: <cmd>     # explicit executable override (required when the
+#                          # target is not a registry id)
+#   acp_args: ["a", "b"]   # explicit launch args (JSON array or split string)
 labels: [trellis, check]
 ---
 
@@ -26,6 +36,8 @@ Your dispatch prompt declares your axis on an `Axis: standards` or `Axis: spec` 
 - `Axis: spec` — run Axis 2 (Spec) only. You are **READ-ONLY**: never edit any file, apply no fixes, and skip "Self-fix" and "Verification order" entirely — no verification commands needed. Report the `### Spec` section only (every finding open — you fix nothing).
 
 On a two-worker dispatch your sibling worker covers the other axis; do not duplicate its review.
+
+Roster note: dispatchers resolve the card name per axis before spawning — `check.standards` / `check.spec` win over this generic `check` card when those files exist in `.trellis/agents/`. An axis-specific card carries its own frontmatter but should keep this body (or a narrowed variant of it): the axis rules above are the contract.
 
 ## Context (agent pull)
 

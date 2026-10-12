@@ -57,10 +57,12 @@ export interface AcpAgentEntry {
     args?: string[];
     env?: Record<string, string>;
   };
-  /** session/set_config_option configId used for model selection. */
-  modelOptionId: string;
+  /** session/set_config_option configId used for model selection.
+   *  Absent for targets resolved purely from a card-level command
+   *  override — the registry row is where this id is learned. */
+  modelOptionId?: string;
   /** session/set_config_option configId used for effort/thinking level. */
-  effortOptionId: string;
+  effortOptionId?: string;
   /** configId/value pairs applied unconditionally after session start
    *  (e.g. claude mode=bypassPermissions for unattended runs). */
   postSessionConfig: AcpConfigRequest[];
@@ -87,8 +89,14 @@ export function listAcpTargets(): string[] {
 /**
  * Resolve an `acp_target` id + optional card-level command/args overrides
  * into a concrete launch spec. Applies the `windows` override on win32.
- * Throws on unknown target — callers surface the error at spawn time
- * (fail fast) rather than inside the detached supervisor.
+ *
+ * Fail-closed contract (dispatch-roster schema): the id must be a registry
+ * entry, OR the card must carry an explicit `command` override — an unlisted
+ * id paired with a command resolves to a self-contained launch spec (no env
+ * presets, no config-option ids, no auth hint; `windows` does not apply —
+ * the override is the whole contract). An unlisted id WITHOUT a command
+ * throws, as does a missing id — callers surface the error at spawn time
+ * rather than inside the detached supervisor.
  */
 export function resolveAcpTarget(opts: {
   target?: string;
@@ -103,14 +111,26 @@ export function resolveAcpTarget(opts: {
     );
   }
   const entry = ACP_AGENTS[id];
+  const cmdOverride = opts.command?.trim();
   if (!entry) {
+    if (cmdOverride) {
+      return {
+        id,
+        command: cmdOverride,
+        args: opts.args ?? [],
+        env: {},
+        postSessionConfig: [],
+        authHint: "",
+      };
+    }
     throw new Error(
-      `Unknown acp_target '${id}' (registered targets: ${listAcpTargets().join(", ")})`,
+      `Unknown acp_target '${id}' (registered targets: ${listAcpTargets().join(", ")}) ` +
+        `— either register it in acp-agents.json or set an explicit ` +
+        `\`acp_command:\` on the agent card`,
     );
   }
   const onWindows = process.platform === "win32";
   const win = onWindows ? entry.windows : undefined;
-  const cmdOverride = opts.command?.trim();
   const command =
     cmdOverride !== undefined && cmdOverride.length > 0
       ? cmdOverride
@@ -513,10 +533,18 @@ export async function acpHandshake(args: {
   const hasOption = (id: string | undefined): boolean =>
     id !== undefined &&
     ctx.configOptions.some((o) => o.id === id);
-  if (view.model && hasOption(ctx.target.modelOptionId)) {
+  if (
+    view.model &&
+    ctx.target.modelOptionId !== undefined &&
+    hasOption(ctx.target.modelOptionId)
+  ) {
     configReqs.push({ configId: ctx.target.modelOptionId, value: view.model });
   }
-  if (view.effort && hasOption(ctx.target.effortOptionId)) {
+  if (
+    view.effort &&
+    ctx.target.effortOptionId !== undefined &&
+    hasOption(ctx.target.effortOptionId)
+  ) {
     configReqs.push({ configId: ctx.target.effortOptionId, value: view.effort });
   }
   for (const c of configReqs) {
