@@ -854,10 +854,11 @@ describe("runLoop — per-ticket dispatch (the degenerate thin loop)", () => {
     expect(h.workerRequests).toEqual([]);
     expect(h.ledger.some((l) => l.action === "attempt_started")).toBe(false);
 
-    // One refusal row per round, in the same shape ticket mode writes.
+    // One refusal row, in the same shape ticket mode writes. A deterministic
+    // refusal never retries — the same meta would resolve identically forever.
     const rows = h.ledger.filter((l) => l.action === "ticket_result");
-    expect(rows).toHaveLength(3);
-    expect(rows.every((r) => r.reason === "failed:dispatch_refused")).toBe(true);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.reason).toBe("failed:dispatch_refused");
     expect(JSON.parse(rows[0]?.detail ?? "")).toMatchObject({
       dir: "01-01-alpha",
       outcome: "failed",
@@ -865,10 +866,10 @@ describe("runLoop — per-ticket dispatch (the degenerate thin loop)", () => {
       strikes: 0,
     });
 
-    // The loop's own accounting treats it as a failure like any other — the
-    // strike budget reaches the threshold and the durable mark stays task.py's.
-    expect(result.stopped).toBe("fail_threshold");
-    expect(result.failed).toBe(3);
+    // Not a strike, not a retry: marked for a human and the line halts at once.
+    expect(result.stopped).toBe("dispatch_refused");
+    expect(result.failed).toBe(1);
+    expect(h.ledger.some((l) => l.action === "blocked")).toBe(true);
     const marked = h.taskCalls.find((c) => c.args[0] === "set-meta");
     expect(marked?.args).toEqual(["set-meta", "01-01-alpha", "triage", "ready-for-human"]);
   });

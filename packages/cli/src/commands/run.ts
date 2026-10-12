@@ -150,6 +150,7 @@ export type StopReason =
   | "cycle"
   | "frontier_error"
   | "fail_threshold"
+  | "dispatch_refused"
   | "delivery_deferred"
   | "push_refused"
   | "always_stop";
@@ -959,7 +960,24 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 
     if (step.kind === "failed") {
       failed += 1;
-      const count = (strikes.get(head.dir) ?? 0) + 1;
+      // A deterministic refusal cannot heal across polls — the ticket's
+      // meta would be re-resolved identically forever. Mark it for a human
+      // and halt the line now; it is not a strike.
+      if (ticketRun.result?.code === "dispatch_refused") {
+        ports.task(["set-meta", head.dir, "triage", "ready-for-human"]);
+        ports.ledgerAppend({
+          ticket: head.dir,
+          action: "blocked",
+          reason: `dispatch refused: ${step.reason}`,
+          detail: "marked triage=ready-for-human; fix the roster and rerun",
+        });
+        ports.log(`Stopped: ${head.dir} dispatch refused — fix the roster and rerun.`);
+        return { stopped: "dispatch_refused", attempted, archived, failed };
+      }
+      // Charge what the ticket_result row charged: internal_error carries
+      // strikes:0 — a runner-side death never burns the worker's budget.
+      const count =
+        (strikes.get(head.dir) ?? 0) + (ticketRun.result?.strikes ?? 1);
       strikes.set(head.dir, count);
       ports.log(`✗ ${head.dir}: ${step.reason} (strike ${count}/${opts.failThreshold})`);
       if (count >= opts.failThreshold) {
