@@ -135,7 +135,17 @@ export async function waitForTerminal(
   const source =
     opts.source ??
     ((signal: AbortSignal) =>
-      watchEvents(channelName, { self: "main", from: [workerName] }, { signal }));
+      // The channel is created fresh per run in oneShotWorker, so replaying
+      // from offset 0 is safe — and required: a worker that crashes during
+      // the ACP handshake can write its `error`/`killed` before this watcher
+      // subscribes, and the default from-now mode would miss them. The `from`
+      // list must include the supervisor alias: terminal lifecycle events are
+      // recorded `by: "supervisor:<worker>"`, not by the worker name itself.
+      watchEvents(
+        channelName,
+        { self: "main", from: [workerName, `supervisor:${workerName}`] },
+        { signal, fromStart: true },
+      ));
 
   try {
     armIdle();

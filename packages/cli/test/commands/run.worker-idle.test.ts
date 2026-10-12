@@ -5,9 +5,15 @@
  * no channel, no provider, no AI.
  */
 
-import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { createChannel } from "../../src/commands/channel/create.js";
 import type { ChannelEvent } from "../../src/commands/channel/store/events.js";
+import { eventsPath } from "../../src/commands/channel/store/paths.js";
 import { waitForTerminal } from "../../src/commands/run/worker.js";
 
 const WORKER = "implementer-01-01-alpha";
@@ -101,5 +107,79 @@ describe("waitForTerminal — the idle clock", () => {
       source: source([{ delayMs: 10, ev: event("killed", { reason: "budget" }) }]),
     });
     expect(killed.error).toContain("killed: budget");
+  });
+});
+
+describe("waitForTerminal — the real event source", () => {
+  // Lifecycle events are recorded `by: "supervisor:<worker>"`; a crash during
+  // the ACP handshake can land them on disk BEFORE the watcher subscribes.
+  // Both must still end the wait — the dogfood run hung ~30 minutes when a
+  // supervisor-written handshake error slipped the worker-name filter.
+  let tmpDir: string;
+  let projectDir: string;
+  let oldRoot: string | undefined;
+  let oldProject: string | undefined;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-run-worker-test-"));
+    projectDir = path.join(tmpDir, "project");
+    fs.mkdirSync(projectDir);
+    oldRoot = process.env.TRELLIS_CHANNEL_ROOT;
+    oldProject = process.env.TRELLIS_CHANNEL_PROJECT;
+    process.env.TRELLIS_CHANNEL_ROOT = path.join(tmpDir, "channels");
+    delete process.env.TRELLIS_CHANNEL_PROJECT;
+    vi.spyOn(process, "cwd").mockReturnValue(projectDir);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (oldRoot === undefined) delete process.env.TRELLIS_CHANNEL_ROOT;
+    else process.env.TRELLIS_CHANNEL_ROOT = oldRoot;
+    if (oldProject === undefined) delete process.env.TRELLIS_CHANNEL_PROJECT;
+    else process.env.TRELLIS_CHANNEL_PROJECT = oldProject;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("sees a supervisor-written terminal event already on disk", async () => {
+    const channel = "run-real-source";
+    await createChannel(channel, { by: "main" });
+    fs.appendFileSync(
+      eventsPath(channel),
+      `${JSON.stringify({
+        seq: 4,
+        ts: new Date().toISOString(),
+        kind: "error",
+        by: `supervisor:${WORKER}`,
+        message: "handshake failed: ACP initialize did not respond within 30s",
+      })}\n`,
+    );
+
+    const wait = await waitForTerminal(channel, WORKER, 5_000, {
+      idleTimeoutMs: 2_000,
+    });
+    expect(wait.ok).toBe(false);
+    expect(wait.error).toContain("handshake failed");
+  });
+
+  it("sees a supervisor-written killed event", async () => {
+    const channel = "run-real-source-killed";
+    await createChannel(channel, { by: "main" });
+    fs.appendFileSync(
+      eventsPath(channel),
+      `${JSON.stringify({
+        seq: 5,
+        ts: new Date().toISOString(),
+        kind: "killed",
+        by: `supervisor:${WORKER}`,
+        reason: "crash",
+      })}\n`,
+    );
+
+    const wait = await waitForTerminal(channel, WORKER, 5_000, {
+      idleTimeoutMs: 2_000,
+    });
+    expect(wait.ok).toBe(false);
+    expect(wait.error).toContain("killed: crash");
   });
 });
