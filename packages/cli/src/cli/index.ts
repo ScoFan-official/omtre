@@ -407,7 +407,7 @@ program
   .description(
     "Unattended loop: take the frontier head, implement it in its own worktree, verify, and record a run ledger. Delivery is opt-in.",
   )
-  .option("--until-empty", "Keep taking tickets until the frontier has nothing ready")
+  .option("--until-empty", "Keep taking tickets until the frontier has nothing ready (loop mode only)")
   .option("--board <slug>", "Restrict the loop to one domain board (meta.domain)")
   .option("--ticket <dir>", "Run exactly one ticket (dispatch resolved from meta.worker → agent card → worker_default)")
   .option("--worker <name>", "With --ticket: agent card to run as, overriding meta.worker for this invocation")
@@ -416,10 +416,10 @@ program
   .option("--dry-run", "Print the selected ticket and the planned actions; write nothing at all")
   .option(
     "--provider <name>",
-    `Headless worker provider (${listProviders().join(", ")})`,
+    `With --ticket: provider override (${listProviders().join(", ")}); the loop resolves providers per ticket from each card`,
   )
-  .option("--agent <name>", "Agent definition to run as (supplies the provider)")
-  .option("--model <name>", "Model override passed to the provider")
+  .option("--agent <name>", "Refused in both modes — dispatch comes from each ticket's roster (or --worker with --ticket)")
+  .option("--model <name>", "With --ticket: model override; the loop resolves models per ticket from the roster")
   .option("--timeout <duration>", "Per-worker timeout, e.g. 20m (default 30m)")
   .action(async (options: Record<string, unknown>) => {
     try {

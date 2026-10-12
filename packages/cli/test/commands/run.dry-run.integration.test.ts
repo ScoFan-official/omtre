@@ -23,6 +23,10 @@ const TEMPLATE_SCRIPTS = path.resolve(
   __dirname,
   "../../src/templates/trellis/scripts",
 );
+const TEMPLATE_AGENTS = path.resolve(
+  __dirname,
+  "../../src/templates/trellis/agents",
+);
 
 function findPython(): string | null {
   for (const bin of ["python3", "python"]) {
@@ -61,6 +65,22 @@ function taskDir(repo: string, slug: string): string {
   return dir;
 }
 
+/**
+ * The roster the loop resolves every ticket's dispatch from: the bundled
+ * agent cards plus a config fallback card. Tickets may override the card by
+ * `meta.worker`; without a roster at all, dispatch refuses fail-closed.
+ */
+function writeRoster(repo: string): void {
+  fs.cpSync(TEMPLATE_AGENTS, path.join(repo, ".trellis", "agents"), {
+    recursive: true,
+  });
+  fs.writeFileSync(
+    path.join(repo, ".trellis", "config.yaml"),
+    "autonomy: hands-off\nworker_default: implement\n",
+    "utf-8",
+  );
+}
+
 let repo = "";
 let logged: string[] = [];
 
@@ -89,6 +109,7 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
   it("selects the highest-priority ready ticket from real frontier output", async () => {
     runTask(repo, "create", "Blocked later", "--slug", "zeta", "--no-start", "-d", "waits");
     runTask(repo, "create", "Head work", "--slug", "alpha", "--no-start", "-d", "ready first", "--priority", "P0");
+    writeRoster(repo);
 
     const blocked = taskDir(repo, "zeta");
     const head = taskDir(repo, "alpha");
@@ -98,7 +119,7 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
     console.log = (...args: unknown[]) => logged.push(args.join(" "));
     let result;
     try {
-      result = await runCommand({ dryRun: true, provider: "claude" }, repo);
+      result = await runCommand({ dryRun: true }, repo);
     } finally {
       console.log = original;
     }
@@ -109,10 +130,15 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
     expect(printed).toContain(head);
     expect(printed).not.toContain(blocked);
     expect(printed).toContain("verify:run-verify");
+    // The plan names the worker the head's roster resolved — the implement
+    // card from worker_default, provider claude.
+    expect(printed).toContain('"agent": "implement"');
+    expect(printed).toContain('"provider": "claude"');
   });
 
   it("writes nothing: no ledger file, no runs directory, no state change", async () => {
     runTask(repo, "create", "Only work", "--slug", "alpha", "--no-start", "-d", "ready");
+    writeRoster(repo);
     const head = taskDir(repo, "alpha");
     const before = fs.readFileSync(
       path.join(repo, ".trellis", "tasks", head, "task.json"),
@@ -122,7 +148,7 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
     const original = console.log;
     console.log = () => undefined;
     try {
-      await runCommand({ dryRun: true, provider: "claude", untilEmpty: true }, repo);
+      await runCommand({ dryRun: true, untilEmpty: true }, repo);
     } finally {
       console.log = original;
     }
@@ -133,23 +159,43 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
     ).toBe(before);
   });
 
-  it("rejects an unknown provider before touching anything", async () => {
-    await expect(
-      runCommand({ provider: "gemini", dryRun: true }, repo),
-    ).rejects.toThrow(/unknown --provider/);
+  it("refuses a run-level --provider — dispatch resolves per ticket", async () => {
+    // Valid or not, the flag is refused wholesale: the roster is the only
+    // dispatch source in loop mode.
+    for (const provider of ["gemini", "claude"]) {
+      await expect(
+        runCommand({ provider, dryRun: true }, repo),
+      ).rejects.toThrow(/--provider is not valid/);
+    }
     expect(fs.existsSync(path.join(repo, ".trellis", ".runtime", "runs"))).toBe(false);
   });
 
-  it("demands a named worker instead of defaulting in the dark", async () => {
-    await expect(runCommand({ dryRun: true }, repo)).rejects.toThrow(
-      /needs --provider/,
-    );
+  it("names the dispatch refusal in the plan instead of inventing a worker", async () => {
+    // No roster at all: the ticket cannot resolve a worker, and the plan
+    // must say so — never a silent fallback to a default provider.
+    runTask(repo, "create", "Roster-less", "--slug", "alpha", "--no-start", "-d", "ready");
+    const head = taskDir(repo, "alpha");
+
+    const original = console.log;
+    console.log = (...args: unknown[]) => logged.push(args.join(" "));
+    let result;
+    try {
+      result = await runCommand({ dryRun: true }, repo);
+    } finally {
+      console.log = original;
+    }
+
+    expect(result.stopped).toBe("dry_run");
+    const printed = logged.join("\n");
+    expect(printed).toContain(head);
+    expect(printed).toContain("dispatch_error");
+    expect(printed).toContain("dispatch_refused");
   });
 
   it("refuses a repo it does not drive", async () => {
     const bare = fs.mkdtempSync(path.join(os.tmpdir(), "run-no-trellis-"));
     try {
-      await expect(runCommand({ provider: "claude", dryRun: true }, bare)).rejects.toThrow(
+      await expect(runCommand({ dryRun: true }, bare)).rejects.toThrow(
         /no .trellis\/scripts\/task.py/,
       );
     } finally {

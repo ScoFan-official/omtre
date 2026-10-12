@@ -194,7 +194,23 @@ describe("resolveDispatch — fail closed, with a fix hint", () => {
     if (!out.ok) expect(out.error).toContain("provider");
   });
 
-  it("refuses a provider that is not in the registry (e.g. a future acp card)", () => {
+  it("refuses a provider that is not in the registry", () => {
+    const out = resolveDispatch(
+      DIR,
+      {},
+      dispatchPorts({
+        taskMeta: () => ({ worker: "implement" }),
+        agentCard: () => ({ provider: "nonexistent-provider" }),
+      }),
+    );
+    expect(out.ok).toBe(false);
+    if (!out.ok) {
+      expect(out.error).toContain("nonexistent-provider");
+      expect(out.error).toContain("claude");
+    }
+  });
+
+  it("accepts the acp provider once it is registered", () => {
     const out = resolveDispatch(
       DIR,
       {},
@@ -203,11 +219,7 @@ describe("resolveDispatch — fail closed, with a fix hint", () => {
         agentCard: () => ({ provider: "acp" }),
       }),
     );
-    expect(out.ok).toBe(false);
-    if (!out.ok) {
-      expect(out.error).toContain("acp");
-      expect(out.error).toContain("claude");
-    }
+    expect(out.ok).toBe(true);
   });
 });
 
@@ -443,6 +455,15 @@ describe("normalizeTicketOptions", () => {
     );
     expect(out.ok).toBe(false);
     if (!out.ok) expect(out.error).toMatch(/--worker/);
+  });
+
+  it("refuses --until-empty — the loop and the single run are mutually exclusive", () => {
+    const out = normalizeTicketOptions(
+      { ticket: DIR, untilEmpty: true },
+      ROOT,
+    );
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.error).toMatch(/--until-empty/);
   });
 
   it("refuses an unknown provider", () => {

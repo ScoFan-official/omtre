@@ -137,9 +137,6 @@ export interface RunOptions {
   maxTickets: number;
   untilEmpty: boolean;
   dryRun: boolean;
-  provider?: Provider;
-  agent?: string;
-  model?: string;
   workerTimeoutMs: number;
   failThreshold: number;
 }
@@ -153,6 +150,7 @@ export type StopReason =
   | "cycle"
   | "frontier_error"
   | "fail_threshold"
+  | "dispatch_refused"
   | "delivery_deferred"
   | "push_refused"
   | "always_stop";
@@ -238,13 +236,14 @@ function positiveInt(
 /**
  * The action plan a dry run prints. Delivery comes from `task.py delivery-gate`
  * (CLAI-8), so the plan names the verdict the config gives for this ticket's
- * branch rather than a flag the operator waved.
+ * branch rather than a flag the operator waved — and the worker is the triple
+ * the ticket's own roster resolved.
  */
-function plannedActions(opts: RunOptions, delivery: string): string[] {
+function plannedActions(dispatch: TicketDispatch, delivery: string): string[] {
   return [
     "frontier:head",
     "worktree:add",
-    `worker:${opts.provider ?? opts.agent}:${opts.model ?? "default"}`,
+    `worker:${dispatch.agent ?? dispatch.provider}:${dispatch.model ?? "default"}`,
     "verify:run-verify",
     delivery,
     "task:archive(on the ticket branch)",
@@ -793,6 +792,38 @@ export async function runTicket(
   return emit(step);
 }
 
+/**
+ * The fail-closed refusal row both entry points emit when the roster chain
+ * cannot name a worker (`resolveDispatch` not-ok): no attempt pair — a
+ * refusal is not a crashed attempt — but one `ticket_result` row so the
+ * refusal is visible to an unattended caller, carrying the machine code
+ * `dispatch_refused` and the partial dispatch it was asked to run under.
+ */
+function dispatchRefusal(
+  dir: string,
+  resolved: { error: string; partial: TicketDispatch },
+  ports: RunnerPorts,
+): TicketRun {
+  const result: TicketResult = {
+    dir,
+    outcome: "failed",
+    code: "dispatch_refused",
+    detail: resolved.error,
+    strikes: 0,
+    dispatch: resolved.partial,
+  };
+  ports.ledgerAppend({
+    ticket: dir,
+    action: "ticket_result",
+    reason: `${result.outcome}:${result.code}`,
+    detail: JSON.stringify(result),
+  });
+  return {
+    step: { kind: "failed", reason: `dispatch_refused(${resolved.error})` },
+    result,
+  };
+}
+
 export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<RunResult> {
   const strikes = new Map<string, number>();
   const delivered = new Set<string>();
@@ -882,9 +913,19 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
       const delivery = gate.allow
         ? `delivery:push(${branch})+pr`
         : `delivery:refused(${gate.reason})`;
+      // The plan names the worker the ticket's roster would dispatch — a
+      // resolution that cannot name one is itself the plan's headline.
+      const resolved = resolveDispatch(head.dir, {}, ports);
       ports.log(
         JSON.stringify(
-          { ticket: head.dir, branch, tier: gate.tier, actions: plannedActions(opts, delivery) },
+          {
+            ticket: head.dir,
+            branch,
+            tier: gate.tier,
+            dispatch: resolved.ok ? resolved.dispatch : null,
+            ...(resolved.ok ? {} : { dispatch_error: resolved.error }),
+            actions: resolved.ok ? plannedActions(resolved.dispatch, delivery) : ["dispatch_refused"],
+          },
           null,
           2,
         ),
@@ -894,12 +935,19 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 
     attempted += 1;
     ports.log(`→ ${head.dir} (${head.priority ?? "-"})`);
-    const ticketRun = await runTicket(
-      head.dir,
-      { provider: opts.provider, agent: opts.agent, model: opts.model },
-      ports,
-      { workerTimeoutMs: opts.workerTimeoutMs, title: head.title, priority: head.priority },
-    );
+    // Per-ticket dispatch — the same resolveDispatch → runTicket path
+    // `--ticket` takes. The roster (meta.worker → agent card →
+    // worker_default) answers per ticket; a refusal is fail-closed and lands
+    // in the loop's ordinary failure accounting (strikes → threshold → the
+    // task.py-owned ready-for-human mark), never a silent fallback.
+    const resolved = resolveDispatch(head.dir, {}, ports);
+    const ticketRun = resolved.ok
+      ? await runTicket(head.dir, resolved.dispatch, ports, {
+          workerTimeoutMs: opts.workerTimeoutMs,
+          title: head.title,
+          priority: head.priority,
+        })
+      : dispatchRefusal(head.dir, resolved, ports);
     const step = ticketRun.step;
 
     if (step.kind === "stop") {
@@ -912,7 +960,24 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 
     if (step.kind === "failed") {
       failed += 1;
-      const count = (strikes.get(head.dir) ?? 0) + 1;
+      // A deterministic refusal cannot heal across polls — the ticket's
+      // meta would be re-resolved identically forever. Mark it for a human
+      // and halt the line now; it is not a strike.
+      if (ticketRun.result?.code === "dispatch_refused") {
+        ports.task(["set-meta", head.dir, "triage", "ready-for-human"]);
+        ports.ledgerAppend({
+          ticket: head.dir,
+          action: "blocked",
+          reason: `dispatch refused: ${step.reason}`,
+          detail: "marked triage=ready-for-human; fix the roster and rerun",
+        });
+        ports.log(`Stopped: ${head.dir} dispatch refused — fix the roster and rerun.`);
+        return { stopped: "dispatch_refused", attempted, archived, failed };
+      }
+      // Charge what the ticket_result row charged: internal_error carries
+      // strikes:0 — a runner-side death never burns the worker's budget.
+      const count =
+        (strikes.get(head.dir) ?? 0) + (ticketRun.result?.strikes ?? 1);
       strikes.set(head.dir, count);
       ports.log(`✗ ${head.dir}: ${step.reason} (strike ${count}/${opts.failThreshold})`);
       if (count >= opts.failThreshold) {
@@ -1121,25 +1186,53 @@ export function realPorts(
   };
 }
 
-/** Normalize commander's loose option bag into a validated `RunOptions`. */
+/**
+ * Normalize commander's loose option bag into a validated `RunOptions`.
+ *
+ * The loop accepts NO dispatch flags — the same refusal idiom ticket mode
+ * applies to `--agent`. Each ticket's dispatch resolves from its own roster
+ * (meta.worker → agent card → worker_default); a flag that forced one
+ * triple for the whole run, or that silently did nothing, would be a second
+ * source of truth next to the roster. Single-run overrides live on
+ * `--ticket` (`--worker`/`--provider`/`--model`).
+ */
 export function normalizeOptions(
   raw: Record<string, unknown>,
   root: string,
 ): { ok: true; options: RunOptions } | { ok: false; error: string } {
-  const provider = typeof raw.provider === "string" && raw.provider ? raw.provider : undefined;
-  const agent = typeof raw.agent === "string" && raw.agent ? raw.agent : undefined;
-  if (provider && !listProviders().includes(provider as Provider)) {
-    return {
-      ok: false,
-      error: `unknown --provider "${provider}" (known: ${listProviders().join(", ")})`,
-    };
-  }
-  if (!provider && !agent) {
+  if (typeof raw.worker === "string" && raw.worker) {
     return {
       ok: false,
       error:
-        `needs --provider <${listProviders().join("|")}> or --agent <name> — ` +
-        "an unattended run must name the worker it is delegating to",
+        "--worker is only valid with --ticket — the loop resolves each " +
+        "ticket's own dispatch from the roster",
+    };
+  }
+  if (typeof raw.agent === "string" && raw.agent) {
+    return {
+      ok: false,
+      error:
+        "--agent is not valid here — the loop resolves each ticket's dispatch " +
+        "from its roster (meta.worker → agent card → worker_default); the " +
+        "single-run card override is --ticket --worker",
+    };
+  }
+  if (typeof raw.provider === "string" && raw.provider) {
+    return {
+      ok: false,
+      error:
+        "--provider is not valid here — each ticket's provider comes from its " +
+        "dispatch card's frontmatter; --ticket accepts --provider as a " +
+        "single-run override",
+    };
+  }
+  if (typeof raw.model === "string" && raw.model) {
+    return {
+      ok: false,
+      error:
+        "--model is not valid here — each ticket's model comes from its " +
+        "roster (meta.model → card model); --ticket accepts --model as a " +
+        "single-run override",
     };
   }
 
@@ -1158,9 +1251,6 @@ export function normalizeOptions(
       maxTickets: maxTickets.value,
       untilEmpty: raw.untilEmpty === true,
       dryRun: raw.dryRun === true,
-      provider: provider as Provider | undefined,
-      agent,
-      model: typeof raw.model === "string" && raw.model ? raw.model : undefined,
       workerTimeoutMs: timeout ?? DEFAULT_WORKER_TIMEOUT_MS,
       failThreshold: failThreshold.value,
     },
@@ -1231,6 +1321,14 @@ export function normalizeTicketOptions(
   }
   if (typeof raw.agent === "string" && raw.agent) {
     return { ok: false, error: "--agent is not valid with --ticket — name the dispatch card with --worker" };
+  }
+  if (raw.untilEmpty === true) {
+    return {
+      ok: false,
+      error:
+        "--until-empty is not valid with --ticket — ticket mode runs exactly " +
+        "one dir; the frontier loop is the other mode",
+    };
   }
   const provider = typeof raw.provider === "string" && raw.provider ? raw.provider : undefined;
   if (provider && !isProvider(provider)) {
@@ -1312,20 +1410,7 @@ export async function runTicketCommand(
   ports.ledgerAppend({ ticket: opts.dir, action: "run_start", detail: `ticket=${opts.dir}` });
 
   if (!resolved.ok) {
-    const result: TicketResult = {
-      dir: opts.dir,
-      outcome: "failed",
-      code: "dispatch_refused",
-      detail: resolved.error,
-      strikes: 0,
-      dispatch: resolved.partial,
-    };
-    ports.ledgerAppend({
-      ticket: opts.dir,
-      action: "ticket_result",
-      reason: `${result.outcome}:${result.code}`,
-      detail: JSON.stringify(result),
-    });
+    const { result } = dispatchRefusal(opts.dir, resolved, ports);
     ports.log(`✗ ${opts.dir}: dispatch refused — ${resolved.error}`);
     return { result, ledgerFile: ledger?.file };
   }
