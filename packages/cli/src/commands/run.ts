@@ -722,7 +722,14 @@ export async function runTicket(
   // still gets the result row so the refusal is visible.
   const refuse = (reason: string): TicketRun => {
     const step: TicketStep = { kind: "failed", reason };
-    const result = ticketResult(dir, dispatch, step);
+    const result: TicketResult = {
+      dir,
+      outcome: "failed",
+      code: reasonCode(reason),
+      detail: reason,
+      strikes: 0,
+      dispatch,
+    };
     resultRow(result);
     return { step, result };
   };

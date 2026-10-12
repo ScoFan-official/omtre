@@ -91,7 +91,10 @@ export function resolveDispatch(
   // whatever deeper layers had already supplied.
   const partial: TicketDispatch = {
     agent: overrides.worker ?? metaString(meta, "worker"),
-    provider: overrides.provider,
+    provider:
+      overrides.provider && isProvider(overrides.provider)
+        ? overrides.provider
+        : undefined,
     model: overrides.model ?? metaString(meta, "model"),
   };
 
