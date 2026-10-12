@@ -21,13 +21,19 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { isProvider, type Provider } from "./adapters/index.js";
+
 export interface AgentDefinition {
   name: string;
   description?: string;
-  provider?: "claude" | "codex";
+  provider?: Provider;
   model?: string;
+  /** ACP effort/thinking level (e.g. `low|medium|high|xhigh`); provider-agnostic key. */
+  effort?: string;
   labels?: string[];
   systemPrompt: string;
+  /** All raw frontmatter keys — ACP target/override fields
+   *  (`acp_target`, `acp_command`, `acp_args`) are read from here. */
   raw: Record<string, string>;
   filePath: string;
 }
@@ -112,6 +118,7 @@ export function loadAgent(
     description: fm.description?.trim() || undefined,
     provider,
     model: fm.model?.trim() || undefined,
+    effort: fm.effort?.trim() || undefined,
     labels,
     systemPrompt: body,
     raw: fm,
@@ -119,12 +126,15 @@ export function loadAgent(
   };
 }
 
-function normalizeProvider(
-  v: string | undefined,
-): "claude" | "codex" | undefined {
+/**
+ * Provider validation is registry-aware: any adapter registered in
+ * `adapters/index.js` (claude, codex, acp, future providers) is accepted
+ * without a parallel whitelist here.
+ */
+function normalizeProvider(v: string | undefined): Provider | undefined {
   if (!v) return undefined;
   const t = v.trim().toLowerCase();
-  if (t === "claude" || t === "codex") return t;
+  if (isProvider(t)) return t;
   return undefined;
 }
 

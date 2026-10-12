@@ -1,5 +1,6 @@
 import fs from "node:fs";
 
+import { createAcpCtx, parseAcpLine } from "./adapters/acp.js";
 import { parseClaudeLine } from "./adapters/claude.js";
 import { createCodexCtx, parseCodexLine } from "./adapters/codex.js";
 import type { ParseResult } from "./adapters/types.js";
@@ -16,7 +17,10 @@ import type { ParseResult } from "./adapters/types.js";
  * trace; we pre-seed the ctx with the ids the probe used (1 for initialize,
  * 2 for thread/start, 3 for turn/start) so id-matching works.
  */
-export function parseTrace(adapter: "claude" | "codex", file: string): void {
+export function parseTrace(
+  adapter: "claude" | "codex" | "acp",
+  file: string,
+): void {
   const raw = fs.readFileSync(file, "utf-8");
   const lines = raw.split("\n");
   let lineNo = 0;
@@ -26,6 +30,52 @@ export function parseTrace(adapter: "claude" | "codex", file: string): void {
       lineNo++;
       if (!line.trim()) continue;
       const result: ParseResult = parseClaudeLine(line);
+      printResult(lineNo, result);
+    }
+    return;
+  }
+
+  if (adapter === "acp") {
+    // Probe logs (research: 10-12-acp-probe) carry `[time] SEND {...}` /
+    // `RECV {...}` prefixes. SEND lines seed ctx.pending so responses
+    // route to the right label; RECV lines go through the parser.
+    // Pure-jsonl traces work too (everything is treated as inbound).
+    const ctx = createAcpCtx();
+    const mark = /^.*? (SEND|RECV) (\{.*)$/;
+    for (const line of lines) {
+      lineNo++;
+      if (!line.trim()) continue;
+      const m = mark.exec(line);
+      const dir = m ? m[1] : "RECV";
+      const payload = m ? m[2] : line;
+      if (dir === "SEND") {
+        try {
+          const req = JSON.parse(payload) as {
+            id?: number;
+            method?: string;
+          };
+          if (typeof req.id === "number" && req.method) {
+            ctx.pending.set(
+              req.id,
+              req.method === "session/prompt"
+                ? "session/prompt"
+                : req.method === "initialize"
+                  ? "initialize"
+                  : req.method === "session/set_config_option"
+                    ? "set_config_option"
+                    : req.method === "session/new" ||
+                        req.method === "session/resume" ||
+                        req.method === "session/load"
+                      ? req.method
+                      : "other",
+            );
+          }
+        } catch {
+          // malformed outbound line — ignore
+        }
+        continue;
+      }
+      const result = parseAcpLine(payload, ctx);
       printResult(lineNo, result);
     }
     return;

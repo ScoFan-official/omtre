@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { InboxPolicy } from "@mindfoldhq/trellis-core/channel";
 
 import { loadAgent } from "./agent-loader.js";
+import { resolveAcpTarget } from "./adapters/acp.js";
 import type { CodexSandboxMode } from "./adapters/codex.js";
 import type { Provider } from "./adapters/index.js";
 import { assembleContext } from "./context-loader.js";
@@ -35,6 +36,14 @@ export interface SpawnOptions {
   resume?: string;
   /** Codex-only: overrides the `thread/start` sandbox mode (default `workspace-write`). */
   sandbox?: CodexSandboxMode;
+  /**
+   * ACP-only: target id into `adapters/acp-agents.json` (e.g. `grok-build`,
+   * `codex`, `claude`). Required when provider resolves to `acp` — either
+   * here or via the agent card's `acp_target:` frontmatter.
+   */
+  acpTarget?: string;
+  /** ACP-only: effort/thinking level for `session/set_config_option`. */
+  effort?: string;
   /** Auto-kill the worker after this many milliseconds (anti-zombie). */
   timeoutMs?: number;
   /** Emit supervisor_warning this many milliseconds before timeout. */
@@ -66,8 +75,39 @@ interface ResolvedSpawn {
   as: string;
   systemPrompt: string;
   model?: string;
+  acpTarget?: string;
+  acpCommand?: string;
+  acpArgs?: string[];
+  /** Env vars contributed by the ACP target registry entry. */
+  acpEnv?: Record<string, string>;
+  effort?: string;
   contextFiles: string[];
   contextManifests: string[];
+}
+
+/**
+ * `acp_args` frontmatter may be a JSON array (`["-m","grok-4.7"]`) or a
+ * plain whitespace-split string. Anything else is rejected loudly —
+ * a silently mis-parsed argv is worse than a spawn-time error.
+ */
+function parseAcpArgsOverride(raw: string | undefined): string[] | undefined {
+  if (!raw?.trim()) return undefined;
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("[")) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      throw new Error(
+        `agent card 'acp_args' looks like JSON but failed to parse: ${trimmed.slice(0, 80)}`,
+      );
+    }
+    if (!Array.isArray(parsed) || parsed.some((a) => typeof a !== "string")) {
+      throw new Error("agent card 'acp_args' JSON must be an array of strings");
+    }
+    return parsed as string[];
+  }
+  return trimmed.split(/\s+/);
 }
 
 function resolveSpawn(channelName: string, opts: SpawnOptions): ResolvedSpawn {
@@ -77,13 +117,22 @@ function resolveSpawn(channelName: string, opts: SpawnOptions): ResolvedSpawn {
   let provider = opts.provider;
   let model = opts.model;
   let as = opts.as;
+  let acpTarget = opts.acpTarget;
+  let acpCommand: string | undefined;
+  let acpArgs: string[] | undefined;
+  let effort = opts.effort;
 
   if (opts.agent) {
     const agent = loadAgent(opts.agent, cwd, trustedRoots);
     agentBody = agent.systemPrompt || undefined;
     provider = provider ?? agent.provider;
     model = model ?? agent.model;
+    effort = effort ?? agent.effort;
     as = as ?? agent.name;
+    // ACP card fields live in raw frontmatter: acp_target / acp_command / acp_args.
+    acpTarget = acpTarget ?? agent.raw.acp_target?.trim();
+    acpCommand = agent.raw.acp_command?.trim() || undefined;
+    acpArgs = parseAcpArgsOverride(agent.raw.acp_args);
   }
 
   if (!provider) {
@@ -93,6 +142,18 @@ function resolveSpawn(channelName: string, opts: SpawnOptions): ResolvedSpawn {
   }
   if (!as) {
     throw new Error("Missing --as (no agent name to fall back to)");
+  }
+
+  // ACP: validate the target id NOW (fail fast at the spawn call, not
+  // inside the detached supervisor) and harvest the target's env.
+  let acpEnv: Record<string, string> | undefined;
+  if (provider === "acp") {
+    const target = resolveAcpTarget({
+      target: acpTarget,
+      command: acpCommand,
+      args: acpArgs,
+    });
+    acpEnv = Object.keys(target.env).length > 0 ? target.env : undefined;
   }
 
   const context = assembleContext(cwd, opts.files, opts.jsonls, trustedRoots);
@@ -108,6 +169,10 @@ function resolveSpawn(channelName: string, opts: SpawnOptions): ResolvedSpawn {
     as,
     systemPrompt,
     model,
+    ...(provider === "acp"
+      ? { acpTarget, acpCommand, acpArgs, acpEnv }
+      : {}),
+    effort,
     contextFiles: context.paths,
     contextManifests: context.manifests,
   };
@@ -266,6 +331,11 @@ async function spawnLocked(
       model: resolved.model,
       resume: opts.resume,
       sandbox: opts.sandbox,
+      ...(resolved.acpTarget ? { acpTarget: resolved.acpTarget } : {}),
+      ...(resolved.acpCommand ? { acpCommand: resolved.acpCommand } : {}),
+      ...(resolved.acpArgs ? { acpArgs: resolved.acpArgs } : {}),
+      ...(resolved.effort ? { effort: resolved.effort } : {}),
+      ...(resolved.acpEnv ? { env: resolved.acpEnv } : {}),
       timeoutMs: opts.timeoutMs,
       warnBeforeMs: opts.warnBeforeMs,
       idleTimeoutMs,
