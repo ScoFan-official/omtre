@@ -284,7 +284,7 @@ export function registerChannelCommand(program: Command): void {
     )
     .option(
       "--provider <provider>",
-      "worker provider: claude | codex (overrides agent)",
+      `worker provider: ${listProviders().join(" | ")} (overrides agent)`,
     )
     .option(
       "--as <name>",
@@ -296,6 +296,14 @@ export function registerChannelCommand(program: Command): void {
     .option(
       "--sandbox <mode>",
       "codex-only: worker sandbox mode: read-only | workspace-write | danger-full-access (default workspace-write)",
+    )
+    .option(
+      "--acp-target <id>",
+      "acp-only: target in acp-agents.json (grok-build | codex | claude); may come from the agent card's acp_target frontmatter",
+    )
+    .option(
+      "--effort <level>",
+      "acp-only: reasoning effort level for session/set_config_option (e.g. low | medium | high | xhigh)",
     )
     .option(
       "--timeout <duration>",
@@ -343,6 +351,8 @@ export function registerChannelCommand(program: Command): void {
         model?: string;
         resume?: string;
         sandbox?: string;
+        acpTarget?: string;
+        effort?: string;
         timeout?: string;
         warnBefore?: string;
         file?: string[];
@@ -370,6 +380,8 @@ export function registerChannelCommand(program: Command): void {
           model: opts.model,
           resume: opts.resume,
           sandbox,
+          acpTarget: opts.acpTarget,
+          effort: opts.effort,
           timeoutMs: parseDuration(opts.timeout),
           warnBeforeMs: parseDuration(opts.warnBefore),
           files: opts.file,
@@ -400,11 +412,19 @@ export function registerChannelCommand(program: Command): void {
     )
     .option(
       "--provider <provider>",
-      "worker provider: claude | codex (overrides agent)",
+      `worker provider: ${listProviders().join(" | ")} (overrides agent)`,
     )
     .option("--as <name>", "worker name (default: agent name if --agent set)")
     .option("--cwd <path>", "worker working directory")
     .option("--model <id>", "model override")
+    .option(
+      "--acp-target <id>",
+      "acp-only: target in acp-agents.json (grok-build | codex | claude)",
+    )
+    .option(
+      "--effort <level>",
+      "acp-only: reasoning effort level (e.g. low | medium | high | xhigh)",
+    )
     .option(
       "--file <path>",
       "include a file as context (glob supported, repeatable)",
@@ -431,6 +451,8 @@ export function registerChannelCommand(program: Command): void {
         as?: string;
         cwd?: string;
         model?: string;
+        acpTarget?: string;
+        effort?: string;
         file?: string[];
         jsonl?: string[];
         message?: string;
@@ -453,6 +475,8 @@ export function registerChannelCommand(program: Command): void {
           as: opts.as,
           cwd: opts.cwd,
           model: opts.model,
+          acpTarget: opts.acpTarget,
+          effort: opts.effort,
           files: opts.file,
           jsonls: opts.jsonl,
           message: opts.message,

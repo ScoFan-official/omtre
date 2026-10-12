@@ -30,6 +30,10 @@ export interface WorkerRequest {
   prompt: string;
   provider?: Provider;
   agent?: string;
+  /** ACP-only: target id in acp-agents.json (usually set on the agent card). */
+  acpTarget?: string;
+  /** ACP-only: effort/thinking level for session/set_config_option. */
+  effort?: string;
   /**
    * Worker name inside the channel. `channelSpawn` requires one, and without an
    * agent definition there is nothing to fall back to, so the runner names its
@@ -183,6 +187,8 @@ export async function oneShotWorker(
       as: req.workerName ?? `implementer-${req.ticket}`,
       cwd: req.cwd,
       model: req.model,
+      acpTarget: req.acpTarget,
+      effort: req.effort,
       timeoutMs: req.timeoutMs,
       files: req.files,
       jsonls: req.jsonls,

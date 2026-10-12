@@ -72,4 +72,12 @@ console.log("Copied src/templates/ to dist/templates/");
 copyDir("src/migrations/manifests", "dist/migrations/manifests");
 console.log("Copied src/migrations/manifests/ to dist/migrations/manifests/");
 
+// Ship the ACP agent registry next to the compiled adapter (read via
+// `new URL("./acp-agents.json", import.meta.url)` at module load).
+cpSync(
+  "src/commands/channel/adapters/acp-agents.json",
+  "dist/commands/channel/adapters/acp-agents.json",
+);
+console.log("Copied acp-agents.json to dist/commands/channel/adapters/");
+
 console.log("Template copy complete.");

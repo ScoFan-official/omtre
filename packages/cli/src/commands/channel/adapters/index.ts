@@ -26,6 +26,17 @@ import {
   parseClaudeLine,
 } from "./claude.js";
 import {
+  acpHandshake,
+  buildAcpArgs,
+  createAcpCtx,
+  encodeAcpInterruptMessage,
+  encodeAcpUserMessage,
+  isAcpReady,
+  parseAcpLine,
+  resolveAcpCommand,
+  type AcpCtx,
+} from "./acp.js";
+import {
   buildCodexArgs,
   buildCodexThreadStartParams,
   createCodexCtx,
@@ -63,6 +74,14 @@ export interface SupervisorView {
   cwd: string;
   /** Codex-only: overrides the `thread/start` sandbox mode (default `workspace-write`). */
   sandbox?: CodexSandboxMode;
+  /** ACP-only: target id in `acp-agents.json` (e.g. `grok-build`, `codex`, `claude`). */
+  acpTarget?: string;
+  /** ACP-only: card-level override of the target executable. */
+  acpCommand?: string;
+  /** ACP-only: card-level override of the target launch args. */
+  acpArgs?: string[];
+  /** ACP-only: effort/thinking level applied via `session/set_config_option`. */
+  effort?: string;
 }
 
 export interface WorkerAdapter<Ctx = AdapterCtx> {
@@ -100,6 +119,14 @@ export interface WorkerAdapter<Ctx = AdapterCtx> {
    * control frames before the replacement user message.
    */
   encodeInterruptMessage(text: string, ctx: Ctx): string;
+  /**
+   * Optional: the executable name/path the supervisor should resolve
+   * and spawn. Adapters that front several targets (acp) resolve the
+   * concrete command from the registry here; providers whose binary
+   * name equals `provider` (claude, codex) leave it undefined and the
+   * supervisor falls back to `adapter.provider`.
+   */
+  resolveCommand?(view: SupervisorView): string;
 }
 
 /** Claude adapter — stream-json over stdio, no handshake. */
@@ -186,6 +213,40 @@ const codexAdapter: WorkerAdapter<CodexCtx> = {
 };
 
 /**
+ * ACP adapter — newline-delimited JSON-RPC over stdio, fronts a registry
+ * of agent executables (`acp-agents.json`) selected by `acp_target`.
+ * `buildArgs` produces the target's prefix args; `resolveCommand` resolves
+ * the concrete executable so the supervisor never guesses from `provider`.
+ */
+const acpAdapter: WorkerAdapter<AcpCtx> = {
+  provider: "acp",
+  buildArgs(view) {
+    return buildAcpArgs(view);
+  },
+  createCtx() {
+    return createAcpCtx();
+  },
+  handshake({ child, ctx, view }) {
+    return acpHandshake({ child, ctx, view });
+  },
+  isReady(ctx) {
+    return isAcpReady(ctx);
+  },
+  parseLine(line, ctx) {
+    return parseAcpLine(line, ctx);
+  },
+  encodeUserMessage(text, ctx) {
+    return encodeAcpUserMessage(ctx, text);
+  },
+  encodeInterruptMessage(text, ctx) {
+    return encodeAcpInterruptMessage(ctx, text);
+  },
+  resolveCommand(view) {
+    return resolveAcpCommand(view);
+  },
+};
+
+/**
  * Single source of truth for known providers. Adding a new adapter:
  *   1. write `adapters/<name>.ts`
  *   2. add `<name>: <name>Adapter` here
@@ -194,6 +255,7 @@ const codexAdapter: WorkerAdapter<CodexCtx> = {
 const REGISTRY = {
   claude: claudeAdapter,
   codex: codexAdapter,
+  acp: acpAdapter,
 } as const;
 
 export type Provider = keyof typeof REGISTRY;

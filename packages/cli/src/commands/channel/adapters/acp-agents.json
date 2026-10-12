@@ -1,0 +1,45 @@
+{
+  "grok-build": {
+    "command": "grok",
+    "args": ["agent", "--always-approve", "stdio"],
+    "env": {},
+    "windows": {},
+    "modelOptionId": "model",
+    "effortOptionId": "reasoning_effort",
+    "postSessionConfig": [],
+    "authHint": "grok 未认证/超时：请先运行 `grok` 交互式登录，或检查网络代理"
+  },
+  "codex": {
+    "command": "codex-acp",
+    "args": [],
+    "env": {
+      "INITIAL_AGENT_MODE": "agent-full-access"
+    },
+    "windows": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "@agentclientprotocol/codex-acp"]
+    },
+    "modelOptionId": "model",
+    "effortOptionId": "reasoning_effort",
+    "postSessionConfig": [],
+    "authHint": "codex-acp 认证失败：先 `codex login`，或设置 OPENAI_API_KEY / CODEX 网关环境变量"
+  },
+  "claude": {
+    "command": "claude-agent-acp",
+    "args": [],
+    "env": {},
+    "windows": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "@agentclientprotocol/claude-agent-acp"]
+    },
+    "modelOptionId": "model",
+    "effortOptionId": "effort",
+    "postSessionConfig": [
+      {
+        "configId": "mode",
+        "value": "bypassPermissions"
+      }
+    ],
+    "authHint": "claude-agent-acp 认证失败：先 `claude` 交互式登录或配置 ANTHROPIC_API_KEY"
+  }
+}

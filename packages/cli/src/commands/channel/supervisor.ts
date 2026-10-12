@@ -56,6 +56,14 @@ export interface SupervisorConfig {
   resume?: string;
   /** Codex-only: overrides the `thread/start` sandbox mode (default `workspace-write`). */
   sandbox?: CodexSandboxMode;
+  /** ACP-only: target id into `acp-agents.json` (e.g. `grok-build`). */
+  acpTarget?: string;
+  /** ACP-only: card-level override of the target executable. */
+  acpCommand?: string;
+  /** ACP-only: card-level override of the target launch args. */
+  acpArgs?: string[];
+  /** ACP-only: effort/thinking level passed to the session config. */
+  effort?: string;
   /** Auto-kill worker after this many ms (anti-zombie). */
   timeoutMs?: number;
   /** Emit supervisor_warning this many ms before timeout. `<=0` disables it. */
@@ -217,6 +225,10 @@ export async function runSupervisor(
     ...(systemPromptFile ? { systemPromptFile } : {}),
     cwd: config.cwd,
     sandbox: config.sandbox,
+    acpTarget: config.acpTarget,
+    acpCommand: config.acpCommand,
+    acpArgs: config.acpArgs,
+    effort: config.effort,
   };
   const args = adapter.buildArgs(view);
 
@@ -230,7 +242,13 @@ export async function runSupervisor(
 
   const logPath = workerFile(channelName, workerName, "log", project);
   const log = fs.createWriteStream(logPath);
-  const resolvedProvider = resolveProviderPath(adapter.provider, config.cwd);
+  // Adapters that front several executables (acp) name the concrete
+  // command via resolveCommand(view); native providers fall back to
+  // `adapter.provider` as before.
+  const resolvedProvider = resolveProviderPath(
+    adapter.resolveCommand?.(view) ?? adapter.provider,
+    config.cwd,
+  );
   const resolvedProviderDisplay = [
     resolvedProvider.command,
     ...resolvedProvider.prefixArgs,

@@ -30,6 +30,10 @@ export interface RunOptions {
   as?: string;
   cwd?: string;
   model?: string;
+  /** ACP-only: target id in acp-agents.json (may come from the agent card). */
+  acpTarget?: string;
+  /** ACP-only: effort/thinking level for session/set_config_option. */
+  effort?: string;
   files?: string[];
   jsonls?: string[];
   message?: string;
@@ -59,6 +63,8 @@ export async function channelRun(opts: RunOptions): Promise<void> {
       as: opts.as,
       cwd: opts.cwd,
       model: opts.model,
+      acpTarget: opts.acpTarget,
+      effort: opts.effort,
       timeoutMs,
       files: opts.files,
       jsonls: opts.jsonls,
