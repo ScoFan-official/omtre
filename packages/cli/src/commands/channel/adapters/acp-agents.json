@@ -1,11 +1,9 @@
 {
   "grok-build": {
     "command": "grok",
-    "args": ["agent", "stdio"],
+    "args": ["agent", "--always-approve", "stdio"],
     "env": {},
-    "windows": {
-      "command": "C:\\Users\\ScoFan\\.grok\\bin\\grok.exe"
-    },
+    "windows": {},
     "modelOptionId": "model",
     "effortOptionId": "reasoning_effort",
     "postSessionConfig": [],

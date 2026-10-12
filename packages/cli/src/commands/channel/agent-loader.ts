@@ -7,7 +7,7 @@
  *   ---
  *   name: architect
  *   description: System architect ...
- *   provider: claude       # claude | codex; used as default --provider
+ *   provider: claude       # registered provider (claude | codex | acp)
  *   model: claude-opus-4-7 # CLI-specific model id; optional
  *   labels: [design]       # optional metadata
  *   ---

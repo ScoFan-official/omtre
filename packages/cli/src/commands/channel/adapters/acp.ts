@@ -386,7 +386,7 @@ function acpClientHello(): Record<string, unknown> {
     clientCapabilities: {
       fs: { readTextFile: false, writeTextFile: false },
       terminal: false,
-      auth: { terminal: true },
+      auth: { terminal: false },
     },
     clientInfo: { name: "trellis-channel", version: "0.1" },
   };

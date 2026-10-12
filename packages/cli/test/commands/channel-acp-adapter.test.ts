@@ -82,11 +82,11 @@ describe("ACP target registry", () => {
     expect(listAcpTargets().sort()).toEqual(["claude", "codex", "grok-build"]);
   });
 
-  it("resolves grok-build to `grok agent stdio`", () => {
+  it("resolves grok-build to `grok agent --always-approve stdio`", () => {
     const t = resolveAcpTarget({ target: "grok-build" });
     expect(t.id).toBe("grok-build");
     expect(t.command).toMatch(/grok/);
-    expect(t.args).toEqual(["agent", "stdio"]);
+    expect(t.args).toEqual(["agent", "--always-approve", "stdio"]);
     expect(t.modelOptionId).toBe("model");
     expect(t.effortOptionId).toBe("reasoning_effort");
   });
@@ -134,11 +134,23 @@ describe("ACP target registry", () => {
   it("uses the windows override on win32", () => {
     vi.spyOn(process, "platform", "get").mockReturnValue("win32");
     try {
-      const t = resolveAcpTarget({ target: "grok-build" });
-      expect(t.command).toBe("C:\\Users\\ScoFan\\.grok\\bin\\grok.exe");
+      const t = resolveAcpTarget({ target: "codex" });
+      expect(t.command).toBe("cmd.exe");
+      expect(t.args).toEqual([
+        "/c",
+        "npx",
+        "-y",
+        "@agentclientprotocol/codex-acp",
+      ]);
     } finally {
       vi.restoreAllMocks();
     }
+  });
+
+  it("passes --always-approve to grok before stdio", () => {
+    const t = resolveAcpTarget({ target: "grok-build" });
+    expect(t.command).toBe("grok");
+    expect(t.args).toEqual(["agent", "--always-approve", "stdio"]);
   });
 });
 
@@ -177,7 +189,7 @@ describe("ACP arg substitution", () => {
   it("buildAcpArgs returns the target's argv (no placeholders by default)", () => {
     expect(
       buildAcpArgs({ acpTarget: "grok-build", model: "x", cwd: "/w" }),
-    ).toEqual(["agent", "stdio"]);
+    ).toEqual(["agent", "--always-approve", "stdio"]);
   });
 
   it("resolveAcpCommand returns the target command", () => {
@@ -925,7 +937,7 @@ describe("ACP adapter registration", () => {
         systemPrompt: "",
         acpTarget: "grok-build",
       }),
-    ).toEqual(["agent", "stdio"]);
+    ).toEqual(["agent", "--always-approve", "stdio"]);
     expect(
       adapter.resolveCommand?.({
         cwd: "/tmp",
