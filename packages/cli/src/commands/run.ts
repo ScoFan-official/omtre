@@ -676,7 +676,13 @@ function ticketResult(dir: string, dispatch: TicketDispatch, step: TicketStep): 
   const base = {
     dir,
     dispatch,
-    strikes: step.kind === "failed" ? 1 : 0,
+    // internal_error = runner-side bug, not a worker failure — the same
+    // contract as "attempt_started without finished": infra death never
+    // charges the ticket's strike budget.
+    strikes:
+      step.kind === "failed" && !step.reason.startsWith("internal_error(")
+        ? 1
+        : 0,
     ...(step.verify ? { verify: step.verify } : {}),
   };
   if (step.kind === "archived") {
