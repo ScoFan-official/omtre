@@ -127,14 +127,8 @@ export function loadOrchestratorConfig(
  * do not resolve. Returns `undefined` when absent — the roster then fails
  * closed instead of guessing a worker.
  */
-export function readWorkerDefault(cwd: string): string | undefined {
-  const configPath = path.join(cwd, ".trellis", "config.yaml");
-  let content: string;
-  try {
-    content = fs.readFileSync(configPath, "utf-8");
-  } catch {
-    return undefined;
-  }
+/** Content-level scan, exposed for tests and the dispatch.ts delegate. */
+export function parseWorkerDefaultKey(content: string): string | undefined {
   for (const raw of content.split("\n")) {
     const line = raw.trimEnd();
     // Top-level scalar only — an indented match belongs to another section.
@@ -144,4 +138,15 @@ export function readWorkerDefault(cwd: string): string | undefined {
     return value.length > 0 ? value : undefined;
   }
   return undefined;
+}
+
+export function readWorkerDefault(cwd: string): string | undefined {
+  const configPath = path.join(cwd, ".trellis", "config.yaml");
+  let content: string;
+  try {
+    content = fs.readFileSync(configPath, "utf-8");
+  } catch {
+    return undefined;
+  }
+  return parseWorkerDefaultKey(content);
 }

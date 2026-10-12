@@ -16,15 +16,15 @@
  * cannot be dispatched at all.
  */
 
-import fs from "node:fs";
-import path from "node:path";
-
 import {
   isProvider,
   listProviders,
   type Provider,
 } from "../channel/adapters/index.js";
-import { DIR_NAMES } from "../../constants/paths.js";
+import {
+  parseWorkerDefaultKey,
+  readWorkerDefault,
+} from "./orchestrator.js";
 
 /** The dispatch triple the runner hands to one attempt. */
 export interface TicketDispatch {
@@ -163,35 +163,15 @@ export function resolveDispatch(
 }
 
 /**
- * Read `.trellis/config.yaml` `worker_default:` — a top-level scalar. Line
- * scanner on purpose: config.yaml is a documented flat-ish file and pulling
- * in a YAML dependency for one key is what `parseWorkerGuardSection`
- * already refused to do.
+ * Read `.trellis/config.yaml` `worker_default:` — the roster fallback card
+ * name. Delegates to orchestrator.ts so the whole stack scans this key with
+ * one dialect (trellis_config.py-faithful comment/quote rules).
  */
 export function loadWorkerDefault(cwd: string): string | null {
-  const configPath = path.join(cwd, DIR_NAMES.WORKFLOW, "config.yaml");
-  let content: string;
-  try {
-    content = fs.readFileSync(configPath, "utf-8");
-  } catch {
-    return null;
-  }
-  return parseWorkerDefault(content);
+  return readWorkerDefault(cwd) ?? null;
 }
 
 /** Exposed for unit tests. */
 export function parseWorkerDefault(content: string): string | null {
-  for (const raw of content.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    // Top-level key only — an indented `worker_default:` belongs to some
-    // nested section and is not the roster fallback.
-    const m = /^worker_default:\s*(.*?)\s*$/.exec(line);
-    if (!m) continue;
-    const value = m[1]
-      .replace(/\s*#.*$/, "")
-      .trim()
-      .replace(/^['"]|['"]$/g, "");
-    return value || null;
-  }
-  return null;
+  return parseWorkerDefaultKey(content) ?? null;
 }
