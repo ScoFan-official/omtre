@@ -108,6 +108,33 @@ channel:
   # auto_trust_trellis_symlinks: false
 
 #-------------------------------------------------------------------------------
+# Dispatch roster (multi-agent orchestration)
+#-------------------------------------------------------------------------------
+# The unattended runner picks workers by AGENT CARD NAME (files under
+# .trellis/agents/), never by ad-hoc provider strings. Resolution order for a
+# ticket's worker:
+#
+#   1. ticket meta.worker (task.py set-meta <dir> worker <card>)
+#   2. the role card for the job — check additionally prefers its axis
+#      sub-cards check.standards / check.spec when they exist
+#   3. worker_default below
+#   4. nothing resolved → the ticket is blocked (fail-closed; no silent
+#      fallback to an unconfigured agent)
+#
+# `task.py validate <task>` rejects missing cards and malformed ACP fields
+# (provider: acp requires acp_target from the bundled registry — grok-build |
+# codex | claude — or an explicit acp_command override on the card).
+#
+# Card named by `orchestrator.agent` drives the loop; `orchestrator.model`
+# is its model override; `max_parallel` caps parallel tickets (default 1).
+#
+# worker_default: implement
+# orchestrator:
+#   agent: orchestrator
+#   model: claude-opus-4-7
+#   max_parallel: 1
+
+#-------------------------------------------------------------------------------
 # Codex (dispatch behavior)
 #-------------------------------------------------------------------------------
 # Codex-only knob; other platforms ignore it. Default ("auto") dispatches

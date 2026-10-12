@@ -66,6 +66,7 @@ export const commonTrellisConfig = readTemplate(
 );
 export const commonSafeCommit = readTemplate("scripts/common/safe_commit.py");
 export const commonFrontier = readTemplate("scripts/common/frontier.py");
+export const commonRoster = readTemplate("scripts/common/roster.py");
 export const commonVerify = readTemplate("scripts/common/verify.py");
 
 // Python scripts - main
@@ -92,6 +93,8 @@ export const gitattributesTemplate = readTemplate("gitattributes.txt");
 // and refreshed by `trellis update`.
 export const implementAgentTemplate = readTemplate("agents/implement.md");
 export const checkAgentTemplate = readTemplate("agents/check.md");
+export const researchAgentTemplate = readTemplate("agents/research.md");
+export const orchestratorAgentTemplate = readTemplate("agents/orchestrator.md");
 
 // Domain-layer scaffold files (dispatched under `.trellis/domains/`).
 // `.trellis/domains/**` is a user-data zone: `trellis update` seeds these
@@ -150,6 +153,7 @@ export function getAllScripts(): Map<string, string> {
   scripts.set("common/trellis_config.py", commonTrellisConfig);
   scripts.set("common/safe_commit.py", commonSafeCommit);
   scripts.set("common/frontier.py", commonFrontier);
+  scripts.set("common/roster.py", commonRoster);
   scripts.set("common/verify.py", commonVerify);
 
   // Main
@@ -174,6 +178,8 @@ export function getAllAgents(): Map<string, string> {
   const agents = new Map<string, string>();
   agents.set("implement.md", implementAgentTemplate);
   agents.set("check.md", checkAgentTemplate);
+  agents.set("research.md", researchAgentTemplate);
+  agents.set("orchestrator.md", orchestratorAgentTemplate);
   return agents;
 }
 
