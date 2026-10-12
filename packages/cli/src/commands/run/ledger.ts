@@ -16,12 +16,15 @@ import path from "node:path";
 
 export type LedgerAction =
   | "run_start"
+  | "attempt_started"
   | "ticket_start"
   | "worktree"
   | "worker"
   | "verify"
   | "delivery"
   | "archived"
+  | "attempt_finished"
+  | "ticket_result"
   | "blocked"
   | "stop";
 
