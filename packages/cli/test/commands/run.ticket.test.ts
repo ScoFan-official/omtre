@@ -445,6 +445,15 @@ describe("normalizeTicketOptions", () => {
     if (!out.ok) expect(out.error).toMatch(/--worker/);
   });
 
+  it("refuses --until-empty — the loop and the single run are mutually exclusive", () => {
+    const out = normalizeTicketOptions(
+      { ticket: DIR, untilEmpty: true },
+      ROOT,
+    );
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.error).toMatch(/--until-empty/);
+  });
+
   it("refuses an unknown provider", () => {
     const out = normalizeTicketOptions(
       { ticket: DIR, provider: "gemini" },

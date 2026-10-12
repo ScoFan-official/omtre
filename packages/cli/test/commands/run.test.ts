@@ -17,11 +17,12 @@ import {
   normalizeOptions,
   parsePorcelain,
   runLoop,
+  runTicket,
   type FrontierEntry,
   type RunOptions,
   type RunnerPorts,
 } from "../../src/commands/run.js";
-import type { AgentCardInfo } from "../../src/commands/run/dispatch.js";
+import { resolveDispatch, type AgentCardInfo } from "../../src/commands/run/dispatch.js";
 import type { LedgerInput } from "../../src/commands/run/ledger.js";
 import type { WorkerOutcome, WorkerRequest } from "../../src/commands/run/worker.js";
 
@@ -67,8 +68,11 @@ interface Script {
   meta?: Record<string, Record<string, unknown>>;
   /** Agent-card frontmatter slice per name (`null` entry = unreadable card). */
   cards?: Record<string, AgentCardInfo | null>;
-  /** config.yaml `worker_default` value. */
-  workerDefault?: string;
+  /**
+   * config.yaml `worker_default` value. Defaults to `"implement"` (the
+   * harness's default roster); pass `null` to leave it unset.
+   */
+  workerDefault?: string | null;
 }
 
 interface Harness {
@@ -92,7 +96,6 @@ function baseOptions(overrides: Partial<RunOptions> = {}): RunOptions {
     maxTickets: 5,
     untilEmpty: true,
     dryRun: false,
-    provider: "claude",
     workerTimeoutMs: 60000,
     failThreshold: 3,
     ...overrides,
@@ -252,10 +255,13 @@ function harness(script: Script = {}): Harness {
       return script.meta?.[dir] ?? {};
     },
     agentCard(name) {
-      return script.cards?.[name] ?? null;
+      if (script.cards && name in script.cards) return script.cards[name] ?? null;
+      // The default roster: worker_default names the implement card so the
+      // loop's per-ticket dispatch resolution has something to resolve.
+      return name === "implement" ? { provider: "claude" } : null;
     },
     workerDefault() {
-      return script.workerDefault ?? null;
+      return script.workerDefault === undefined ? "implement" : script.workerDefault;
     },
     worktreePath: wtOf,
     worktreeOccupied: (dir) => (script.existingWorktrees ?? []).includes(wtOf(dir)),
@@ -784,6 +790,90 @@ describe("runLoop — the stop lines", () => {
   });
 });
 
+describe("runLoop — per-ticket dispatch (the degenerate thin loop)", () => {
+  it("resolves each ticket's own dispatch through the roster", async () => {
+    // Different tickets name different cards, so different providers run in
+    // one pass — the whole point of the degenerate loop.
+    const h = harness({
+      ready: [{ dir: "01-01-alpha" }, { dir: "01-02-beta" }],
+      meta: {
+        "01-01-alpha": { worker: "implement" },
+        "01-02-beta": { worker: "check", model: "fast" },
+      },
+      cards: {
+        implement: { provider: "claude", model: "m1" },
+        check: { provider: "codex" },
+      },
+    });
+    const result = await runLoop(baseOptions(), h.ports);
+
+    expect(result.archived).toBe(2);
+    expect(h.workerRequests[0]).toMatchObject({
+      ticket: "01-01-alpha",
+      provider: "claude",
+      agent: "implement",
+      model: "m1",
+    });
+    expect(h.workerRequests[1]).toMatchObject({
+      ticket: "01-02-beta",
+      provider: "codex",
+      agent: "check",
+      model: "fast",
+    });
+  });
+
+  it("runs a ticket identically under --until-empty and --ticket", async () => {
+    const loopH = harness({ ready: [{ dir: "01-01-alpha", priority: "P0" }] });
+    await runLoop(baseOptions(), loopH.ports);
+
+    const ticketH = harness({ ready: [{ dir: "01-01-alpha", priority: "P0" }] });
+    const resolved = resolveDispatch("01-01-alpha", {}, ticketH.ports);
+    expect(resolved.ok).toBe(true);
+    const { result } = resolved.ok
+      ? await runTicket("01-01-alpha", resolved.dispatch, ticketH.ports, {
+          workerTimeoutMs: baseOptions().workerTimeoutMs,
+        })
+      : { result: null };
+    expect(result).not.toBeNull();
+
+    // The loop's ticket_result row must equal ticket mode's — an
+    // orchestrator cannot tell which entry point produced it.
+    const row = loopH.ledger.find((l) => l.action === "ticket_result");
+    expect(JSON.parse(row?.detail ?? "")).toEqual(result);
+    expect(loopH.workerRequests).toEqual(ticketH.workerRequests);
+  });
+
+  it("refuses a ticket with no roster entry — fail closed, no attempt, marked at threshold", async () => {
+    // No meta.worker, no card, no worker_default: the same fail-closed
+    // refusal ticket mode gives, then the loop's ordinary stop accounting.
+    const h = harness({ ready: [{ dir: "01-01-alpha" }], workerDefault: null });
+    const result = await runLoop(baseOptions(), h.ports);
+
+    // Nothing ran: no worktree, no worker spawn, no attempt pair.
+    expect(h.worktreeAdds).toBe(0);
+    expect(h.workerRequests).toEqual([]);
+    expect(h.ledger.some((l) => l.action === "attempt_started")).toBe(false);
+
+    // One refusal row per round, in the same shape ticket mode writes.
+    const rows = h.ledger.filter((l) => l.action === "ticket_result");
+    expect(rows).toHaveLength(3);
+    expect(rows.every((r) => r.reason === "failed:dispatch_refused")).toBe(true);
+    expect(JSON.parse(rows[0]?.detail ?? "")).toMatchObject({
+      dir: "01-01-alpha",
+      outcome: "failed",
+      code: "dispatch_refused",
+      strikes: 0,
+    });
+
+    // The loop's own accounting treats it as a failure like any other — the
+    // strike budget reaches the threshold and the durable mark stays task.py's.
+    expect(result.stopped).toBe("fail_threshold");
+    expect(result.failed).toBe(3);
+    const marked = h.taskCalls.find((c) => c.args[0] === "set-meta");
+    expect(marked?.args).toEqual(["set-meta", "01-01-alpha", "triage", "ready-for-human"]);
+  });
+});
+
 describe("parsePorcelain — the fallback commit's input", () => {
   it("reads modified, untracked and renamed paths", () => {
     expect(
@@ -800,27 +890,32 @@ describe("parsePorcelain — the fallback commit's input", () => {
   // a second copy of that list in TS is exactly the drift this removes.
 });
 
-describe("normalizeOptions — the CLI surface refuses ambiguity", () => {
-  it("requires a named worker", () => {
+describe("normalizeOptions — the loop's dispatch comes from the roster, not flags", () => {
+  it("needs no worker flag — each ticket's roster resolves the dispatch", () => {
     const out = normalizeOptions({ dryRun: true }, ROOT);
-    expect(out.ok).toBe(false);
-    if (!out.ok) expect(out.error).toMatch(/needs --provider/);
-  });
-
-  it("rejects a provider with no adapter", () => {
-    const out = normalizeOptions({ provider: "gemini" }, ROOT);
-    expect(out.ok).toBe(false);
-    if (!out.ok) expect(out.error).toMatch(/unknown --provider/);
-  });
-
-  it("accepts an agent definition in place of a provider", () => {
-    const out = normalizeOptions({ agent: "reviewer" }, ROOT);
     expect(out.ok).toBe(true);
-    if (out.ok) expect(out.options.agent).toBe("reviewer");
+  });
+
+  it("refuses run-level dispatch flags the way ticket mode refuses --agent", () => {
+    // A flag that forced (or silently ignored) one dispatch for the whole run
+    // would be a second source of truth next to the per-ticket roster — the
+    // same class of ambiguity the `--agent` refusal kills in ticket mode.
+    const cases: { raw: Record<string, unknown>; pattern: RegExp }[] = [
+      { raw: { worker: "implement" }, pattern: /--worker is only valid with --ticket/ },
+      { raw: { agent: "implement" }, pattern: /--agent is not valid/ },
+      { raw: { provider: "claude" }, pattern: /--provider is not valid/ },
+      { raw: { provider: "gemini" }, pattern: /--provider is not valid/ },
+      { raw: { model: "m" }, pattern: /--model is not valid/ },
+    ];
+    for (const { raw, pattern } of cases) {
+      const out = normalizeOptions(raw, ROOT);
+      expect(out.ok).toBe(false);
+      if (!out.ok) expect(out.error).toMatch(pattern);
+    }
   });
 
   it("defaults the thresholds the contract names", () => {
-    const out = normalizeOptions({ provider: "claude" }, ROOT);
+    const out = normalizeOptions({}, ROOT);
     expect(out.ok).toBe(true);
     if (out.ok) {
       expect(out.options.maxTickets).toBe(5);
@@ -829,17 +924,17 @@ describe("normalizeOptions — the CLI surface refuses ambiguity", () => {
   });
 
   it("refuses a non-positive count instead of looping forever", () => {
-    for (const raw of [{ provider: "claude", maxTickets: "0" }, { provider: "claude", maxTickets: "-2" }]) {
+    for (const raw of [{ maxTickets: "0" }, { maxTickets: "-2" }]) {
       const out = normalizeOptions(raw, ROOT);
       expect(out.ok).toBe(false);
       if (!out.ok) expect(out.error).toMatch(/--max-tickets/);
     }
-    const failures = normalizeOptions({ provider: "claude", maxFailures: "x" }, ROOT);
+    const failures = normalizeOptions({ maxFailures: "x" }, ROOT);
     expect(failures.ok).toBe(false);
   });
 
   it("parses durations and board filters", () => {
-    const out = normalizeOptions({ provider: "claude", board: "deap", timeout: "20m" }, ROOT);
+    const out = normalizeOptions({ board: "deap", timeout: "20m" }, ROOT);
     expect(out.ok).toBe(true);
     if (out.ok) {
       expect(out.options.board).toBe("deap");
@@ -850,13 +945,37 @@ describe("normalizeOptions — the CLI surface refuses ambiguity", () => {
   it("ignores a leftover --allow-push instead of keeping a second source of truth", () => {
     // Delivery is config (CLAI-8). Honouring a flag here would let an operator
     // outvote the protected-position rule, which is the whole point of the gate.
-    const out = normalizeOptions({ provider: "claude", allowPush: "main" }, ROOT);
+    const out = normalizeOptions({ allowPush: "main" }, ROOT);
     expect(out.ok).toBe(true);
     expect(JSON.stringify(out.ok ? out.options : {})).not.toMatch(/allowPush/);
   });
 });
 
 describe("runLoop — dry run", () => {
+  it("names the worker the head's own roster resolves", async () => {
+    const h = harness({
+      ready: [{ dir: "01-01-alpha" }],
+      meta: { "01-01-alpha": { worker: "check" } },
+      cards: { check: { provider: "codex", model: "m2" } },
+    });
+    await runLoop(baseOptions({ dryRun: true }), h.ports);
+
+    const printed = h.logs.find((line) => line.startsWith("{"));
+    expect(printed).toContain("worker:check:m2");
+    expect(printed).toContain('"provider": "codex"');
+    expect(h.worktreeAdds).toBe(0);
+  });
+
+  it("reports the dispatch refusal when the head's roster resolves nothing", async () => {
+    const h = harness({ ready: [{ dir: "01-01-alpha" }], workerDefault: null });
+    await runLoop(baseOptions({ dryRun: true }), h.ports);
+
+    const printed = h.logs.find((line) => line.startsWith("{"));
+    expect(printed).toContain("dispatch_error");
+    expect(printed).toContain("dispatch_refused");
+    expect(h.worktreeAdds).toBe(0);
+  });
+
   it("names the head and mutates nothing", async () => {
     const h = harness({ ready: [{ dir: "01-01-alpha", priority: "P0" }] });
     const result = await runLoop(baseOptions({ dryRun: true }), h.ports);
