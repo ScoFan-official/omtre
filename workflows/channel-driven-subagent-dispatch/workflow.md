@@ -1,5 +1,7 @@
 # Channel-Driven Sub-Agent Dispatch Workflow
 
+User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).
+
 ---
 
 ## Core Principles
