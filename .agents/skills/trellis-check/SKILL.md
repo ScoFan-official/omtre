@@ -40,6 +40,8 @@ Read the specific guideline files referenced — the index is a pointer, not the
 
 Run the project's lint, type-check, and test commands. Fix any failures before proceeding.
 
+Also run `python ./.trellis/scripts/voice_lint.py --changed` — STC/STE prose lint on files changed in this task. Blocking findings must be fixed before the check can pass.
+
 ## Step 4: Review Against Checklist
 
 ### Code Quality
