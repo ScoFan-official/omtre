@@ -35,12 +35,12 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 | 票 | 标题 | 类型 | `blocked_by` | 状态 |
 |---|---|---|---|---|
 | [10-19-rename-constants-and-pkg](../archive/2026-10/10-19-rename-constants-and-pkg) | 改名施工 1：集中常量、包名与二进制入口收拢 | task | — | done |
-| [10-19-rename-ts-core-and-cli](../10-19-rename-ts-core-and-cli) | 改名施工 2：TS 核心库与 CLI 命令、工具层改名 | task | `10-19-rename-constants-and-pkg` | ready |
+| [10-19-rename-ts-core-and-cli](../archive/2026-10/10-19-rename-ts-core-and-cli) | 改名施工 2：TS 核心库与 CLI 命令、工具层改名 | task | `10-19-rename-constants-and-pkg` | done |
 | [10-19-rename-python-runtime-scripts](../10-19-rename-python-runtime-scripts) | 改名施工 3：Python 工作流脚本与核心骨架模板改名 | task | `10-19-rename-constants-and-pkg` | ready |
 | [10-19-rename-templates-common-and-hooks](../10-19-rename-templates-common-and-hooks) | 改名施工 4：公共命令/技能模板（common）与 shared-hooks 改名 | task | `10-19-rename-constants-and-pkg` | ready |
 | [10-19-rename-configurators-and-platforms](../10-19-rename-configurators-and-platforms) | 改名施工 5：全平台 Configurators 与 20 个平台专属模板改名 | task | `10-19-rename-constants-and-pkg`, `10-19-rename-python-runtime-scripts`, `10-19-rename-templates-common-and-hooks` | blocked |
 | [10-19-rename-test-suite-and-regression](../10-19-rename-test-suite-and-regression) | 改名施工 6：测试套件收尾与 regression.test.ts 迁移 | task | `10-19-rename-ts-core-and-cli`, `10-19-rename-python-runtime-scripts`, `10-19-rename-templates-common-and-hooks`, `10-19-rename-configurators-and-platforms` | blocked |
-| [10-19-rename-skills-marketplace-docs](../10-19-rename-skills-marketplace-docs) | 改名施工 7：技能包（skills/）、marketplace/、CI 与文档改名 | task | `10-19-rename-constants-and-pkg` | ready |
+| [10-19-rename-skills-marketplace-docs](../archive/2026-10/10-19-rename-skills-marketplace-docs) | 改名施工 7：技能包（skills/）、marketplace/、CI 与文档改名 | task | `10-19-rename-constants-and-pkg` | done |
 | [10-19-rename-residual-gate](../10-19-rename-residual-gate) | 改名施工 8：全仓旧名残留检查脚本与 CI 门禁 | task | `10-19-rename-test-suite-and-regression`, `10-19-rename-skills-marketplace-docs` | blocked |
 
 ## Not yet specified
