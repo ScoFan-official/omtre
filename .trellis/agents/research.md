@@ -3,6 +3,8 @@ name: research
 description: |
   Code and tech search expert. Finds patterns, specs, and tech solutions. Populates task JSONL context files.
 provider: claude
+effort: high
+labels: [trellis, research]
 ---
 
 # Research Agent

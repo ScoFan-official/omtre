@@ -113,6 +113,17 @@ channel:
   # auto_trust_trellis_symlinks: false
 
 #-------------------------------------------------------------------------------
+# Dispatch roster (multi-agent orchestration)
+#-------------------------------------------------------------------------------
+# The unattended runner picks workers by AGENT CARD NAME (files under
+# .trellis/agents/), never by ad-hoc provider strings.
+worker_default: implement
+orchestrator:
+  agent: orchestrator
+  model: default
+  max_parallel: 2
+
+#-------------------------------------------------------------------------------
 # Codex (dispatch behavior)
 #-------------------------------------------------------------------------------
 # Codex-only knob; other platforms ignore it. Default ("auto") dispatches
