@@ -1,7 +1,7 @@
 # omtre migrate 合约：转换范围、幂等、dry-run、回滚与保护
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: .trellis/tasks/10-19-rename-rules
 Map: .trellis/tasks/10-19-omtre-standalone/map.md
 
