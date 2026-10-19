@@ -1,8 +1,8 @@
 /**
- * External, versioned recovery storage for reversible full Trellis ablation.
+ * External, versioned recovery storage for reversible full Omtre ablation.
  *
  * The store intentionally contains only manifest-owned project paths and the
- * exact `.trellis/` tree. User-authored task/spec/workspace files may contain
+ * exact `.omtre/` tree. User-authored task/spec/workspace files may contain
  * sensitive text, so the state root is private and retained only until a
  * verified restore. Unrelated application files and global host state are
  * never copied.
@@ -14,6 +14,7 @@ import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 
+import { HOME_DIR_NAME } from "../constants/paths.js";
 import { VERSION } from "../constants/version.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import {
@@ -23,8 +24,8 @@ import {
 } from "./managed-removal.js";
 
 export const ABLATION_SCHEMA_VERSION = 1;
-export const FULL_ABLATION_CAPABILITY = "trellis.full" as const;
-export const ABLATION_STATE_ROOT_ENV = "TRELLIS_ABLATION_STATE_ROOT";
+export const FULL_ABLATION_CAPABILITY = "omtre.full" as const;
+export const ABLATION_STATE_ROOT_ENV = "OMTRE_ABLATION_STATE_ROOT";
 
 export type AblationStatus = "preparing" | "applied" | "restoring" | "conflict";
 
@@ -69,7 +70,7 @@ export interface AblationStateV1 {
   status: AblationStatus;
   projectRoot: string;
   projectKey: string;
-  trellisVersion: string;
+  omtreVersion: string;
   capabilities: [typeof FULL_ABLATION_CAPABILITY];
   createdAt: string;
   configuredPlatforms: string[];
@@ -120,7 +121,7 @@ export class AblationConflictError extends Error {
 
   public constructor(conflicts: AblationConflict[]) {
     super(
-      `Restore refused because ${conflicts.length} Trellis-managed path(s) changed while ablated.`,
+      `Restore refused because ${conflicts.length} Omtre-managed path(s) changed while ablated.`,
     );
     this.name = "AblationConflictError";
     this.conflicts = conflicts;
@@ -168,7 +169,7 @@ const ablationStateSchema = z
     status: z.enum(["preparing", "applied", "restoring", "conflict"]),
     projectRoot: z.string().min(1),
     projectKey: z.string().regex(/^[a-f0-9]{64}$/),
-    trellisVersion: z.string().min(1),
+    omtreVersion: z.string().min(1),
     capabilities: z.tuple([z.literal(FULL_ABLATION_CAPABILITY)]),
     createdAt: z.iso.datetime(),
     configuredPlatforms: z.array(z.string()),
@@ -287,7 +288,7 @@ export function getAblationStateRoot(): string {
   if (override && override.trim().length > 0) {
     return path.resolve(override);
   }
-  return path.join(os.homedir(), ".trellis", "ablations", "v1");
+  return path.join(os.homedir(), HOME_DIR_NAME, "ablations", "v1");
 }
 
 export function getTransactionPaths(
@@ -484,7 +485,7 @@ export function stageAblationTransaction(
     status: "preparing",
     projectRoot,
     projectKey: projectKey(projectRoot),
-    trellisVersion: VERSION,
+    omtreVersion: VERSION,
     capabilities: [FULL_ABLATION_CAPABILITY],
     createdAt: new Date().toISOString(),
     configuredPlatforms: [...input.configuredPlatforms],
@@ -504,7 +505,7 @@ export function stageAblationTransaction(
   }
   if (lstatIfPresent(paths.transactionDir)) {
     throw new Error(
-      "An ablation transaction already exists for this project. Run `trellis restore` first.",
+      "An ablation transaction already exists for this project. Run `omtre restore` first.",
     );
   }
   ensurePrivateDirectory(paths.stateRoot);
@@ -635,7 +636,7 @@ function acquireProjectLock(paths: TransactionPaths): void {
     }
     if (holderPid && pidAlive(holderPid)) {
       throw new Error(
-        `Another Trellis ablation operation is already in progress for this project (pid ${holderPid}).`,
+        `Another Omtre ablation operation is already in progress for this project (pid ${holderPid}).`,
       );
     }
     try {
@@ -645,7 +646,7 @@ function acquireProjectLock(paths: TransactionPaths): void {
     }
   }
   throw new Error(
-    "Unable to acquire the Trellis ablation-operation lock; retry the command.",
+    "Unable to acquire the Omtre ablation-operation lock; retry the command.",
   );
 }
 

@@ -188,7 +188,7 @@ describe("compareOhmyVersions: oh-my builds vs upstream base", () => {
 
   it("ranks -ohmy.0 above the bare base (no absent/zero collision)", () => {
     // The 0.6.18-ohmy.0 release: with `absent = 0` the comparator called this
-    // equal to bare `0.6.18`, so `trellis update` skipped re-stamping
+    // equal to bare `0.6.18`, so `omtre update` skipped re-stamping
     // `.version` ("already up to date").
     expect(compareOhmyVersions("0.6.18-ohmy.0", "0.6.18")).toBe(1);
     expect(compareOhmyVersions("0.6.18", "0.6.18-ohmy.0")).toBe(-1);

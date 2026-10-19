@@ -39,7 +39,7 @@ describe("resolveCheckAxisCard", () => {
 
   it("falls back to `check` when no specialized card exists", () => {
     withAgents(
-      { ".trellis/agents/check.md": CARD("check") },
+      { ".omtre/agents/check.md": CARD("check") },
       (cwd) => {
         expect(resolveCheckAxisCard("standards", cwd)).toBe("check");
         expect(resolveCheckAxisCard("spec", cwd)).toBe("check");
@@ -50,9 +50,9 @@ describe("resolveCheckAxisCard", () => {
   it("prefers check.standards / check.spec sub-cards when they exist", () => {
     withAgents(
       {
-        ".trellis/agents/check.md": CARD("check"),
-        ".trellis/agents/check.standards.md": CARD("check.standards"),
-        ".trellis/agents/check.spec.md": CARD("check.spec"),
+        ".omtre/agents/check.md": CARD("check"),
+        ".omtre/agents/check.standards.md": CARD("check.standards"),
+        ".omtre/agents/check.spec.md": CARD("check.spec"),
       },
       (cwd) => {
         expect(resolveCheckAxisCard("standards", cwd)).toBe("check.standards");
@@ -64,8 +64,8 @@ describe("resolveCheckAxisCard", () => {
   it("falls back per axis — a missing spec card does not block the standards card", () => {
     withAgents(
       {
-        ".trellis/agents/check.md": CARD("check"),
-        ".trellis/agents/check.standards.md": CARD("check.standards"),
+        ".omtre/agents/check.md": CARD("check"),
+        ".omtre/agents/check.standards.md": CARD("check.standards"),
       },
       (cwd) => {
         expect(resolveCheckAxisCard("standards", cwd)).toBe("check.standards");
@@ -77,7 +77,7 @@ describe("resolveCheckAxisCard", () => {
   it("accepts the <name>/AGENT.md directory layout for sub-cards", () => {
     withAgents(
       {
-        ".trellis/agents/check.spec/AGENT.md": CARD("check.spec"),
+        ".omtre/agents/check.spec/AGENT.md": CARD("check.spec"),
       },
       (cwd) => {
         expect(resolveCheckAxisCard("spec", cwd)).toBe("check.spec");
@@ -101,7 +101,7 @@ describe("loadAgent line endings", () => {
       path.join(fs.realpathSync(os.tmpdir()), "crlf-card-"),
     );
     try {
-      const p = path.join(tmp, ".trellis", "agents", "worker.md");
+      const p = path.join(tmp, ".omtre", "agents", "worker.md");
       fs.mkdirSync(path.dirname(p), { recursive: true });
       fs.writeFileSync(p, content);
       fn(tmp);

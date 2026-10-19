@@ -24,7 +24,7 @@ describe("downloadWithStrategy temp-dir cleanup", () => {
   let destDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-fetch-clean-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-fetch-clean-"));
     destDir = path.join(tmpDir, "dest");
     fs.mkdirSync(destDir, { recursive: true });
     fs.writeFileSync(path.join(destDir, "old.md"), "old content");
@@ -38,7 +38,7 @@ describe("downloadWithStrategy temp-dir cleanup", () => {
   function failTempDirCleanup(): void {
     const realRm = fs.promises.rm.bind(fs.promises);
     vi.spyOn(fs.promises, "rm").mockImplementation(async (p, opts) => {
-      if (String(p).includes("trellis-template-")) {
+      if (String(p).includes("omtre-template-")) {
         throw Object.assign(new Error("EBUSY: resource busy"), {
           code: "EBUSY",
         });

@@ -11,7 +11,7 @@ describe("inferTaskPhase", () => {
     expect(inferTaskPhase("done")).toBe("completed");
   });
 
-  it("accepts a TrellisTaskRecord and reads status", () => {
+  it("accepts an OmtreTaskRecord and reads status", () => {
     expect(inferTaskPhase(emptyTaskRecord())).toBe("plan");
     expect(
       inferTaskPhase(emptyTaskRecord({ status: "in_progress" })),

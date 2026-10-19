@@ -1,12 +1,12 @@
 /**
- * `trellis workflow` command — list and switch the active `.trellis/workflow.md`.
+ * `omtre workflow` command — list and switch the active `.omtre/workflow.md`.
  *
  * Behavior contracts:
  *
  * - Hash boundary: after writing managed bundled (`oh-my`) content, refresh
- *   the `.trellis/workflow.md` entry in `.template-hashes.json`. After writing
+ *   the `.omtre/workflow.md` entry in `.template-hashes.json`. After writing
  *   any non-managed content (including `native`), remove that entry. This
- *   prevents `trellis update` from silently restoring bundled bytes over a
+ *   prevents `omtre update` from silently restoring bundled bytes over a
  *   user-selected variant (see design.md "Durable-state contract").
  *
  * - Modified-file protection: if the on-disk workflow has been edited (hash
@@ -14,8 +14,8 @@
  *   interactive runs prompt; non-interactive runs fail unless `--force` or
  *   `--create-new` was passed.
  *
- * - `--create-new`: never touches `.trellis/workflow.md`; writes
- *   `.trellis/workflow.md.new` and leaves the hash file alone.
+ * - `--create-new`: never touches `.omtre/workflow.md`; writes
+ *   `.omtre/workflow.md.new` and leaves the hash file alone.
  */
 
 import fs from "node:fs";
@@ -127,11 +127,11 @@ async function confirmOverwriteInteractively(): Promise<
       type: "list",
       name: "action",
       message:
-        "Your .trellis/workflow.md has local edits. What do you want to do?",
+        "Your .omtre/workflow.md has local edits. What do you want to do?",
       choices: [
         { name: "Overwrite (replace local edits)", value: "overwrite" },
         {
-          name: "Write to .trellis/workflow.md.new and keep current",
+          name: "Write to .omtre/workflow.md.new and keep current",
           value: "create-new",
         },
         { name: "Skip (no changes)", value: "skip" },
@@ -144,7 +144,7 @@ async function confirmOverwriteInteractively(): Promise<
 function applyHashContract(cwd: string, templateId: string): void {
   const relPath = PATHS.WORKFLOW_GUIDE_FILE;
   // [oh-my] `oh-my` is the managed bundled workflow in this fork (the role
-  // `native` plays upstream): its hash stays tracked so `trellis update`
+  // `native` plays upstream): its hash stays tracked so `omtre update`
   // refreshes it. `native` and marketplace ids are user-managed.
   if (templateId === OH_MY_WORKFLOW_ID) {
     const filePath = workflowFilePath(cwd);
@@ -154,7 +154,7 @@ function applyHashContract(cwd: string, templateId: string): void {
     updateHashes(cwd, files);
   } else {
     // Non-managed workflow is user-managed local content. Drop the hash entry
-    // so `trellis update` treats it as modified and does not silently restore
+    // so `omtre update` treats it as modified and does not silently restore
     // bundled bytes.
     removeHash(cwd, relPath);
   }
@@ -247,7 +247,7 @@ export async function runWorkflowCommand(
   const cwd = process.cwd();
   if (!fs.existsSync(path.join(cwd, DIR_NAMES.WORKFLOW))) {
     throw new WorkflowCommandError(
-      "No .trellis/ directory found. Run `trellis init` first.",
+      "No .omtre/ directory found. Run `omtre init` first.",
     );
   }
 
@@ -300,8 +300,8 @@ export async function runWorkflowCommand(
   await writeWorkflow(cwd, template, options);
 
   // Best-effort warning: if the resolved workflow references
-  // `.trellis/agents/<name>.md` files that don't exist on disk, point the user
-  // at `trellis update` so `trellis channel spawn --agent <name>` doesn't fail
+  // `.omtre/agents/<name>.md` files that don't exist on disk, point the user
+  // at `omtre update` so `omtre channel spawn --agent <name>` doesn't fail
   // mid-session. Non-blocking; never errors a successful write.
   warnAboutMissingAgents(cwd, template.content);
 }
@@ -311,10 +311,10 @@ function warnAboutMissingAgents(cwd: string, workflowContent: string): void {
   if (missing.length === 0) return;
   process.stderr.write(
     chalk.yellow(
-      `\n⚠ The selected workflow references .trellis/agents/{${missing.join(",")}}.md, but those files are not on disk.\n`,
+      `\n⚠ The selected workflow references .omtre/agents/{${missing.join(",")}}.md, but those files are not on disk.\n`,
     ) +
       chalk.yellow(
-        `  Run \`trellis update\` to backfill the bundled agent definitions, or create them under ${PATHS.AGENTS}/.\n`,
+        `  Run \`omtre update\` to backfill the bundled agent definitions, or create them under ${PATHS.AGENTS}/.\n`,
       ),
   );
 }

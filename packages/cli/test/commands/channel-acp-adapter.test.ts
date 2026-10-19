@@ -21,7 +21,7 @@ import {
   type AcpCtx,
 } from "../../src/commands/channel/adapters/acp.js";
 import { getAdapter, isProvider, listProviders } from "../../src/commands/channel/adapters/index.js";
-import { commonRoster } from "../../src/templates/trellis/index.js";
+import { commonRoster } from "../../src/templates/extract.js";
 
 function parse(
   line: Record<string, unknown> | string,
@@ -156,7 +156,7 @@ describe("ACP target registry", () => {
 
   it("roster.py KNOWN_ACP_TARGETS stays in sync with the shipped registry", () => {
     // `task.py validate` cannot reach this registry at user runtime — it
-    // embeds the id list in templates/trellis/scripts/common/roster.py. A
+    // embeds the id list in templates/omtre/scripts/common/roster.py. A
     // registry row added here without the Python mirror means validate
     // wrongly rejects a target the runtime would happily spawn.
     const match = /KNOWN_ACP_TARGETS\s*=\s*\(([^)]*)\)/.exec(commonRoster);
@@ -905,7 +905,7 @@ describe("ACP agent card fields", () => {
   it("loadAgent validates provider via the registry and exposes acp_* raw fields", () => {
     const tmp = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "acp-agent-"));
     try {
-      const agentsDir = path.join(tmp, ".trellis", "agents");
+      const agentsDir = path.join(tmp, ".omtre", "agents");
       fs.mkdirSync(agentsDir, { recursive: true });
       fs.writeFileSync(
         path.join(agentsDir, "acp-grok-build.md"),
@@ -935,7 +935,7 @@ describe("ACP agent card fields", () => {
   it("loadAgent still accepts claude/codex and rejects unknown providers", () => {
     const tmp = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "acp-agent-"));
     try {
-      const agentsDir = path.join(tmp, ".trellis", "agents");
+      const agentsDir = path.join(tmp, ".omtre", "agents");
       fs.mkdirSync(agentsDir, { recursive: true });
       for (const [name, provider] of [
         ["ok-claude", "claude"],

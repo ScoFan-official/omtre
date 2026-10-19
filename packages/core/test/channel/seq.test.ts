@@ -35,7 +35,7 @@ describe("appendEvent + .seq sidecar", () => {
       seqSidecarPath("ch1", "_global"),
       "utf-8",
     ).catch(async () =>
-      fsp.readFile(seqSidecarPath("ch1", process.env.TRELLIS_CHANNEL_PROJECT ?? "_global"), "utf-8"),
+      fsp.readFile(seqSidecarPath("ch1", process.env.OMTRE_CHANNEL_PROJECT ?? "_global"), "utf-8"),
     );
     expect(sidecar.trim()).toBe("2");
   });
@@ -62,7 +62,7 @@ describe("appendEvent + .seq sidecar", () => {
     await sendMessage({ channel: "lazy", by: "main", text: "one" });
     await sendMessage({ channel: "lazy", by: "main", text: "two" });
     // Delete the sidecar to simulate a pre-sidecar channel.
-    const projectKey = process.env.TRELLIS_CHANNEL_PROJECT ?? "";
+    const projectKey = process.env.OMTRE_CHANNEL_PROJECT ?? "";
     const sidecar = seqSidecarPath("lazy", projectKey);
     fs.unlinkSync(sidecar);
     await sendMessage({ channel: "lazy", by: "main", text: "three" });
@@ -75,7 +75,7 @@ describe("appendEvent + .seq sidecar", () => {
   it("rebuilds sidecar when corrupted", async () => {
     await createChannel({ channel: "corrupt", by: "main" });
     await sendMessage({ channel: "corrupt", by: "main", text: "one" });
-    const projectKey = process.env.TRELLIS_CHANNEL_PROJECT ?? "";
+    const projectKey = process.env.OMTRE_CHANNEL_PROJECT ?? "";
     const sidecar = seqSidecarPath("corrupt", projectKey);
     fs.writeFileSync(sidecar, "not-a-number\n");
     await sendMessage({ channel: "corrupt", by: "main", text: "two" });
@@ -88,7 +88,7 @@ describe("appendEvent + .seq sidecar", () => {
     await createChannel({ channel: "behind", by: "main" });
     await sendMessage({ channel: "behind", by: "main", text: "one" });
     await sendMessage({ channel: "behind", by: "main", text: "two" });
-    const projectKey = process.env.TRELLIS_CHANNEL_PROJECT ?? "";
+    const projectKey = process.env.OMTRE_CHANNEL_PROJECT ?? "";
     const sidecar = seqSidecarPath("behind", projectKey);
     fs.writeFileSync(sidecar, "1\n");
     await sendMessage({ channel: "behind", by: "main", text: "three" });
@@ -100,7 +100,7 @@ describe("appendEvent + .seq sidecar", () => {
   it("repairs sidecar ahead of JSONL tail without seq gap", async () => {
     await createChannel({ channel: "ahead", by: "main" });
     await sendMessage({ channel: "ahead", by: "main", text: "one" });
-    const projectKey = process.env.TRELLIS_CHANNEL_PROJECT ?? "";
+    const projectKey = process.env.OMTRE_CHANNEL_PROJECT ?? "";
     const sidecar = seqSidecarPath("ahead", projectKey);
     fs.writeFileSync(sidecar, "99\n");
     await sendMessage({ channel: "ahead", by: "main", text: "two" });
@@ -116,7 +116,7 @@ describe("appendEvent + .seq sidecar", () => {
     await sendMessage({ channel: "torn", by: "main", text: "one" });
     const file = eventsPath(
       "torn",
-      process.env.TRELLIS_CHANNEL_PROJECT ?? "",
+      process.env.OMTRE_CHANNEL_PROJECT ?? "",
     );
     const prefix = fs.readFileSync(file);
     fs.appendFileSync(file, '{"seq":99,"kind":"progress","by":"w","text":"cut');
@@ -134,7 +134,7 @@ describe("appendEvent + .seq sidecar", () => {
     await sendMessage({ channel: "utf8-torn", by: "main", text: "one" });
     const file = eventsPath(
       "utf8-torn",
-      process.env.TRELLIS_CHANNEL_PROJECT ?? "",
+      process.env.OMTRE_CHANNEL_PROJECT ?? "",
     );
     const prefix = fs.readFileSync(file);
     // Incomplete UTF-8 for U+4E2D (中): first two bytes only.
@@ -175,7 +175,7 @@ describe("appendEvent + .seq sidecar", () => {
     // size > tail size used by seq.ts (4096B) to make the intent obvious.
     const file = eventsPath(
       "no-fullscan",
-      process.env.TRELLIS_CHANNEL_PROJECT ?? "",
+      process.env.OMTRE_CHANNEL_PROJECT ?? "",
     );
     expect(fs.statSync(file).size).toBeGreaterThan(4096);
   });

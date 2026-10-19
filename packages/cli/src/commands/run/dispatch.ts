@@ -1,5 +1,5 @@
 /**
- * Dispatch resolution for the single-ticket runner (`trellis run --ticket`).
+ * Dispatch resolution for the single-ticket runner (`omtre run --ticket`).
  *
  * A ticket does not name a provider/model inline — it names an agent CARD
  * (`task.json meta.worker`), and the card's frontmatter carries the triple
@@ -21,15 +21,12 @@ import {
   listProviders,
   type Provider,
 } from "../channel/adapters/index.js";
-import {
-  parseWorkerDefaultKey,
-  readWorkerDefault,
-} from "./orchestrator.js";
+import { parseWorkerDefaultKey, readWorkerDefault } from "./orchestrator.js";
 
 /** The dispatch triple the runner hands to one attempt. */
 export interface TicketDispatch {
   provider?: Provider;
-  /** Agent card name — `.trellis/agents/<agent>.md`. */
+  /** Agent card name — `.omtre/agents/<agent>.md`. */
   agent?: string;
   model?: string;
   /**
@@ -54,7 +51,7 @@ export interface DispatchPorts {
   taskMeta(dir: string): Record<string, unknown>;
   /** Card frontmatter slice; `null` when the card is missing or unreadable. */
   agentCard(name: string): AgentCardInfo | null;
-  /** `.trellis/config.yaml` `worker_default`; `null` when unset. */
+  /** `.omtre/config.yaml` `worker_default`; `null` when unset. */
   workerDefault(): string | null;
 }
 
@@ -109,8 +106,8 @@ export function resolveDispatch(
       partial,
       error:
         `cannot resolve a worker for ${dir}: task.json meta.worker is unset and ` +
-        `.trellis/config.yaml has no worker_default — fix: \`task.py set-meta ${dir} ` +
-        `worker <card>\`, set \`worker_default: <card>\` in .trellis/config.yaml, ` +
+        `.omtre/config.yaml has no worker_default — fix: \`task.py set-meta ${dir} ` +
+        `worker <card>\`, set \`worker_default: <card>\` in .omtre/config.yaml, ` +
         `or pass --worker <card>`,
     };
   }
@@ -123,7 +120,7 @@ export function resolveDispatch(
       partial,
       error:
         `dispatch card '${worker}' not found — expected ` +
-        `.trellis/agents/${worker}.md committed so the ticket worktree can read ` +
+        `.omtre/agents/${worker}.md committed so the ticket worktree can read ` +
         `it — fix: create the card, or point meta.worker / worker_default / ` +
         `--worker at an existing one`,
     };
@@ -137,7 +134,7 @@ export function resolveDispatch(
       error:
         `card '${worker}' has no provider frontmatter and --provider was not ` +
         `passed — fix: add \`provider: <${listProviders().join("|")}>\` to ` +
-        `.trellis/agents/${worker}.md or pass --provider`,
+        `.omtre/agents/${worker}.md or pass --provider`,
     };
   }
   if (!isProvider(provider)) {
@@ -163,9 +160,9 @@ export function resolveDispatch(
 }
 
 /**
- * Read `.trellis/config.yaml` `worker_default:` — the roster fallback card
+ * Read `.omtre/config.yaml` `worker_default:` — the roster fallback card
  * name. Delegates to orchestrator.ts so the whole stack scans this key with
- * one dialect (trellis_config.py-faithful comment/quote rules).
+ * one dialect (omtre_config.py-faithful comment/quote rules).
  */
 export function loadWorkerDefault(cwd: string): string | null {
   return readWorkerDefault(cwd) ?? null;

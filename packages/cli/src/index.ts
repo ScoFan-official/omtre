@@ -1,5 +1,5 @@
 /**
- * Trellis - AI-assisted development workflow framework
+ * Omtre - AI-assisted development workflow framework
  *
  * Based on Anthropic's "Effective Harnesses for Long-Running Agents"
  * https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
@@ -25,4 +25,9 @@ export {
   type DispatchPorts,
   type TicketDispatch,
 } from "./commands/run/dispatch.js";
-export { openLedger, type Ledger, type LedgerInput, type LedgerLine } from "./commands/run/ledger.js";
+export {
+  openLedger,
+  type Ledger,
+  type LedgerInput,
+  type LedgerLine,
+} from "./commands/run/ledger.js";

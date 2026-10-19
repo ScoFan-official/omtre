@@ -1,7 +1,7 @@
 /**
  * Integration tests for the uninstall uncommitted-data guard (audit 🔴-7).
  *
- * `trellis uninstall` deletes the whole .trellis/ tree — including
+ * `omtre uninstall` deletes the whole .omtre/ tree — including
  * user-authored specs, task PRDs, and journals — with no backup. When those
  * hold uncommitted work, a scripted `--yes` run must fail closed rather than
  * silently destroy them.
@@ -18,7 +18,7 @@ import path from "node:path";
 import inquirer from "inquirer";
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 vi.mock("inquirer", () => ({
   default: { prompt: vi.fn() },
@@ -27,7 +27,7 @@ vi.mock("inquirer", () => ({
 import { init } from "../../src/commands/init.js";
 import {
   uninstall,
-  collectUncommittedTrellisData,
+  collectUncommittedOmtreData,
 } from "../../src/commands/uninstall.js";
 
 function has(cmd: string, args: string[]): boolean {
@@ -52,7 +52,7 @@ describe.skipIf(!canRun)("uninstall uncommitted-data guard", () => {
 
   beforeEach(async () => {
     tmpDir = fs.realpathSync(
-      fs.mkdtempSync(path.join(os.tmpdir(), "trellis-dirty-")),
+      fs.mkdtempSync(path.join(os.tmpdir(), "omtre-dirty-")),
     );
     git(tmpDir, "init", "-q", "-b", "main");
     git(tmpDir, "config", "user.email", "t@example.com");
@@ -66,38 +66,38 @@ describe.skipIf(!canRun)("uninstall uncommitted-data guard", () => {
       configurable: true,
       value: true,
     });
-    delete process.env.TRELLIS_ALLOW_DIRTY_UNINSTALL;
+    delete process.env.OMTRE_ALLOW_DIRTY_UNINSTALL;
     await init({ yes: true, claude: true, force: true });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     fs.rmSync(tmpDir, { recursive: true, force: true });
-    delete process.env.TRELLIS_ALLOW_DIRTY_UNINSTALL;
+    delete process.env.OMTRE_ALLOW_DIRTY_UNINSTALL;
   });
 
   it("detects a newly added spec file once the tree is committed", () => {
     // Commit the init'd tree first so git reports the new file individually
-    // (an entirely-untracked .trellis collapses to the dir name instead).
+    // (an entirely-untracked .omtre collapses to the dir name instead).
     git(tmpDir, "add", "-A");
-    git(tmpDir, "commit", "-q", "-m", "trellis");
+    git(tmpDir, "commit", "-q", "-m", "omtre");
 
-    const specFile = path.join(tmpDir, ".trellis", "spec", "my-rules.md");
+    const specFile = path.join(tmpDir, ".omtre", "spec", "my-rules.md");
     fs.mkdirSync(path.dirname(specFile), { recursive: true });
     fs.writeFileSync(specFile, "my custom spec");
 
-    const dirty = collectUncommittedTrellisData(tmpDir);
+    const dirty = collectUncommittedOmtreData(tmpDir);
     expect(dirty.some((p) => p.includes("spec/my-rules.md"))).toBe(true);
   });
 
-  it("reports nothing once the .trellis tree is committed", () => {
+  it("reports nothing once the .omtre tree is committed", () => {
     git(tmpDir, "add", "-A");
-    git(tmpDir, "commit", "-q", "-m", "trellis");
-    expect(collectUncommittedTrellisData(tmpDir)).toEqual([]);
+    git(tmpDir, "commit", "-q", "-m", "omtre");
+    expect(collectUncommittedOmtreData(tmpDir)).toEqual([]);
   });
 
-  it("refuses --yes uninstall while user data is uncommitted, leaving .trellis intact", async () => {
-    const specFile = path.join(tmpDir, ".trellis", "spec", "my-rules.md");
+  it("refuses --yes uninstall while user data is uncommitted, leaving .omtre intact", async () => {
+    const specFile = path.join(tmpDir, ".omtre", "spec", "my-rules.md");
     fs.mkdirSync(path.dirname(specFile), { recursive: true });
     fs.writeFileSync(specFile, "unsaved work");
 
@@ -111,27 +111,27 @@ describe.skipIf(!canRun)("uninstall uncommitted-data guard", () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
     // Nothing was deleted — the spec and the tree survive.
     expect(fs.existsSync(specFile)).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(true);
   });
 
-  it("TRELLIS_ALLOW_DIRTY_UNINSTALL=1 overrides the guard", async () => {
-    const specFile = path.join(tmpDir, ".trellis", "spec", "my-rules.md");
+  it("OMTRE_ALLOW_DIRTY_UNINSTALL=1 overrides the guard", async () => {
+    const specFile = path.join(tmpDir, ".omtre", "spec", "my-rules.md");
     fs.mkdirSync(path.dirname(specFile), { recursive: true });
     fs.writeFileSync(specFile, "unsaved work");
-    process.env.TRELLIS_ALLOW_DIRTY_UNINSTALL = "1";
+    process.env.OMTRE_ALLOW_DIRTY_UNINSTALL = "1";
 
     await uninstall({ yes: true });
 
     // Override honored — the tree is removed.
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(false);
   });
 
   it("committed user data does not block --yes uninstall", async () => {
     git(tmpDir, "add", "-A");
-    git(tmpDir, "commit", "-q", "-m", "trellis");
+    git(tmpDir, "commit", "-q", "-m", "omtre");
 
     await uninstall({ yes: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(false);
   });
 });

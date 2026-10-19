@@ -2,18 +2,18 @@
  * Discover channel runtime agent names referenced by a workflow.md body.
  *
  * Channel-driven workflows tell the main session to run
- * `trellis channel spawn --agent <name>`, which loads `.trellis/agents/<name>.md`
+ * `omtre channel spawn --agent <name>`, which loads `.omtre/agents/<name>.md`
  * via `packages/cli/src/commands/channel/agent-loader.ts`. If a workflow
  * references an agent name that is not on disk, the spawn call fails at
- * runtime. We surface that mismatch eagerly (at `trellis init --workflow` /
- * `trellis workflow --template` time) so users can run `trellis update` before
+ * runtime. We surface that mismatch eagerly (at `omtre init --workflow` /
+ * `omtre workflow --template` time) so users can run `omtre update` before
  * the first spawn.
  *
  * Detection is intentionally lexical — we accept false positives over
  * shipping a markdown parser. We pick names from two surface forms:
  *
- *   1. `--agent <name>` flag on a `trellis channel spawn ...` command
- *   2. `.trellis/agents/<name>.md` literal path reference
+ *   1. `--agent <name>` flag on a `omtre channel spawn ...` command
+ *   2. `.omtre/agents/<name>.md` literal path reference
  *
  * Both forms gate on the same `SAFE_AGENT_NAME` charset that `agent-loader.ts`
  * enforces, so the discovered set is always loader-compatible.
@@ -35,12 +35,12 @@ const AGENT_FLAG_RE = new RegExp(
   "g",
 );
 const AGENT_PATH_RE = new RegExp(
-  `\\.trellis/agents/([${SAFE_AGENT_NAME_CHARS}]+)\\.md`,
+  `\\.omtre/agents/([${SAFE_AGENT_NAME_CHARS}]+)\\.md`,
   "g",
 );
 
 /**
- * Extract the set of `.trellis/agents/<name>.md` agent names that the given
+ * Extract the set of `.omtre/agents/<name>.md` agent names that the given
  * workflow body references. Result is sorted and deduplicated.
  */
 export function collectReferencedAgents(workflowContent: string): string[] {
@@ -58,7 +58,7 @@ export function collectReferencedAgents(workflowContent: string): string[] {
 
 /**
  * Of the agent names referenced by the workflow, return those that do not
- * exist under `<cwd>/.trellis/agents/`.
+ * exist under `<cwd>/.omtre/agents/`.
  */
 export function collectMissingAgents(
   cwd: string,

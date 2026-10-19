@@ -12,7 +12,7 @@ import path from "node:path";
 import inquirer from "inquirer";
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({
@@ -38,7 +38,7 @@ describe("uninstall() integration", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-uninstall-int-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-uninstall-int-"));
     vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
     vi.spyOn(console, "log").mockImplementation(noop);
     vi.spyOn(console, "error").mockImplementation(noop);
@@ -56,14 +56,14 @@ describe("uninstall() integration", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("#1 friendly exit when .trellis/ is missing", async () => {
+  it("#1 friendly exit when .omtre/ is missing", async () => {
     // No init — tmpDir is empty.
     await uninstall({ yes: true });
     // Nothing was created or deleted; tmpDir should still be empty.
     expect(fs.readdirSync(tmpDir)).toEqual([]);
   });
 
-  it("#2 errors when manifest is missing but .trellis/ exists", async () => {
+  it("#2 errors when manifest is missing but .omtre/ exists", async () => {
     fs.mkdirSync(path.join(tmpDir, DIR_NAMES.WORKFLOW));
     const exitSpy = vi
       .spyOn(process, "exit")
@@ -79,7 +79,7 @@ describe("uninstall() integration", () => {
     await init({ yes: true, claude: true, cursor: true, force: true });
 
     // Sanity: init wrote things.
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(true);
 
@@ -88,13 +88,13 @@ describe("uninstall() integration", () => {
 
     await uninstall({ yes: true });
 
-    // .trellis/ should be gone.
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(false);
+    // .omtre/ should be gone.
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(false);
 
     // Every opaque manifest path (non-structured files) should be gone.
     // Structured config files (settings.json/hooks.json/config.toml/
-    // package.json) may legitimately remain when the trellis template
-    // shipped non-trellis fields too (e.g. .claude/settings.json's `env`
+    // package.json) may legitimately remain when the omtre template
+    // shipped non-omtre fields too (e.g. .claude/settings.json's `env`
     // and `enabledPlugins`). Such residuals are scrubbed but kept on
     // disk per the PRD ("settings.json 剥离后若仅剩空 hooks 对象 → 文件被删除；
     // 否则保留").
@@ -159,11 +159,11 @@ describe("uninstall() integration", () => {
 
     await uninstall({});
 
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
   });
 
-  it("#6 user-modified trellis file is still deleted (manifest defines scope)", async () => {
+  it("#6 user-modified omtre file is still deleted (manifest defines scope)", async () => {
     await init({ yes: true, cursor: true, force: true });
 
     // Pick any manifest-tracked file under .cursor/ and overwrite it.
@@ -211,7 +211,7 @@ describe("uninstall() integration", () => {
     // Detect kilo's actual config dir from manifest entries.
     const hashesBefore = loadHashes(tmpDir);
     const kiloEntry = Object.keys(hashesBefore).find(
-      (p) => !p.startsWith(".trellis/") && p !== "AGENTS.md",
+      (p) => !p.startsWith(".omtre/") && p !== "AGENTS.md",
     );
     if (!kiloEntry) throw new Error("test fixture: no kilo entries found");
     const kiloRoot = kiloEntry.split("/")[0];
@@ -225,7 +225,7 @@ describe("uninstall() integration", () => {
 
   it("#8b platform root dir survives only when scrubbing leaves residual structured content", async () => {
     // Cursor's hooks.json template contains `{ version: 1, hooks: {...} }`.
-    // After trellis hooks are stripped, `{ version: 1 }` remains — not fully
+    // After omtre hooks are stripped, `{ version: 1 }` remains — not fully
     // empty per the scrubber, so the file (and therefore .cursor/) survive.
     // This documents the boundary of the cleanup contract.
     await init({ yes: true, cursor: true, force: true });
@@ -242,11 +242,11 @@ describe("uninstall() integration", () => {
     }
   });
 
-  it("#8 .claude/settings.json with extra user fields keeps user fields, strips trellis hooks", async () => {
+  it("#8 .claude/settings.json with extra user fields keeps user fields, strips omtre hooks", async () => {
     await init({ yes: true, claude: true, force: true });
 
     // Simulate a user editing settings.json to add custom fields and a custom
-    // hook entry alongside the trellis ones.
+    // hook entry alongside the omtre ones.
     const settingsPath = path.join(tmpDir, ".claude", "settings.json");
     if (!fs.existsSync(settingsPath)) {
       // Some init paths may not write settings.json; if so, skip the test by
@@ -323,7 +323,7 @@ describe("uninstall() integration", () => {
 
     await uninstall({ yes: true });
 
-    // .trellis/ is gone, but settings.json should remain (had user fields).
+    // .omtre/ is gone, but settings.json should remain (had user fields).
     if (fs.existsSync(settingsPath)) {
       const after = JSON.parse(fs.readFileSync(settingsPath, "utf-8")) as Record<
         string,
@@ -332,7 +332,7 @@ describe("uninstall() integration", () => {
       expect(after.model).toBe("claude-sonnet-4");
       expect(after.permissions).toEqual({ allow: ["Bash(git:*)"] });
 
-      // User hook (if it was inserted) should still be present, trellis ones gone.
+      // User hook (if it was inserted) should still be present, omtre ones gone.
       const hooksAfter = after.hooks;
       if (
         hooksAfter !== null &&

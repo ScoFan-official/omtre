@@ -28,6 +28,8 @@ import {
   cleanupEmptyDirs,
   OMTRE_BLOCK_END,
   OMTRE_BLOCK_START,
+  OMTRE_COPILOT_GUIDANCE_END,
+  OMTRE_COPILOT_GUIDANCE_START,
 } from "./managed-paths.js";
 
 export interface StructuredFileSpec {
@@ -55,7 +57,7 @@ export interface PlannedModification {
 export interface ManagedRemovalPlan {
   deletions: PlannedDeletion[];
   modifications: PlannedModification[];
-  removeTrellisDir: boolean;
+  removeWorkflowDir: boolean;
   allPosixPaths: string[];
 }
 
@@ -98,7 +100,7 @@ function assertWithinProject(projectRoot: string, absPath: string): void {
  * Validate a manifest key before it reaches path.join/path.resolve.
  * Manifest keys are intentionally stricter than generic relative paths: empty,
  * dot, dotdot, NUL, absolute, and Windows-separator segments are not ownership
- * claims that Trellis can safely act on.
+ * claims that Omtre can safely act on.
  */
 export function validateManagedRelativePath(posixPath: string): void {
   if (
@@ -176,7 +178,7 @@ export function buildStructuredFileSpecs(): Map<string, StructuredFileSpec> {
     ).map(
       (posixPath): StructuredFileSpec => ({
         posixPath,
-        reason: "Strip trellis hooks; preserve user fields",
+        reason: "Strip omtre hooks; preserve user fields",
         scrub: (content, deletedPaths) =>
           scrubHooksJson(content, deletedPaths, "nested"),
       }),
@@ -184,7 +186,7 @@ export function buildStructuredFileSpecs(): Map<string, StructuredFileSpec> {
     ...([".cursor/hooks.json", ".github/copilot/hooks.json"] as const).map(
       (posixPath): StructuredFileSpec => ({
         posixPath,
-        reason: "Strip trellis hooks; preserve user fields",
+        reason: "Strip omtre hooks; preserve user fields",
         scrub: (content, deletedPaths) =>
           scrubHooksJson(content, deletedPaths, "flat"),
       }),
@@ -197,33 +199,36 @@ export function buildStructuredFileSpecs(): Map<string, StructuredFileSpec> {
     {
       posixPath: ".pi/settings.json",
       reason:
-        "Strip trellis extension/skills/prompts entries; preserve user fields",
+        "Strip omtre extension/skills/prompts entries; preserve user fields",
       scrub: (content) => scrubPiSettings(content),
     },
     {
       posixPath: ".codex/config.toml",
-      reason: "Remove trellis project_doc_fallback_filenames and notes",
+      reason: "Remove omtre project_doc_fallback_filenames and notes",
       scrub: (content) => scrubCodexConfigToml(content),
     },
     {
       posixPath: COPILOT_INSTRUCTIONS_PATH,
-      reason: "Remove Trellis Copilot guidance; preserve repo instructions",
-      scrub: (content) =>
-        scrubManagedMarkdownBlock(
+      reason: "Remove Omtre Copilot guidance; preserve repo instructions",
+      scrub: (content) => {
+        const res = scrubManagedMarkdownBlock(
+          content,
+          OMTRE_COPILOT_GUIDANCE_START,
+          OMTRE_COPILOT_GUIDANCE_END,
+        );
+        if (res.content !== content || res.fullyEmpty) return res;
+        return scrubManagedMarkdownBlock(
           content,
           COPILOT_INSTRUCTIONS_BLOCK_START,
           COPILOT_INSTRUCTIONS_BLOCK_END,
-        ),
+        );
+      },
     },
     {
       posixPath: FILE_NAMES.AGENTS,
-      reason: "Strip Trellis managed block; preserve user instructions",
+      reason: "Strip Omtre managed block; preserve user instructions",
       scrub: (content) =>
-        scrubManagedMarkdownBlock(
-          content,
-          OMTRE_BLOCK_START,
-          OMTRE_BLOCK_END,
-        ),
+        scrubManagedMarkdownBlock(content, OMTRE_BLOCK_START, OMTRE_BLOCK_END),
     },
   ];
 
@@ -279,7 +284,7 @@ export function buildManagedRemovalPlan(
       result.content === content
     ) {
       throw new Error(
-        `Cannot prove Trellis content was removed from structured file: ${posixPath}`,
+        `Cannot prove Omtre content was removed from structured file: ${posixPath}`,
       );
     }
     if (result.fullyEmpty) {
@@ -297,7 +302,7 @@ export function buildManagedRemovalPlan(
   return {
     deletions,
     modifications,
-    removeTrellisDir: true,
+    removeWorkflowDir: true,
     allPosixPaths,
   };
 }
@@ -331,10 +336,10 @@ export function executeManagedRemovalPlan(
   }
 
   let deletedDirs = 0;
-  if (plan.removeTrellisDir) {
-    const trellisDir = path.join(cwd, DIR_NAMES.WORKFLOW);
-    if (lstatIfPresent(trellisDir)) {
-      fs.rmSync(trellisDir, { recursive: true, force: true });
+  if (plan.removeWorkflowDir) {
+    const workflowDir = path.join(cwd, DIR_NAMES.WORKFLOW);
+    if (lstatIfPresent(workflowDir)) {
+      fs.rmSync(workflowDir, { recursive: true, force: true });
       deletedDirs += 1;
     }
   }

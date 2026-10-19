@@ -10,7 +10,7 @@ import {
   readWorkerDefault,
 } from "../../src/commands/run/orchestrator.js";
 
-// The dispatch-roster schema names the orchestrator through .trellis/config.yaml:
+// The dispatch-roster schema names the orchestrator through .omtre/config.yaml:
 //
 //   orchestrator:
 //     agent: orchestrator
@@ -115,15 +115,15 @@ describe("parseOrchestratorSection", () => {
 });
 
 describe("loadOrchestratorConfig", () => {
-  it("returns undefined when .trellis/config.yaml is missing or has no section", () => {
+  it("returns undefined when .omtre/config.yaml is missing or has no section", () => {
     const tmp = fs.mkdtempSync(
       path.join(fs.realpathSync(os.tmpdir()), "orch-cfg-"),
     );
     try {
       expect(loadOrchestratorConfig(tmp)).toBeUndefined();
-      fs.mkdirSync(path.join(tmp, ".trellis"), { recursive: true });
+      fs.mkdirSync(path.join(tmp, ".omtre"), { recursive: true });
       fs.writeFileSync(
-        path.join(tmp, ".trellis", "config.yaml"),
+        path.join(tmp, ".omtre", "config.yaml"),
         "autonomy: hands-off\nworker_default: implement\n",
       );
       expect(loadOrchestratorConfig(tmp)).toBeUndefined();
@@ -132,14 +132,14 @@ describe("loadOrchestratorConfig", () => {
     }
   });
 
-  it("reads the section from .trellis/config.yaml", () => {
+  it("reads the section from .omtre/config.yaml", () => {
     const tmp = fs.mkdtempSync(
       path.join(fs.realpathSync(os.tmpdir()), "orch-cfg-"),
     );
     try {
-      fs.mkdirSync(path.join(tmp, ".trellis"), { recursive: true });
+      fs.mkdirSync(path.join(tmp, ".omtre"), { recursive: true });
       fs.writeFileSync(
-        path.join(tmp, ".trellis", "config.yaml"),
+        path.join(tmp, ".omtre", "config.yaml"),
         [
           "autonomy: hands-off",
           "orchestrator:",
@@ -164,8 +164,8 @@ describe("readWorkerDefault", () => {
       path.join(fs.realpathSync(os.tmpdir()), "worker-default-"),
     );
     if (content !== undefined) {
-      fs.mkdirSync(path.join(tmp, ".trellis"), { recursive: true });
-      fs.writeFileSync(path.join(tmp, ".trellis", "config.yaml"), content);
+      fs.mkdirSync(path.join(tmp, ".omtre"), { recursive: true });
+      fs.writeFileSync(path.join(tmp, ".omtre", "config.yaml"), content);
     }
     return tmp;
   }

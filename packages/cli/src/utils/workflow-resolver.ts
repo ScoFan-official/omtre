@@ -1,7 +1,7 @@
 /**
  * Workflow template resolver.
  *
- * Centralizes how `trellis init --workflow` and `trellis workflow` discover and
+ * Centralizes how `omtre init --workflow` and `omtre workflow` discover and
  * fetch workflow.md content. Reuses `template-fetcher` helpers for registry
  * parsing, index probing, and git/http transport. The `native` and `oh-my`
  * workflows are virtual entries resolved directly from bundled templates to
@@ -19,7 +19,7 @@ import path from "node:path";
 import {
   ohMyWorkflowMdTemplate,
   workflowMdTemplate,
-} from "../templates/trellis/index.js";
+} from "../templates/extract.js";
 import {
   TIMEOUTS,
   TEMPLATE_INDEX_URL,
@@ -34,10 +34,10 @@ import {
 /**
  * The id used to refer to the bundled native workflow.
  *
- * Upstream treats this id as Trellis-managed for hash-tracking. In this fork
+ * Upstream treats this id as Omtre-managed for hash-tracking. In this fork
  * that role is played by {@link OH_MY_WORKFLOW_ID}; `native` remains bundled
  * and selectable but behaves like any non-managed variant (its hash entry is
- * dropped so `trellis update` never silently replaces it).
+ * dropped so `omtre update` never silently replaces it).
  */
 export const NATIVE_WORKFLOW_ID = "native";
 
@@ -45,10 +45,10 @@ export const NATIVE_WORKFLOW_ID = "native";
  * [oh-my] The id of the fork's bundled default workflow — Laber's variant with
  * Devin `run_subagent` dispatch blocks.
  *
- * Treated as Trellis-managed for hash-tracking (the role `native` plays
- * upstream): when this id is selected by `init --workflow` or `trellis
- * workflow`, `.trellis/workflow.md` stays in `.template-hashes.json` and
- * `trellis update` refreshes it. Any other id is user-managed local workflow
+ * Treated as Omtre-managed for hash-tracking (the role `native` plays
+ * upstream): when this id is selected by `init --workflow` or `omtre
+ * workflow`, `.omtre/workflow.md` stays in `.template-hashes.json` and
+ * `omtre update` refreshes it. Any other id is user-managed local workflow
  * and must be removed from the hash file (the durable-state contract in
  * design.md "Durable-state contract").
  */
@@ -62,7 +62,7 @@ export const DEFAULT_WORKFLOW_ID = OH_MY_WORKFLOW_ID;
  *
  * `content` is the workflow.md body bytes (LF-normalized in storage).
  * `path` is the marketplace-relative path for remote entries, or
- *   `bundled:trellis/workflow.md` for the native virtual entry.
+ *   `bundled:omtre/workflow.md` for the native virtual entry.
  */
 export interface ResolvedWorkflowTemplate {
   id: string;
@@ -109,10 +109,10 @@ function nativeListingEntry(): WorkflowTemplateListing {
   return {
     id: NATIVE_WORKFLOW_ID,
     type: "workflow",
-    name: "Native Trellis Workflow",
+    name: "Native Omtre Workflow",
     description:
-      "Default Trellis Plan / Execute / Finish workflow bundled with the CLI",
-    path: "bundled:trellis/workflow.md",
+      "Default Omtre Plan / Execute / Finish workflow bundled with the CLI",
+    path: "bundled:omtre/workflow.md",
     source: "bundled",
   };
 }
@@ -132,10 +132,10 @@ function ohMyListingEntry(): WorkflowTemplateListing {
   return {
     id: OH_MY_WORKFLOW_ID,
     type: "workflow",
-    name: "oh-my-trellis Workflow",
+    name: "Omtre Workflow",
     description:
-      "Fork default: Trellis workflow with Devin run_subagent dispatch for Phase 2, bundled with the CLI",
-    path: "bundled:trellis/workflow-oh-my.md",
+      "Fork default: Omtre workflow with Devin run_subagent dispatch for Phase 2, bundled with the CLI",
+    path: "bundled:omtre/workflow-oh-my.md",
     source: "bundled",
   };
 }
@@ -374,7 +374,7 @@ async function fetchWorkflowFileGit(
   // workflow resolution is a single-file fetch (not a directory copy).
   const { execFile } = await import("node:child_process");
   const dir = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), "trellis-workflow-"),
+    path.join(os.tmpdir(), "omtre-workflow-"),
   );
 
   function run(args: string[]): Promise<void> {

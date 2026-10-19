@@ -151,7 +151,7 @@ os._exit(0)
 
 describe.skipIf(SKIP)("sqlite-readonly parser", () => {
   const tmpDir = nodeFs.mkdtempSync(
-    nodePath.join(nodeOs.tmpdir(), "trellis-sqlite-"),
+    nodePath.join(nodeOs.tmpdir(), "omtre-sqlite-"),
   );
   const dbPath = nodePath.join(tmpDir, "test.db");
 

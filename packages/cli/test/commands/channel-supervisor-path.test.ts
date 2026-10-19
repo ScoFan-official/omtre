@@ -11,7 +11,7 @@ describe("resolveProviderPath", () => {
   let originalPath: string | undefined;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-provider-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-provider-"));
     originalPath = process.env.PATH;
     process.env.PATH = tmpDir;
     vi.spyOn(process, "platform", "get").mockReturnValue("win32");

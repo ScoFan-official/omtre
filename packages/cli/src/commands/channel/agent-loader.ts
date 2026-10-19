@@ -1,5 +1,5 @@
 /**
- * Load a Trellis agent definition from `.trellis/agents/<name>.md`.
+ * Load an Omtre agent definition from `.omtre/agents/<name>.md`.
  *
  * Format: YAML frontmatter (between `---` fences) + markdown body.
  *   The body becomes the system prompt injected into the worker.
@@ -15,12 +15,13 @@
  *   You are a senior system architect ...
  *
  * Unknown frontmatter fields are preserved as metadata but ignored by
- * channel runtime (they may be consumed by other Trellis layers).
+ * channel runtime (they may be consumed by other Omtre layers).
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+import { PATHS } from "../../constants/paths.js";
 import { isProvider, type Provider } from "./adapters/index.js";
 
 export interface AgentDefinition {
@@ -55,7 +56,7 @@ export function findAgentFile(
       `Agent name '${name}' is not allowed (must match ${SAFE_AGENT_NAME.source})`,
     );
   }
-  const agentsRoot = path.resolve(cwd, ".trellis", "agents");
+  const agentsRoot = path.resolve(cwd, PATHS.AGENTS);
   const candidates = [
     path.join(agentsRoot, `${name}.md`),
     path.join(agentsRoot, name, "AGENT.md"),
@@ -63,7 +64,7 @@ export function findAgentFile(
   for (const p of candidates) {
     // Defense in depth: confirm the resolved path stays under agentsRoot,
     // or one of the trusted roots (see context-trust.ts) — accommodates
-    // `.trellis/agents` reached through a trusted `.trellis` symlink.
+    // `.omtre/agents` reached through a trusted `.omtre` symlink.
     const real = fs.existsSync(p) ? fs.realpathSync(p) : p;
     const inAgentsRoot =
       real === agentsRoot || real.startsWith(agentsRoot + path.sep);
@@ -81,7 +82,7 @@ export function findAgentFile(
 /**
  * Dispatch-roster check specialization: the `check` role is the one role with
  * OPTIONAL axis sub-cards. `check.standards` / `check.spec` (when present in
- * `.trellis/agents/`) take precedence over the generic `check` card, so the
+ * `.omtre/agents/`) take precedence over the generic `check` card, so the
  * two axes can be dispatched to different executors. An absent sub-card falls
  * back to `check` — the card then runs both axes serially per its own rules.
  * No other fallback exists: an unresolvable card name still fails loudly at
@@ -108,8 +109,8 @@ export function loadAgent(
   if (!file) {
     throw new Error(
       `Agent '${name}' not found. Looked in:\n  ${[
-        path.join(cwd, ".trellis", "agents", `${name}.md`),
-        path.join(cwd, ".trellis", "agents", name, "AGENT.md"),
+        path.join(cwd, PATHS.AGENTS, `${name}.md`),
+        path.join(cwd, PATHS.AGENTS, name, "AGENT.md"),
       ].join("\n  ")}`,
     );
   }

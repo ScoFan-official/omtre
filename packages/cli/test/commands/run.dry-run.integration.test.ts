@@ -1,5 +1,5 @@
 /**
- * Integration test for `trellis run --dry-run` against the REAL task system.
+ * Integration test for `omtre run --dry-run` against the REAL task system.
  *
  * The unit harness scripts the frontier JSON; this one proves the two things
  * that only show up with real `task.py` output:
@@ -18,15 +18,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { runCommand } from "../../src/commands/run.js";
-
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
-const TEMPLATE_AGENTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/agents",
-);
+import { getAllAgents, getAllScripts } from "../../src/templates/extract.js";
 
 function findPython(): string | null {
   for (const bin of ["python3", "python"]) {
@@ -43,11 +35,11 @@ function findPython(): string | null {
 const PYTHON = findPython();
 
 function testEnv(): NodeJS.ProcessEnv {
-  return { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" };
+  return { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" };
 }
 
 function runTask(repo: string, ...args: string[]): void {
-  const r = spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  const r = spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
     env: testEnv(),
@@ -59,7 +51,7 @@ function runTask(repo: string, ...args: string[]): void {
 
 function taskDir(repo: string, slug: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(slug));
   if (!dir) throw new Error(`no task dir matching ${slug}`);
   return dir;
@@ -71,11 +63,13 @@ function taskDir(repo: string, slug: string): string {
  * `meta.worker`; without a roster at all, dispatch refuses fail-closed.
  */
 function writeRoster(repo: string): void {
-  fs.cpSync(TEMPLATE_AGENTS, path.join(repo, ".trellis", "agents"), {
-    recursive: true,
-  });
+  for (const [rel, content] of getAllAgents()) {
+    const dest = path.join(repo, ".omtre", "agents", rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, content, "utf-8");
+  }
   fs.writeFileSync(
-    path.join(repo, ".trellis", "config.yaml"),
+    path.join(repo, ".omtre", "config.yaml"),
     "autonomy: hands-off\nworker_default: implement\n",
     "utf-8",
   );
@@ -87,11 +81,13 @@ let logged: string[] = [];
 beforeEach(() => {
   logged = [];
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "run-dry-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
-    recursive: true,
-  });
-  const init = spawnSync(PYTHON as string, [".trellis/scripts/init_developer.py", "tester"], {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  for (const [rel, content] of getAllScripts()) {
+    const dest = path.join(repo, ".omtre", "scripts", rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, content, "utf-8");
+  }
+  const init = spawnSync(PYTHON as string, [".omtre/scripts/init_developer.py", "tester"], {
     cwd: repo,
     encoding: "utf-8",
     env: testEnv(),
@@ -105,7 +101,7 @@ afterEach(() => {
   fs.rmSync(repo, { recursive: true, force: true });
 });
 
-describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
+describe.skipIf(PYTHON === null)("omtre run --dry-run", () => {
   it("selects the highest-priority ready ticket from real frontier output", async () => {
     runTask(repo, "create", "Blocked later", "--slug", "zeta", "--no-start", "-d", "waits");
     runTask(repo, "create", "Head work", "--slug", "alpha", "--no-start", "-d", "ready first", "--priority", "P0");
@@ -141,7 +137,7 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
     writeRoster(repo);
     const head = taskDir(repo, "alpha");
     const before = fs.readFileSync(
-      path.join(repo, ".trellis", "tasks", head, "task.json"),
+      path.join(repo, ".omtre", "tasks", head, "task.json"),
       "utf-8",
     );
 
@@ -153,9 +149,9 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
       console.log = original;
     }
 
-    expect(fs.existsSync(path.join(repo, ".trellis", ".runtime", "runs"))).toBe(false);
+    expect(fs.existsSync(path.join(repo, ".omtre", ".runtime", "runs"))).toBe(false);
     expect(
-      fs.readFileSync(path.join(repo, ".trellis", "tasks", head, "task.json"), "utf-8"),
+      fs.readFileSync(path.join(repo, ".omtre", "tasks", head, "task.json"), "utf-8"),
     ).toBe(before);
   });
 
@@ -167,7 +163,7 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
         runCommand({ provider, dryRun: true }, repo),
       ).rejects.toThrow(/--provider is not valid/);
     }
-    expect(fs.existsSync(path.join(repo, ".trellis", ".runtime", "runs"))).toBe(false);
+    expect(fs.existsSync(path.join(repo, ".omtre", ".runtime", "runs"))).toBe(false);
   });
 
   it("names the dispatch refusal in the plan instead of inventing a worker", async () => {
@@ -193,10 +189,10 @@ describe.skipIf(PYTHON === null)("trellis run --dry-run", () => {
   });
 
   it("refuses a repo it does not drive", async () => {
-    const bare = fs.mkdtempSync(path.join(os.tmpdir(), "run-no-trellis-"));
+    const bare = fs.mkdtempSync(path.join(os.tmpdir(), "run-no-omtre-"));
     try {
       await expect(runCommand({ dryRun: true }, bare)).rejects.toThrow(
-        /no .trellis\/scripts\/task.py/,
+        /no .omtre\/scripts\/task.py/,
       );
     } finally {
       fs.rmSync(bare, { recursive: true, force: true });

@@ -323,7 +323,10 @@ export function encodeAcpRequest(
 ): { id: number; line: string } {
   const id = ctx.nextId++;
   ctx.pending.set(id, label);
-  return { id, line: JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n" };
+  return {
+    id,
+    line: JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n",
+  };
 }
 
 /** `session/cancel` is a JSON-RPC notification (no id). */
@@ -408,7 +411,7 @@ function acpClientHello(): Record<string, unknown> {
       terminal: false,
       auth: { terminal: false },
     },
-    clientInfo: { name: "trellis-channel", version: "0.1" },
+    clientInfo: { name: "omtre-channel", version: "0.1" },
   };
 }
 
@@ -455,7 +458,12 @@ export async function acpHandshake(args: {
   ctx.cwd = view.cwd;
   ctx.systemPrompt = view.systemPrompt;
 
-  const init = encodeAcpRequest(ctx, "initialize", acpClientHello(), "initialize");
+  const init = encodeAcpRequest(
+    ctx,
+    "initialize",
+    acpClientHello(),
+    "initialize",
+  );
   child.stdin.write(init.line);
   const initOk = await waitFor(
     () => ctx.initialized || ctx.initError !== undefined,
@@ -511,7 +519,12 @@ export async function acpHandshake(args: {
     await tryAcquire("session/load", view.resume);
   }
   if (!ctx.sessionId) {
-    const req = encodeAcpRequest(ctx, "session/new", sessionParams(), "session/new");
+    const req = encodeAcpRequest(
+      ctx,
+      "session/new",
+      sessionParams(),
+      "session/new",
+    );
     child.stdin.write(req.line);
     await waitFor(
       () => ctx.sessionId !== undefined || ctx.sessionError !== undefined,
@@ -522,7 +535,9 @@ export async function acpHandshake(args: {
     const hint = ctx.target.authHint;
     throw new Error(
       `ACP session acquisition failed` +
-        (ctx.sessionError ? `: ${ctx.sessionError}` : " (no response within 30s)") +
+        (ctx.sessionError
+          ? `: ${ctx.sessionError}`
+          : " (no response within 30s)") +
         (hint ? ` — ${hint}` : ""),
     );
   }
@@ -531,8 +546,7 @@ export async function acpHandshake(args: {
   // then model/effort selects when the option id is advertised.
   const configReqs: AcpConfigRequest[] = [...ctx.target.postSessionConfig];
   const hasOption = (id: string | undefined): boolean =>
-    id !== undefined &&
-    ctx.configOptions.some((o) => o.id === id);
+    id !== undefined && ctx.configOptions.some((o) => o.id === id);
   if (
     view.model &&
     ctx.target.modelOptionId !== undefined &&
@@ -545,7 +559,10 @@ export async function acpHandshake(args: {
     ctx.target.effortOptionId !== undefined &&
     hasOption(ctx.target.effortOptionId)
   ) {
-    configReqs.push({ configId: ctx.target.effortOptionId, value: view.effort });
+    configReqs.push({
+      configId: ctx.target.effortOptionId,
+      value: view.effort,
+    });
   }
   for (const c of configReqs) {
     const req = encodeAcpRequest(
@@ -591,8 +608,14 @@ function jsonReply(id: number | string, result: unknown): string {
   return JSON.stringify({ jsonrpc: "2.0", id, result }) + "\n";
 }
 
-function jsonErrorReply(id: number | string, code: number, message: string): string {
-  return JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }) + "\n";
+function jsonErrorReply(
+  id: number | string,
+  code: number,
+  message: string,
+): string {
+  return (
+    JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }) + "\n"
+  );
 }
 
 /**
@@ -697,7 +720,9 @@ function handleAcpServerRequest(msg: JsonRpcInbound): ParseResult {
         },
       },
     ],
-    side: { reply: [jsonErrorReply(id, -32601, `Method not found: ${msg.method}`)] },
+    side: {
+      reply: [jsonErrorReply(id, -32601, `Method not found: ${msg.method}`)],
+    },
   };
 }
 
@@ -734,7 +759,8 @@ function handleAcpResponse(msg: JsonRpcInbound, ctx: AcpCtx): ParseResult {
     case "initialize":
       ctx.initialized = true;
       if (isObject(msg.result) && isObject(msg.result.agentCapabilities)) {
-        ctx.agentCapabilities = msg.result.agentCapabilities as AcpAgentCapabilities;
+        ctx.agentCapabilities = msg.result
+          .agentCapabilities as AcpAgentCapabilities;
       }
       return { events, side };
     case "session/new":
@@ -815,10 +841,7 @@ function handleAcpResponse(msg: JsonRpcInbound, ctx: AcpCtx): ParseResult {
     default: {
       // Untracked id: sniff the result shape so out-of-sync pending maps
       // (dev trace replay, late duplicate responses) still route sanely.
-      if (
-        isObject(msg.result) &&
-        typeof msg.result.stopReason === "string"
-      ) {
+      if (isObject(msg.result) && typeof msg.result.stopReason === "string") {
         // A session/prompt response we didn't send — process it like a
         // prompt completion but without claiming our promptIds.
         const result = msg.result;
@@ -859,9 +882,7 @@ function handleAcpError(
   side: ParseResult["side"],
 ): ParseResult {
   const errMsg = msg.error?.message ?? "unknown error";
-  const authSuffix = ctx.target?.authHint
-    ? ` — ${ctx.target.authHint}`
-    : "";
+  const authSuffix = ctx.target?.authHint ? ` — ${ctx.target.authHint}` : "";
 
   switch (label) {
     case "initialize":
@@ -871,7 +892,11 @@ function handleAcpError(
           {
             kind: "progress",
             payload: {
-              detail: { kind: "handshake_error", method: "initialize", message: errMsg },
+              detail: {
+                kind: "handshake_error",
+                method: "initialize",
+                message: errMsg,
+              },
             },
           },
         ],
@@ -907,7 +932,11 @@ function handleAcpError(
             {
               kind: "progress",
               payload: {
-                detail: { kind: "prompt_superseded", error: errMsg, request_id: id },
+                detail: {
+                  kind: "prompt_superseded",
+                  error: errMsg,
+                  request_id: id,
+                },
               },
             },
           ],
@@ -1067,7 +1096,9 @@ function handleSessionUpdate(msg: JsonRpcInbound, ctx: AcpCtx): ParseResult {
             payload: {
               detail: {
                 kind: "plan",
-                entries: Array.isArray(update.entries) ? update.entries.length : 0,
+                entries: Array.isArray(update.entries)
+                  ? update.entries.length
+                  : 0,
               },
             },
           },

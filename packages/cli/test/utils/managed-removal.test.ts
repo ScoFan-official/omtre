@@ -13,7 +13,7 @@ describe("managed-removal strict planning", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-removal-plan-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-removal-plan-"));
   });
 
   afterEach(() => {
@@ -86,6 +86,6 @@ describe("managed-removal strict planning", () => {
         { ".codex/hooks.json": "hash" },
         { strictPaths: true },
       ),
-    ).toThrow(/Cannot prove Trellis content was removed/);
+    ).toThrow(/Cannot prove Omtre content was removed/);
   });
 });

@@ -52,8 +52,11 @@ import {
   configYamlTemplate,
   gitignoreTemplate,
   ohMyWorkflowMdTemplate,
-} from "../templates/trellis/index.js";
-import { agentsMdContent } from "../templates/markdown/index.js";
+} from "../templates/extract.js";
+import {
+  agentsMdContent,
+  gitattributesTemplate,
+} from "../templates/extract.js";
 import {
   COPILOT_INSTRUCTIONS_BLOCK_END,
   COPILOT_INSTRUCTIONS_BLOCK_START,
@@ -69,7 +72,6 @@ import {
 import { replacePythonCommandLiterals } from "../configurators/shared.js";
 import { preserveCodexAgentModelKeys } from "../configurators/codex.js";
 import { printZcodeSetupHint } from "../configurators/zcode.js";
-import { ensureGitattributes } from "../configurators/workflow.js";
 import { pruneOrphanManifestKeys } from "../utils/manifest-prune.js";
 import {
   fetchRegistrySpecTemplates,
@@ -123,7 +125,7 @@ type ConflictAction = "overwrite" | "skip" | "create-new";
 const CLAUDE_SETTINGS_PATH = ".claude/settings.json";
 const LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES = new Set<string>([
   // v0.5.0-beta.17 and earlier wrote AGENTS.md but did not hash-track it.
-  // This hash is the pristine Trellis-managed block before the Subagents
+  // This hash is the pristine Omtre-managed block before the Subagents
   // section was added, so old untouched projects can be updated without a
   // false "modified by you" conflict.
   "c1f511b1cfc1902f2147da159f09cc51f380b0c9e341cdb3ac5dea5233f3e307",
@@ -131,7 +133,7 @@ const LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES = new Set<string>([
 
 // Paths that should never be touched (true user data)
 // spec/ is user-customized content created during init; update should never modify it
-// domains/ is the domain-layer user-data zone: `trellis update` only seeds
+// domains/ is the domain-layer user-data zone: `omtre update` only seeds
 // missing scaffold files (see collectTemplateFiles) and must never manage,
 // overwrite, migrate, or delete anything already present.
 const PROTECTED_PATHS = [
@@ -161,7 +163,7 @@ function getManagedBlock(
   return content.slice(start, end + endMarker.length);
 }
 
-function getTrellisManagedBlock(content: string): string | null {
+function getOmtreManagedBlock(content: string): string | null {
   return getManagedBlock(content, OMTRE_BLOCK_START, OMTRE_BLOCK_END);
 }
 
@@ -275,7 +277,7 @@ function isKnownUntrackedTemplate(
     return false;
   }
 
-  const managedBlock = getTrellisManagedBlock(existingContent);
+  const managedBlock = getOmtreManagedBlock(existingContent);
   if (!managedBlock) {
     return false;
   }
@@ -485,7 +487,7 @@ function executeSafeFileDeletes(
 }
 
 /**
- * Load update.skip paths from .trellis/config.yaml
+ * Load update.skip paths from .omtre/config.yaml
  *
  * Parses simple YAML structure:
  *   update:
@@ -614,6 +616,49 @@ export function extractConfigSection(
  *
  * @internal Exported for testing only.
  */
+const MERGE_UNION_RULES: readonly { pattern: RegExp; line: string }[] = [
+  {
+    pattern: /journal-\*\.md\s+merge=union/,
+    line: `${PATHS.WORKSPACE}/*/journal-*.md merge=union`,
+  },
+  {
+    pattern: new RegExp(
+      `\\${DIR_NAMES.WORKFLOW}\\/domains\\/REGISTRY\\.md\\s+merge=union`,
+    ),
+    line: `${PATHS.DOMAINS}/REGISTRY.md merge=union`,
+  },
+  {
+    pattern: new RegExp(
+      `\\${DIR_NAMES.WORKFLOW}\\/domains\\/\\*\\/worklog\\/\\*\\.md\\s+merge=union`,
+    ),
+    line: `${PATHS.DOMAINS}/*/worklog/*.md merge=union`,
+  },
+];
+
+function ensureGitattributes(cwd: string): void {
+  const targetPath = path.join(cwd, ".gitattributes");
+
+  if (!fs.existsSync(targetPath)) {
+    fs.writeFileSync(targetPath, gitattributesTemplate);
+    return;
+  }
+
+  const existing = fs.readFileSync(targetPath, "utf-8");
+  const missing = MERGE_UNION_RULES.filter(
+    (rule) => !rule.pattern.test(existing),
+  );
+  if (missing.length === 0) {
+    return;
+  }
+
+  const addition =
+    missing.length === MERGE_UNION_RULES.length
+      ? gitattributesTemplate
+      : missing.map((rule) => rule.line).join("\n") + "\n";
+  const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+  fs.writeFileSync(targetPath, existing + separator + addition);
+}
+
 export function applyConfigSectionsAdded(
   entries: ConfigSectionAdded[],
   cwd: string,
@@ -623,11 +668,18 @@ export function applyConfigSectionsAdded(
   let appended = 0;
 
   for (const entry of entries) {
-    const dedupeKey = `${entry.file}::${entry.sentinel}`;
+    const normalizedFile = entry.file.replace(
+      /^\.[^/]+\//,
+      `${DIR_NAMES.WORKFLOW}/`,
+    );
+    const dedupeKey = `${normalizedFile}::${entry.sentinel}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
-    const targetPath = path.join(cwd, entry.file);
+    const candidateFile = fs.existsSync(path.join(cwd, normalizedFile))
+      ? normalizedFile
+      : entry.file;
+    const targetPath = path.join(cwd, candidateFile);
     if (!fs.existsSync(targetPath)) continue;
 
     let userContent: string;
@@ -638,7 +690,8 @@ export function applyConfigSectionsAdded(
     }
     if (userContent.includes(entry.sentinel)) continue;
 
-    const template = bundledTemplates.get(entry.file);
+    const template =
+      bundledTemplates.get(normalizedFile) ?? bundledTemplates.get(entry.file);
     if (!template) continue;
 
     const section = extractConfigSection(template, entry.sectionHeading);
@@ -653,7 +706,7 @@ export function applyConfigSectionsAdded(
     }
     console.log(
       chalk.green(
-        `  + Added config section "${entry.sectionHeading}" to ${entry.file}`,
+        `  + Added config section "${entry.sectionHeading}" to ${candidateFile}`,
       ),
     );
     appended++;
@@ -669,11 +722,11 @@ export function applyConfigSectionsAdded(
 /**
  * Detect if legacy Codex upgrade is needed.
  *
- * Old Trellis versions used `.agents/skills/` as codex's configDir.
+ * Old Omtre versions used `.agents/skills/` as codex's configDir.
  * New versions use `.codex/` for Codex-specific config and `.agents/skills/`
  * as a shared layer.
  *
- * Detection: Trellis-tracked hashes contain `.agents/skills/` entries
+ * Detection: Omtre-tracked hashes contain `.agents/skills/` entries
  * but `.codex/` does not exist. This avoids misclassifying repos that
  * have `.agents/skills/` from other tools (Kimi CLI, Amp, etc.).
  *
@@ -692,8 +745,8 @@ function needsCodexUpgrade(cwd: string): boolean {
   // the marker paths in its templates.
   const hashes = loadHashes(cwd);
   const legacyMarkers = [
-    ".agents/skills/trellis-continue/SKILL.md",
-    ".agents/skills/trellis-finish-work/SKILL.md",
+    ".agents/skills/omtre-continue/SKILL.md",
+    ".agents/skills/omtre-finish-work/SKILL.md",
   ];
   const hasLegacyMarker = legacyMarkers.some(
     (key) => hashes[key] !== undefined,
@@ -762,7 +815,7 @@ function preserveExistingRegistryConfig(cwd: string, template: string): string {
     "#-------------------------------------------------------------------------------\n" +
     "# Registry\n" +
     "#-------------------------------------------------------------------------------\n\n" +
-    "# Source used to install .trellis/spec. trellis update refreshes this\n" +
+    "# Source used to install .omtre/spec. omtre update refreshes this\n" +
     "# hash-tracked spec template while preserving local edits through the\n" +
     "# normal update conflict flow.\n" +
     "registry:\n" +
@@ -784,7 +837,7 @@ async function collectRegistrySpecTemplates(
   } catch (error) {
     console.log(
       chalk.yellow(
-        `Warning: invalid registry.spec.source in .trellis/config.yaml: ${
+        `Warning: invalid registry.spec.source in .omtre/config.yaml: ${
           error instanceof Error ? error.message : String(error)
         }`,
       ),
@@ -817,7 +870,7 @@ async function collectRegistrySpecTemplates(
       return new Map();
     }
     const tempRoot = await fs.promises.mkdtemp(
-      path.join(os.tmpdir(), "trellis-registry-template-"),
+      path.join(os.tmpdir(), "omtre-registry-template-"),
     );
     try {
       const result = await downloadTemplateById(
@@ -892,21 +945,21 @@ async function collectTemplateFiles(
   }
 
   // Channel runtime agent definitions (single source of truth: getAllAgents()).
-  // Backfilled by `trellis update` if missing so users who installed before the
+  // Backfilled by `omtre update` if missing so users who installed before the
   // bundled agents existed pick them up. Edited files take the standard
   // modified-file prompt path.
   for (const [agentFile, content] of getAllAgents()) {
     files.set(`${PATHS.AGENTS}/${agentFile}`, content);
   }
 
-  // Domain-layer scaffold seed files (.trellis/domains/**). Scaffold-once:
+  // Domain-layer scaffold seed files (.omtre/domains/**). Scaffold-once:
   // only paths missing on disk are offered — anything already present is
   // user data (boards, worklogs, appended registry lines) that update must
   // never compare, prompt on, or overwrite. Dropping existing files here
   // keeps them out of analyzeChanges entirely; a deleted scaffold file keeps
   // its recorded hash and lands in userDeletedFiles ("preserved"), so a
   // user's deletion is respected rather than silently re-seeded.
-  // `.trellis/domains` is also listed in PROTECTED_PATHS.
+  // `.omtre/domains` is also listed in PROTECTED_PATHS.
   for (const [domainFile, content] of getAllDomainFiles()) {
     const relativePath = `${PATHS.DOMAINS}/${domainFile}`;
     if (!fs.existsSync(path.join(cwd, relativePath))) {
@@ -929,7 +982,7 @@ async function collectTemplateFiles(
   // script-consumed.
   // [oh-my] Managed desired content is the fork's `oh-my` workflow. A project
   // that selected `native` or a marketplace variant has no hash entry for this
-  // file (init/`trellis workflow` remove it), so it surfaces as a modified
+  // file (init/`omtre workflow` remove it), so it surfaces as a modified
   // file prompt instead of being silently overwritten.
   files.set(`${DIR_NAMES.WORKFLOW}/workflow.md`, ohMyWorkflowMdTemplate);
   // workspace/index.md stays excluded — it's runtime-appended by add_session.py
@@ -1084,7 +1137,7 @@ function analyzeChanges(
  * Nothing else repairs these. `analyzeChanges` classifies such a file
  * `unchanged`, and the write-back draws only from `newFiles`,
  * `autoUpdateFiles` and overwritten `changedFiles` — so a poisoned or absent
- * entry beside a pristine file survives every subsequent `trellis update`,
+ * entry beside a pristine file survives every subsequent `omtre update`,
  * however many times it is run. Identical template content across versions is
  * not what saves such an entry from going stale; it is precisely what freezes
  * it, because the file never leaves the `unchanged` bucket.
@@ -1096,7 +1149,7 @@ function analyzeChanges(
  * `changedFiles`, and is never seen by this function.
  *
  * That also leaves the mixed-ownership paths — `AGENTS.md`,
- * `.github/copilot-instructions.md`, `.trellis/config.yaml` — free to differ
+ * `.github/copilot-instructions.md`, `.omtre/config.yaml` — free to differ
  * from their recorded hash, which for them is the correct state: once the
  * repository has appended its own content they are no longer `unchanged`.
  */
@@ -1113,7 +1166,7 @@ function collectUnchangedFileHashRepairs(
     if (recorded === undefined) {
       // A missing entry is only an omission for a path the receipt is meant
       // to carry. `EXCLUDE_FROM_HASH` holds paths deliberately left out —
-      // `.trellis/.gitignore` among them — and adding those here would put
+      // `.omtre/.gitignore` among them — and adding those here would put
       // this path in disagreement with `initializeHashes` about what the
       // receipt tracks at all.
       if (!shouldExcludeFromHash(key)) {
@@ -1405,8 +1458,8 @@ function getInstalledVersion(cwd: string): string {
 /**
  * [oh-my] Fetch the latest released CLI version from GitHub.
  *
- * The fork (`oh-my-trellis`) ships as GitHub release tarballs on
- * `ScoFan-official/oh-my-trellis` under `cli-v*` tags, not on npm — the npm
+ * The fork (`omtre`) ships as GitHub release tarballs on
+ * `ScoFan-official/omtre` under `cli-v*` tags, not on npm — the npm
  * registry lookup upstream used is replaced by the releases API. The list
  * endpoint is required (not `/latest`): the pack's own `vX.Y.Z` releases
  * share it. Returns the bare version (`0.6.17-ohmy.N`, no tag prefix).
@@ -1584,9 +1637,9 @@ function isFileSafeToReplace(
  */
 /**
  * Whether the manifest records any file under `dirRelativePath` — i.e. whether
- * Trellis actually created this directory. Used to gate rename-dir migrations:
- * a directory Trellis never wrote (e.g. a user's own `.windsurf/` editor
- * config that merely shares a path with a retired Trellis platform dir) must
+ * Omtre actually created this directory. Used to gate rename-dir migrations:
+ * a directory Omtre never wrote (e.g. a user's own `.windsurf/` editor
+ * config that merely shares a path with a retired Omtre platform dir) must
  * not be auto-moved.
  */
 export function dirHasManifestEntries(
@@ -1624,7 +1677,7 @@ export function classifyMigrations(
       continue;
     }
     // For non-rename types, also block writing TO protected paths
-    // rename/rename-dir are allowed to target protected paths (e.g., 0.2.0 renames into .trellis/workspace)
+    // rename/rename-dir are allowed to target protected paths (e.g., 0.2.0 renames into .omtre/workspace)
     if (
       item.to &&
       isProtectedPath(item.to) &&
@@ -1678,13 +1731,13 @@ export function classifyMigrations(
           result.conflict.push(item);
         }
       } else if (dirHasManifestEntries(item.from, hashes)) {
-        // Trellis created this directory (the manifest tracks files under it),
+        // Omtre created this directory (the manifest tracks files under it),
         // so the rename is ours to make.
         result.auto.push(item);
       } else {
         // Target absent and the source has no manifest record: this is very
         // likely a user-owned directory that merely shares a path with a
-        // retired Trellis platform dir (e.g. a real `.windsurf/` editor
+        // retired Omtre platform dir (e.g. a real `.windsurf/` editor
         // config). Skipping avoids silently moving the user's data out from
         // under their editor — even under --force, since skip never executes.
         result.skip.push(item);
@@ -1763,7 +1816,7 @@ function printMigrationSummary(classified: ClassifiedMigrations): void {
 
   if (classified.skip.length > 0) {
     console.log(
-      chalk.gray("  ○ Skipping (not found, protected, or not Trellis-owned):"),
+      chalk.gray("  ○ Skipping (not found, protected, or not Omtre-owned):"),
     );
     for (const item of classified.skip.slice(0, 3)) {
       console.log(chalk.gray(`    ${item.from}`));
@@ -1823,7 +1876,7 @@ async function promptMigrationAction(
           .join("\n"),
       )
     : chalk.gray(
-        `  Why prompted: file content doesn't match the Trellis template hash\n` +
+        `  Why prompted: file content doesn't match the Omtre template hash\n` +
           `  for this path — usually local customization. If unsure, pick [b].`,
       );
 
@@ -2020,7 +2073,7 @@ export async function executeMigrations(
 
     // For `backup-rename`, leave an inline .backup copy of the user's modified
     // original next to the new location (for rename) or in place (for delete).
-    // This is in addition to the full project snapshot at .trellis/.backup-*/;
+    // This is in addition to the full project snapshot at .omtre/.backup-*/;
     // the inline copy is more discoverable when the user wants to diff or merge
     // their customizations against the new template.
     if (item.type === "rename" && item.to) {
@@ -2051,7 +2104,7 @@ export async function executeMigrations(
 
       if (action === "backup-rename") {
         // Keep a .backup copy in place before deletion so the user can recover
-        // inline without digging through .trellis/.backup-*/.
+        // inline without digging through .omtre/.backup-*/.
         fs.copyFileSync(filePath, filePath + ".backup");
       }
 
@@ -2102,7 +2155,7 @@ function printMigrationResult(result: MigrationResult): void {
  * developer workspace directory.
  *
  * Never overwrites an existing `journal-N.md`: a newer session may already
- * have created it, and `.trellis/workspace/` is excluded from the update
+ * have created it, and `.omtre/workspace/` is excluded from the update
  * backup (see `BACKUP_EXCLUDE_PATTERNS`), so clobbering it would be
  * unrecoverable data loss. Conflicting `traces-N.md` files are left in place
  * and reported instead.
@@ -2140,15 +2193,15 @@ export function renameTracesToJournal(workspaceDir: string): {
 export async function update(options: UpdateOptions): Promise<void> {
   const cwd = process.cwd();
 
-  // Check if Trellis is initialized
+  // Check if Omtre is initialized
   if (!fs.existsSync(path.join(cwd, DIR_NAMES.WORKFLOW))) {
-    console.log(chalk.red("Error: Trellis not initialized in this directory."));
-    console.log(chalk.gray("Run 'trellis init' first."));
+    console.log(chalk.red("Error: Omtre not initialized in this directory."));
+    console.log(chalk.gray("Run 'omtre init' first."));
     return;
   }
 
-  console.log(chalk.cyan("\nTrellis Update"));
-  console.log(chalk.cyan("══════════════\n"));
+  console.log(chalk.cyan("\nOmtre Update"));
+  console.log(chalk.cyan("════════════\n"));
 
   // Set up proxy before any network calls (release version check)
   setupProxy();
@@ -2182,7 +2235,7 @@ export async function update(options: UpdateOptions): Promise<void> {
         `⚠️  Your CLI (${cliVersion}) is behind the latest release (${latestReleaseVersion}).`,
       ),
     );
-    console.log(chalk.yellow(`   Run: trellis upgrade\n`));
+    console.log(chalk.yellow(`   Run: omtre upgrade\n`));
   }
 
   // Check for downgrade situation
@@ -2196,9 +2249,9 @@ export async function update(options: UpdateOptions): Promise<void> {
 
     if (!options.allowDowngrade) {
       console.log(chalk.gray("Solutions:"));
-      console.log(chalk.gray(`  1. Update your CLI: trellis upgrade`));
+      console.log(chalk.gray(`  1. Update your CLI: omtre upgrade`));
       console.log(
-        chalk.gray(`  2. Force downgrade: trellis update --allow-downgrade\n`),
+        chalk.gray(`  2. Force downgrade: omtre update --allow-downgrade\n`),
       );
       return;
     }
@@ -2222,7 +2275,7 @@ export async function update(options: UpdateOptions): Promise<void> {
   if (isUnknownVersion) {
     console.log(
       chalk.yellow(
-        "⚠️  No version file found. Skipping migrations — run trellis init to fix.",
+        "⚠️  No version file found. Skipping migrations — run omtre init to fix.",
       ),
     );
     console.log(chalk.gray("   Template updates will still be applied."));
@@ -2231,7 +2284,7 @@ export async function update(options: UpdateOptions): Promise<void> {
     );
   }
 
-  // Detect legacy Codex (has .agents/skills/ tracked by Trellis but no .codex/)
+  // Detect legacy Codex (has .agents/skills/ tracked by Omtre but no .codex/)
   // NOTE: this MUST happen before pruneOrphanManifestKeys below, since the
   // detector reads the raw manifest looking for .agents/skills/ markers that
   // the prune step would otherwise consider orphans (codex hasn't been added
@@ -2247,7 +2300,7 @@ export async function update(options: UpdateOptions): Promise<void> {
 
   // Self-heal poisoned manifests: prune entries that no current platform
   // configurator owns. This silently removes user-owned paths that early
-  // buggy versions of `trellis init` over-hashed (e.g. .codex/sessions/*).
+  // buggy versions of `omtre init` over-hashed (e.g. .codex/sessions/*).
   // Include codex in known-platforms when codexUpgradeNeeded so legacy Codex
   // markers under .agents/skills/ survive into the upgrade flow.
   {
@@ -2388,7 +2441,7 @@ export async function update(options: UpdateOptions): Promise<void> {
             ),
         );
         console.log("");
-        console.log(chalk.yellow(`  Run: trellis update --migrate`));
+        console.log(chalk.yellow(`  Run: omtre update --migrate`));
         console.log("");
         console.log(
           chalk.gray(
@@ -2565,7 +2618,7 @@ export async function update(options: UpdateOptions): Promise<void> {
           );
           console.log(
             chalk.gray(
-              "  Hash-verified: only files matching known Trellis templates are deleted. Your local customizations (hash mismatch) are still preserved.",
+              "  Hash-verified: only files matching known Omtre templates are deleted. Your local customizations (hash mismatch) are still preserved.",
             ),
           );
         }
@@ -2623,7 +2676,7 @@ export async function update(options: UpdateOptions): Promise<void> {
 
     // Hardcoded: Rename traces-*.md to journal-*.md in workspace directories
     // Why hardcoded: The migration system only supports fixed path renames, not pattern-based.
-    // traces-*.md files are in .trellis/workspace/{developer}/ with variable developer names
+    // traces-*.md files are in .omtre/workspace/{developer}/ with variable developer names
     // and variable file numbers (traces-1.md, traces-2.md, etc.), so we can't enumerate them
     // in the migration manifest. This is a one-time migration for the 0.2.0 naming redesign.
     const workspaceDir = path.join(cwd, PATHS.WORKSPACE);
@@ -2866,7 +2919,7 @@ export async function update(options: UpdateOptions): Promise<void> {
           status: "planning",
           scope: "migration",
           priority: "P1",
-          creator: "trellis-update",
+          creator: "omtre-update",
           assignee: currentDeveloper,
           createdAt: todayStr,
         });
@@ -2881,7 +2934,7 @@ export async function update(options: UpdateOptions): Promise<void> {
         prdContent += `**From Version**: ${projectVersion}\n`;
         prdContent += `**To Version**: ${cliVersion}\n`;
         prdContent += `**Assignee**: ${currentDeveloper}\n\n`;
-        prdContent += `## Status\n\n- [ ] Review migration guide\n- [ ] Update custom files\n- [ ] Run \`trellis update --migrate\`\n- [ ] Test workflows\n\n`;
+        prdContent += `## Status\n\n- [ ] Review migration guide\n- [ ] Update custom files\n- [ ] Run \`omtre update --migrate\`\n- [ ] Test workflows\n\n`;
 
         for (const {
           version,

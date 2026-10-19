@@ -121,23 +121,23 @@ describe("waitForTerminal — the real event source", () => {
   let oldProject: string | undefined;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-run-worker-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-run-worker-test-"));
     projectDir = path.join(tmpDir, "project");
     fs.mkdirSync(projectDir);
-    oldRoot = process.env.TRELLIS_CHANNEL_ROOT;
-    oldProject = process.env.TRELLIS_CHANNEL_PROJECT;
-    process.env.TRELLIS_CHANNEL_ROOT = path.join(tmpDir, "channels");
-    delete process.env.TRELLIS_CHANNEL_PROJECT;
+    oldRoot = process.env.OMTRE_CHANNEL_ROOT;
+    oldProject = process.env.OMTRE_CHANNEL_PROJECT;
+    process.env.OMTRE_CHANNEL_ROOT = path.join(tmpDir, "channels");
+    delete process.env.OMTRE_CHANNEL_PROJECT;
     vi.spyOn(process, "cwd").mockReturnValue(projectDir);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    if (oldRoot === undefined) delete process.env.TRELLIS_CHANNEL_ROOT;
-    else process.env.TRELLIS_CHANNEL_ROOT = oldRoot;
-    if (oldProject === undefined) delete process.env.TRELLIS_CHANNEL_PROJECT;
-    else process.env.TRELLIS_CHANNEL_PROJECT = oldProject;
+    if (oldRoot === undefined) delete process.env.OMTRE_CHANNEL_ROOT;
+    else process.env.OMTRE_CHANNEL_ROOT = oldRoot;
+    if (oldProject === undefined) delete process.env.OMTRE_CHANNEL_PROJECT;
+    else process.env.OMTRE_CHANNEL_PROJECT = oldProject;
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 

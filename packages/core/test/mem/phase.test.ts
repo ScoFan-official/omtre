@@ -21,7 +21,7 @@ const { fakeHome } = vi.hoisted(() => {
   const o = require("node:os") as typeof import("node:os");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const p = require("node:path") as typeof import("node:path");
-  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "trellis-mem-phase-"));
+  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "omtre-mem-phase-"));
   return { fakeHome };
 });
 
@@ -56,9 +56,9 @@ describe("parseTaskPyCommand", () => {
     expect(parseTaskPyCommand(undefined)).toBeNull();
   });
 
-  it('matches `python ./.trellis/scripts/task.py create "foo"`', () => {
+  it('matches `python ./.omtre/scripts/task.py create "foo"`', () => {
     const r = parseTaskPyCommand(
-      'python ./.trellis/scripts/task.py create "fix bug"',
+      'python ./.omtre/scripts/task.py create "fix bug"',
     );
     expect(r).toEqual({
       action: "create",
@@ -67,60 +67,60 @@ describe("parseTaskPyCommand", () => {
     });
   });
 
-  it("matches `python3 ./.trellis/scripts/task.py create ...`", () => {
+  it("matches `python3 ./.omtre/scripts/task.py create ...`", () => {
     const r = parseTaskPyCommand(
-      "python3 ./.trellis/scripts/task.py create my-task",
+      "python3 ./.omtre/scripts/task.py create my-task",
     );
     expect(r?.action).toBe("create");
   });
 
-  it("matches `py -3 .trellis/scripts/task.py create ...` (Windows launcher)", () => {
-    const r = parseTaskPyCommand("py -3 .trellis/scripts/task.py create foo");
+  it("matches `py -3 .omtre/scripts/task.py create ...` (Windows launcher)", () => {
+    const r = parseTaskPyCommand("py -3 .omtre/scripts/task.py create foo");
     expect(r?.action).toBe("create");
   });
 
   it("matches Windows backslash path (single)", () => {
     const r = parseTaskPyCommand(
-      "python3 .trellis\\scripts\\task.py start .trellis\\tasks\\05-08-foo",
+      "python3 .omtre\\scripts\\task.py start .omtre\\tasks\\05-08-foo",
     );
     expect(r).toEqual({
       action: "start",
-      taskDir: ".trellis\\tasks\\05-08-foo",
+      taskDir: ".omtre\\tasks\\05-08-foo",
     });
   });
 
   it("matches Windows backslash path (double — JSONL re-escape)", () => {
     const r = parseTaskPyCommand(
-      "python3 .trellis\\\\scripts\\\\task.py create my-task",
+      "python3 .omtre\\\\scripts\\\\task.py create my-task",
     );
     expect(r?.action).toBe("create");
   });
 
   it("matches `task.py start` with no invoker prefix", () => {
-    const r = parseTaskPyCommand("task.py start .trellis/tasks/05-08-foo/");
+    const r = parseTaskPyCommand("task.py start .omtre/tasks/05-08-foo/");
     expect(r).toEqual({
       action: "start",
-      taskDir: ".trellis/tasks/05-08-foo/",
+      taskDir: ".omtre/tasks/05-08-foo/",
     });
   });
 
   it("matches absolute path", () => {
     const r = parseTaskPyCommand(
-      "python3 /Users/me/proj/.trellis/scripts/task.py create new-thing",
+      "python3 /Users/me/proj/.omtre/scripts/task.py create new-thing",
     );
     expect(r?.action).toBe("create");
   });
 
   it("captures --slug FOO flag value", () => {
     const r = parseTaskPyCommand(
-      'python3 .trellis/scripts/task.py create "Title" --slug my-slug',
+      'python3 .omtre/scripts/task.py create "Title" --slug my-slug',
     );
     expect(r).toMatchObject({ action: "create", slug: "my-slug" });
   });
 
   it("captures --slug=FOO equals form", () => {
     const r = parseTaskPyCommand(
-      "python3 .trellis/scripts/task.py create --slug=my-slug",
+      "python3 .omtre/scripts/task.py create --slug=my-slug",
     );
     expect(r).toMatchObject({ action: "create", slug: "my-slug" });
   });
@@ -135,7 +135,7 @@ describe("parseTaskPyCommand", () => {
 
   it("does NOT match `task.py update` (only create/start are signals)", () => {
     expect(
-      parseTaskPyCommand("python3 .trellis/scripts/task.py update foo"),
+      parseTaskPyCommand("python3 .omtre/scripts/task.py update foo"),
     ).toBeNull();
   });
 
@@ -164,7 +164,7 @@ function ev(
 describe("parseTaskPyCommandsAll (dogfood-driven edge cases)", () => {
   it("strips $(...) closing paren from --slug value", () => {
     const all = parseTaskPyCommandsAll(
-      'TASK_DIR=$(python3 ./.trellis/scripts/task.py create "fix: tl mem --since drops cross-day sessions" --slug mem-since-cross-day-filter)',
+      'TASK_DIR=$(python3 ./.omtre/scripts/task.py create "fix: tl mem --since drops cross-day sessions" --slug mem-since-cross-day-filter)',
     );
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({
@@ -175,7 +175,7 @@ describe("parseTaskPyCommandsAll (dogfood-driven edge cases)", () => {
 
   it("captures BOTH task.py invocations in one Bash command", () => {
     const cmd =
-      'SMOKE_TASK=$(python3 ./.trellis/scripts/task.py create "smoke" 2>&1); python3 ./.trellis/scripts/task.py start ".trellis/tasks/$SMOKE_TASK" 2>&1 | tail -3';
+      'SMOKE_TASK=$(python3 ./.omtre/scripts/task.py create "smoke" 2>&1); python3 ./.omtre/scripts/task.py start ".omtre/tasks/$SMOKE_TASK" 2>&1 | tail -3';
     const all = parseTaskPyCommandsAll(cmd);
     expect(all).toHaveLength(2);
     expect(all[0]).toMatchObject({ action: "create" });
@@ -187,7 +187,7 @@ describe("parseTaskPyCommandsAll (dogfood-driven edge cases)", () => {
 
   it("rejects prose-embedded matches (heredoc / commit-message text)", () => {
     const cmd =
-      'git commit -m "Previous text said `.current-task` is a CLI fallback. Current code never writes that file — task.py start exits with hint to set TRELLIS_CONTEXT_ID."';
+      'git commit -m "Previous text said `.current-task` is a CLI fallback. Current code never writes that file — task.py start exits with hint to set OMTRE_CONTEXT_ID."';
     expect(parseTaskPyCommandsAll(cmd)).toEqual([]);
   });
 
@@ -205,7 +205,7 @@ describe("parseTaskPyCommandsAll (dogfood-driven edge cases)", () => {
 });
 
 describe("slugFromTaskDir (via buildBrainstormWindows pairing)", () => {
-  it("pairs --slug FOO with start .trellis/tasks/MM-DD-FOO via prefix strip", () => {
+  it("pairs --slug FOO with start .omtre/tasks/MM-DD-FOO via prefix strip", () => {
     const events: TaskPyEvent[] = [
       {
         action: "create",
@@ -217,7 +217,7 @@ describe("slugFromTaskDir (via buildBrainstormWindows pairing)", () => {
         action: "start",
         timestamp: "2026-05-08T00:00:10Z",
         turnIndex: 10,
-        taskDir: ".trellis/tasks/05-08-mem-fix",
+        taskDir: ".omtre/tasks/05-08-mem-fix",
       },
     ];
     const ws = buildBrainstormWindows(events, 20);
@@ -249,9 +249,9 @@ describe("buildBrainstormWindows", () => {
   it("pairs multi-task FIFO when slugs are missing", () => {
     const events = [
       ev("create", 1),
-      ev("start", 3, { taskDir: ".trellis/tasks/aaa" }),
+      ev("start", 3, { taskDir: ".omtre/tasks/aaa" }),
       ev("create", 5),
-      ev("start", 9, { taskDir: ".trellis/tasks/bbb" }),
+      ev("start", 9, { taskDir: ".omtre/tasks/bbb" }),
     ];
     expect(buildBrainstormWindows(events, 12)).toEqual([
       { label: "aaa", startTurn: 1, endTurn: 3 },
@@ -263,8 +263,8 @@ describe("buildBrainstormWindows", () => {
     const events = [
       ev("create", 1, { slug: "aaa" }),
       ev("create", 2, { slug: "bbb" }),
-      ev("start", 5, { taskDir: ".trellis/tasks/bbb" }),
-      ev("start", 6, { taskDir: ".trellis/tasks/aaa" }),
+      ev("start", 5, { taskDir: ".omtre/tasks/bbb" }),
+      ev("start", 6, { taskDir: ".omtre/tasks/aaa" }),
     ];
     expect(buildBrainstormWindows(events, 10)).toEqual([
       { label: "aaa", startTurn: 1, endTurn: 6 },
@@ -280,7 +280,7 @@ describe("buildBrainstormWindows", () => {
   });
 
   it("fallback B: start with no preceding create → [0, start)", () => {
-    const events = [ev("start", 7, { taskDir: ".trellis/tasks/earlier" })];
+    const events = [ev("start", 7, { taskDir: ".omtre/tasks/earlier" })];
     expect(buildBrainstormWindows(events, 12)).toEqual([
       { label: "earlier", startTurn: 0, endTurn: 7 },
     ]);
@@ -289,7 +289,7 @@ describe("buildBrainstormWindows", () => {
   it("skips malformed window where start.turnIndex < create.turnIndex (event order quirk)", () => {
     const events = [
       ev("create", 8, { slug: "weird" }),
-      ev("start", 3, { taskDir: ".trellis/tasks/weird" }),
+      ev("start", 3, { taskDir: ".omtre/tasks/weird" }),
     ];
     expect(buildBrainstormWindows(events, 10)).toEqual([]);
   });
@@ -374,7 +374,7 @@ describe("collectClaudeTurnsAndEvents", () => {
               name: "Bash",
               input: {
                 command:
-                  'python3 ./.trellis/scripts/task.py create "task X" --slug task-x',
+                  'python3 ./.omtre/scripts/task.py create "task X" --slug task-x',
               },
             },
           ],
@@ -397,7 +397,7 @@ describe("collectClaudeTurnsAndEvents", () => {
               name: "Bash",
               input: {
                 command:
-                  "python3 ./.trellis/scripts/task.py start .trellis/tasks/task-x",
+                  "python3 ./.omtre/scripts/task.py start .omtre/tasks/task-x",
               },
             },
           ],
@@ -421,7 +421,7 @@ describe("collectClaudeTurnsAndEvents", () => {
     });
     expect(events[1]).toMatchObject({
       action: "start",
-      taskDir: ".trellis/tasks/task-x",
+      taskDir: ".omtre/tasks/task-x",
       turnIndex: 5,
     });
 
@@ -494,7 +494,7 @@ describe("collectClaudeTurnsAndEvents", () => {
               name: "Bash",
               input: {
                 command:
-                  "python3 ./.trellis/scripts/task.py create --slug post-compact",
+                  "python3 ./.omtre/scripts/task.py create --slug post-compact",
               },
             },
           ],
@@ -539,7 +539,7 @@ describe("collectClaudeTurnsAndEvents", () => {
               name: "Bash",
               input: {
                 command:
-                  "python3 ./.trellis/scripts/task.py create --slug stale",
+                  "python3 ./.omtre/scripts/task.py create --slug stale",
               },
             },
           ],
@@ -666,7 +666,7 @@ describe("collectCodexTurnsAndEvents", () => {
           arguments: JSON.stringify({
             argv: [
               "python3",
-              ".trellis/scripts/task.py",
+              ".omtre/scripts/task.py",
               "create",
               "--slug",
               "codex-task",
@@ -690,9 +690,9 @@ describe("collectCodexTurnsAndEvents", () => {
           arguments: JSON.stringify({
             argv: [
               "python3",
-              ".trellis/scripts/task.py",
+              ".omtre/scripts/task.py",
               "start",
-              ".trellis/tasks/05-08-codex-task",
+              ".omtre/tasks/05-08-codex-task",
             ],
           }),
         },
@@ -717,7 +717,7 @@ describe("collectCodexTurnsAndEvents", () => {
     });
     expect(events[1]).toMatchObject({
       action: "start",
-      taskDir: ".trellis/tasks/05-08-codex-task",
+      taskDir: ".omtre/tasks/05-08-codex-task",
       turnIndex: 2,
     });
 
@@ -761,7 +761,7 @@ describe("collectCodexTurnsAndEvents", () => {
           type: "function_call",
           name: "exec_command",
           arguments: JSON.stringify({
-            cmd: "python3 .trellis/scripts/task.py create --slug str-cmd",
+            cmd: "python3 .omtre/scripts/task.py create --slug str-cmd",
           }),
         },
       },
@@ -844,7 +844,7 @@ describe("collectPiTurnsAndEvents", () => {
               name: "bash",
               arguments: {
                 command:
-                  "python3 .trellis/scripts/task.py create --slug pi-task",
+                  "python3 .omtre/scripts/task.py create --slug pi-task",
               },
             },
           ],
@@ -865,7 +865,7 @@ describe("collectPiTurnsAndEvents", () => {
         message: {
           role: "bashExecution",
           command:
-            "python3 .trellis/scripts/task.py start .trellis/tasks/06-18-pi-task",
+            "python3 .omtre/scripts/task.py start .omtre/tasks/06-18-pi-task",
           output: "",
         },
       },
@@ -893,7 +893,7 @@ describe("collectPiTurnsAndEvents", () => {
     });
     expect(events[1]).toMatchObject({
       action: "start",
-      taskDir: ".trellis/tasks/06-18-pi-task",
+      taskDir: ".omtre/tasks/06-18-pi-task",
       turnIndex: 3,
     });
     expect(buildBrainstormWindows(events, turns.length)).toEqual([

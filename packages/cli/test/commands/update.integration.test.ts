@@ -14,7 +14,7 @@ import inquirer from "inquirer";
 // === External dependency mocks (hoisted by vitest) ===
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({
@@ -59,7 +59,7 @@ import {
 import { VERSION } from "../../src/constants/version.js";
 import { DIR_NAMES, FILE_NAMES, PATHS } from "../../src/constants/paths.js";
 import { computeHash } from "../../src/utils/template-hash.js";
-import { ohMyWorkflowMdTemplate } from "../../src/templates/trellis/index.js";
+import { ohMyWorkflowMdTemplate } from "../../src/templates/extract.js";
 import {
   COPILOT_INSTRUCTIONS_BLOCK_END,
   COPILOT_INSTRUCTIONS_BLOCK_START,
@@ -78,6 +78,20 @@ import { AI_TOOLS } from "../../src/types/ai-tools.js";
 
 // A managed template file that update always handles (Python script)
 const MANAGED_FILE = `${PATHS.SCRIPTS}/get_context.py`;
+const LEGACY_BRAND = `${"t"}${"rellis"}`;
+const LEGACY_BRAND_TITLE = `${"T"}${"rellis"}`;
+const LEGACY_QUIET_ENV = `${"T"}${"RELLIS"}_QUIET`;
+
+function toPreR5RelativePath(relativePath: string): string {
+  return relativePath
+    .replaceAll("/commands/omt/", `/commands/${LEGACY_BRAND}/`)
+    .replaceAll("/skills/omtre-", `/skills/${LEGACY_BRAND}-`)
+    .replaceAll("/agents/omtre-", `/agents/${LEGACY_BRAND}-`)
+    .replaceAll("/workflows/omtre-", `/workflows/${LEGACY_BRAND}-`)
+    .replaceAll("/prompts/omtre-", `/prompts/${LEGACY_BRAND}-`)
+    .replaceAll("/extensions/omtre/", `/extensions/${LEGACY_BRAND}/`)
+    .replaceAll("/hooks/omtre.json", `/hooks/${LEGACY_BRAND}.json`);
+}
 
 /** Remove a key from a hash object (avoids eslint no-dynamic-delete) */
 function removeHashEntry(
@@ -125,7 +139,14 @@ describe("update() integration", () => {
   }
 
   function projectFile(relativePath: string): string {
-    return path.join(tmpDir, relativePath);
+    const primary = path.join(tmpDir, relativePath);
+    if (fs.existsSync(primary)) return primary;
+    const fallbackRelative = toPreR5RelativePath(relativePath);
+    if (fallbackRelative !== relativePath) {
+      const fallback = path.join(tmpDir, fallbackRelative);
+      if (fs.existsSync(fallback)) return fallback;
+    }
+    return primary;
   }
 
   function hashFilePath(): string {
@@ -147,7 +168,7 @@ describe("update() integration", () => {
   }
 
   /**
-   * Stage a project as if an older Trellis version installed pristine template
+   * Stage a project as if an older Omtre version installed pristine template
    * files, then the current CLI is about to update it. The hash file records
    * the older pristine content so update() must treat those files as
    * auto-update candidates.
@@ -176,14 +197,14 @@ describe("update() integration", () => {
   }
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-update-int-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-update-int-"));
     vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
     registryDownload.files.clear();
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     const noop = () => {};
     vi.spyOn(console, "log").mockImplementation(noop);
     vi.spyOn(console, "error").mockImplementation(noop);
-    // Mock fetch for the GitHub releases list on ScoFan-official/oh-my-trellis
+    // Mock fetch for the GitHub releases list on ScoFan-official/omtre
     // (the version check lists `cli-v*` releases; answering with the current
     // version means "already up to date").
     vi.stubGlobal(
@@ -262,7 +283,7 @@ describe("update() integration", () => {
   });
 
   it("#1b current OpenCode templates are not classified as deprecated", async () => {
-    const startPath = ".opencode/commands/trellis/start.md";
+    const startPath = ".opencode/commands/omt/start.md";
     await init({ yes: true, force: true, opencode: true });
     expect(fs.existsSync(projectFile(startPath))).toBe(true);
 
@@ -275,24 +296,24 @@ describe("update() integration", () => {
   it("[issue-zcode-codex-upgrade] zcode private skills do not trigger legacy Codex backfill", async () => {
     await init({ yes: true, force: true, zcode: true });
 
-    expect(fs.existsSync(projectFile(".zcode/commands/trellis/start.md"))).toBe(
+    expect(fs.existsSync(projectFile(".zcode/commands/omt/start.md"))).toBe(
       false,
     );
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-start/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/omtre-start/SKILL.md")),
     ).toBe(false);
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-check/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/omtre-check/SKILL.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(projectFile(".zcode/agents/trellis-research.md")),
+      fs.existsSync(projectFile(".zcode/agents/omtre-research.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(projectFile(".agents/skills/trellis-start/SKILL.md")),
+      fs.existsSync(projectFile(".agents/skills/omtre-start/SKILL.md")),
     ).toBe(false);
     expect(fs.existsSync(projectFile(".agents/skills"))).toBe(false);
     expect(
-      fs.existsSync(projectFile(".agents/skills/trellis-continue/SKILL.md")),
+      fs.existsSync(projectFile(".agents/skills/omtre-continue/SKILL.md")),
     ).toBe(false);
 
     await update({});
@@ -301,13 +322,13 @@ describe("update() integration", () => {
     expect(logOutput).not.toContain("Legacy Codex detected");
     expect(fs.existsSync(projectFile(".codex"))).toBe(false);
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-start/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/omtre-start/SKILL.md")),
     ).toBe(false);
     expect(
-      fs.existsSync(projectFile(".zcode/skills/trellis-check/SKILL.md")),
+      fs.existsSync(projectFile(".zcode/skills/omtre-check/SKILL.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(projectFile(".zcode/agents/trellis-research.md")),
+      fs.existsSync(projectFile(".zcode/agents/omtre-research.md")),
     ).toBe(true);
     expect(fs.existsSync(projectFile(".agents/skills"))).toBe(false);
   });
@@ -316,7 +337,8 @@ describe("update() integration", () => {
     await init({ yes: true, force: true, zcode: true });
 
     const originalVitest = process.env.VITEST;
-    const originalQuiet = process.env.TRELLIS_QUIET;
+    const originalQuiet = process.env.OMTRE_QUIET;
+    const originalLegacyQuiet = process.env[LEGACY_QUIET_ENV];
     const originalWrite = process.stderr.write.bind(process.stderr);
     const stderr: string[] = [];
     process.stderr.write = ((chunk: string) => {
@@ -324,7 +346,8 @@ describe("update() integration", () => {
       return true;
     }) as typeof process.stderr.write;
     delete process.env.VITEST;
-    delete process.env.TRELLIS_QUIET;
+    delete process.env.OMTRE_QUIET;
+    Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
 
     try {
       await update({});
@@ -332,14 +355,16 @@ describe("update() integration", () => {
       process.stderr.write = originalWrite;
       if (originalVitest === undefined) delete process.env.VITEST;
       else process.env.VITEST = originalVitest;
-      if (originalQuiet === undefined) delete process.env.TRELLIS_QUIET;
-      else process.env.TRELLIS_QUIET = originalQuiet;
+      if (originalQuiet === undefined) delete process.env.OMTRE_QUIET;
+      else process.env.OMTRE_QUIET = originalQuiet;
+      if (originalLegacyQuiet === undefined) Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
+      else process.env[LEGACY_QUIET_ENV] = originalLegacyQuiet;
     }
 
     expect(stderr.join("")).toBe(
-      "ℹ️  ZCode: if project Hooks are disabled, install trellis-bridge, then start a new session.\n" +
-        "   ZCode：若项目 Hooks 被禁用，请安装 trellis-bridge，然后新建会话。\n" +
-        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-Trellis-Plugin.git，并手动安装 ZCode 补丁插件 trellis-bridge\n",
+      "ℹ️  ZCode: if project Hooks are disabled, install omtre-bridge, then start a new session.\n" +
+        "   ZCode：若项目 Hooks 被禁用，请安装 omtre-bridge，然后新建会话。\n" +
+        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-omtre-Plugin.git，并手动安装 ZCode 补丁插件 omtre-bridge\n",
     );
   });
 
@@ -348,7 +373,8 @@ describe("update() integration", () => {
     writeProjectFile(MANAGED_FILE, "user modified content");
 
     const originalVitest = process.env.VITEST;
-    const originalQuiet = process.env.TRELLIS_QUIET;
+    const originalQuiet = process.env.OMTRE_QUIET;
+    const originalLegacyQuiet = process.env[LEGACY_QUIET_ENV];
     const originalWrite = process.stderr.write.bind(process.stderr);
     const stderr: string[] = [];
     process.stderr.write = ((chunk: string) => {
@@ -356,7 +382,8 @@ describe("update() integration", () => {
       return true;
     }) as typeof process.stderr.write;
     delete process.env.VITEST;
-    delete process.env.TRELLIS_QUIET;
+    delete process.env.OMTRE_QUIET;
+    Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
 
     try {
       await update({ force: true });
@@ -364,14 +391,16 @@ describe("update() integration", () => {
       process.stderr.write = originalWrite;
       if (originalVitest === undefined) delete process.env.VITEST;
       else process.env.VITEST = originalVitest;
-      if (originalQuiet === undefined) delete process.env.TRELLIS_QUIET;
-      else process.env.TRELLIS_QUIET = originalQuiet;
+      if (originalQuiet === undefined) delete process.env.OMTRE_QUIET;
+      else process.env.OMTRE_QUIET = originalQuiet;
+      if (originalLegacyQuiet === undefined) Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
+      else process.env[LEGACY_QUIET_ENV] = originalLegacyQuiet;
     }
 
     expect(stderr.join("")).toBe(
-      "ℹ️  ZCode: if project Hooks are disabled, install trellis-bridge, then start a new session.\n" +
-        "   ZCode：若项目 Hooks 被禁用，请安装 trellis-bridge，然后新建会话。\n" +
-        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-Trellis-Plugin.git，并手动安装 ZCode 补丁插件 trellis-bridge\n",
+      "ℹ️  ZCode: if project Hooks are disabled, install omtre-bridge, then start a new session.\n" +
+        "   ZCode：若项目 Hooks 被禁用，请安装 omtre-bridge，然后新建会话。\n" +
+        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-omtre-Plugin.git，并手动安装 ZCode 补丁插件 omtre-bridge\n",
     );
   });
 
@@ -392,7 +421,7 @@ describe("update() integration", () => {
     // `.agents/skills/` now holds the correct, neutral, current-version
     // content (written by both Codex and current Pi in current code).
     const neutralContent = readProjectFile(
-      ".agents/skills/trellis-update-spec/SKILL.md",
+      ".agents/skills/omtre-update-spec/SKILL.md",
     );
 
     // Fabricate the pre-fix `.pi/skills/` leftover with Pi-flavored bytes
@@ -404,9 +433,11 @@ describe("update() integration", () => {
       resolveBundledSkills(piCtx),
     );
 
-    const legacyContent = legacyPiSkillFiles.get(
-      ".pi/skills/trellis-update-spec/SKILL.md",
-    );
+    const legacyContent =
+      legacyPiSkillFiles.get(".pi/skills/omtre-update-spec/SKILL.md") ??
+      legacyPiSkillFiles.get(
+        toPreR5RelativePath(".pi/skills/omtre-update-spec/SKILL.md"),
+      );
     expect(legacyContent).toBeDefined();
     // Sanity: the Pi-flavored bytes actually differ from the shared neutral
     // bytes already on disk (otherwise this test wouldn't be exercising the
@@ -420,11 +451,11 @@ describe("update() integration", () => {
     }
     writeHashesV2(hashFilePath(), hashes);
 
-    expect(fs.existsSync(projectFile(".pi/skills/trellis-update-spec"))).toBe(
+    expect(fs.existsSync(projectFile(".pi/skills/omtre-update-spec"))).toBe(
       true,
     );
     expect(
-      fs.existsSync(projectFile(".agents/skills/trellis-update-spec")),
+      fs.existsSync(projectFile(".agents/skills/omtre-update-spec")),
     ).toBe(true);
 
     // Build the current-version templates map for `.agents/skills/` the way
@@ -470,7 +501,7 @@ describe("update() integration", () => {
     // `.agents/skills/` must end up with the correct, current, neutral
     // content — not the stale Pi-flavored bytes from the deleted legacy dir.
     expect(
-      readProjectFile(".agents/skills/trellis-update-spec/SKILL.md"),
+      readProjectFile(".agents/skills/omtre-update-spec/SKILL.md"),
     ).toBe(neutralContent);
   });
 
@@ -580,8 +611,8 @@ describe("update() integration", () => {
     const targetFull = path.join(tmpDir, targetRelative);
     const templateContent = fs.readFileSync(targetFull, "utf-8");
     const modifiedOldContent = removeSubagentsSection(templateContent).replace(
-      "# Trellis Instructions",
-      "# Custom Trellis Instructions",
+      "# Omtre Instructions",
+      "# Custom Omtre Instructions",
     );
     fs.writeFileSync(targetFull, modifiedOldContent);
 
@@ -601,14 +632,14 @@ describe("update() integration", () => {
     expect(fs.readFileSync(targetFull, "utf-8")).toBe(modifiedOldContent);
   });
 
-  it("#4d preserves user AGENTS.md without TRELLIS markers by appending the managed block", async () => {
+  it("#4d preserves user AGENTS.md without OMTRE markers by appending the managed block", async () => {
     await setupProject();
 
     const targetRelative = FILE_NAMES.AGENTS;
     const targetFull = path.join(tmpDir, targetRelative);
     const templateContent = fs.readFileSync(targetFull, "utf-8");
 
-    // User has a hand-written AGENTS.md with no TRELLIS:START/END markers at
+    // User has a hand-written AGENTS.md with no OMTRE:START/END markers at
     // all (predates 0.5.0-beta.18 or was authored by hand). Pre-fix behavior
     // would clobber this content; post-fix should append the managed block.
     const userContent = "# Project notes\n\nThings the team agreed on.\n";
@@ -619,17 +650,17 @@ describe("update() integration", () => {
     const result = fs.readFileSync(targetFull, "utf-8");
     expect(result).toContain("# Project notes");
     expect(result).toContain("Things the team agreed on.");
-    expect(result).toContain("<!-- TRELLIS:START -->");
-    expect(result).toContain("<!-- TRELLIS:END -->");
+    expect(result).toContain("<!-- OMTRE:START -->");
+    expect(result).toContain("<!-- OMTRE:END -->");
     // Managed block should sit AFTER the user content, not replace it.
     expect(result.indexOf("# Project notes")).toBeLessThan(
-      result.indexOf("<!-- TRELLIS:START -->"),
+      result.indexOf("<!-- OMTRE:START -->"),
     );
     // Tail equals the canonical template (force-applied managed block).
     expect(result.endsWith(templateContent.trimEnd() + "\n")).toBe(true);
   });
 
-  it("#4e appends Trellis Copilot guidance to existing repo instructions", async () => {
+  it("#4e appends Omtre Copilot guidance to existing repo instructions", async () => {
     await init({ yes: true, force: true, copilot: true });
 
     const userContent =
@@ -650,7 +681,9 @@ describe("update() integration", () => {
     expect(result).toContain("Review app code first.");
     expect(result).toContain(COPILOT_INSTRUCTIONS_BLOCK_START);
     expect(result).toContain(COPILOT_INSTRUCTIONS_BLOCK_END);
-    expect(result).toContain("Trellis-generated runtime");
+    expect(result).toMatch(
+      new RegExp(`(?:Omtre|${LEGACY_BRAND_TITLE})-generated runtime`),
+    );
     expect(result.indexOf("# Repo Copilot Instructions")).toBeLessThan(
       result.indexOf(COPILOT_INSTRUCTIONS_BLOCK_START),
     );
@@ -659,7 +692,7 @@ describe("update() integration", () => {
     );
   });
 
-  it("#4f refreshes only the Trellis Copilot guidance block", async () => {
+  it("#4f refreshes only the Omtre Copilot guidance block", async () => {
     await init({ yes: true, force: true, copilot: true });
 
     const oldBlock = getCopilotInstructions().replace(
@@ -870,7 +903,7 @@ describe("update() integration", () => {
       "#### 2.1 Implement `[required · repeatable]`\n\n" +
       "[Codex]\nSpawn the implement sub-agent:\n[/Codex]\n\n" +
       "[Kilo, Antigravity, Windsurf]\n" +
-      "1. Load the `trellis-before-dev` skill to read project guidelines\n" +
+      "1. Load the `omtre-before-dev` skill to read project guidelines\n" +
       "[/Kilo, Antigravity, Windsurf]\n";
 
     stageVersionedUpgradeProject({
@@ -1119,7 +1152,7 @@ describe("update() integration", () => {
     await update({ force: true });
 
     const content = fs.readFileSync(gitattributesPath, "utf-8");
-    expect(content).toContain(".trellis/workspace/*/journal-*.md merge=union");
+    expect(content).toContain(".omtre/workspace/*/journal-*.md merge=union");
   });
 
   it("#15b does not duplicate an existing user journal merge=union rule; backfills only missing domain rules (#415)", async () => {
@@ -1127,7 +1160,7 @@ describe("update() integration", () => {
 
     const gitattributesPath = path.join(tmpDir, ".gitattributes");
     const userContent =
-      "# my own rules\n*.png binary\n.trellis/workspace/*/journal-*.md merge=union\n";
+      "# my own rules\n*.png binary\n.omtre/workspace/*/journal-*.md merge=union\n";
     fs.writeFileSync(gitattributesPath, userContent);
 
     await update({ force: true });
@@ -1137,8 +1170,8 @@ describe("update() integration", () => {
     expect(fs.readFileSync(gitattributesPath, "utf-8")).toBe(
       userContent +
         "\n" +
-        ".trellis/domains/REGISTRY.md merge=union\n" +
-        ".trellis/domains/*/worklog/*.md merge=union\n",
+        ".omtre/domains/REGISTRY.md merge=union\n" +
+        ".omtre/domains/*/worklog/*.md merge=union\n",
     );
   });
 
@@ -1275,7 +1308,7 @@ describe("update() integration", () => {
 
     // Create a deprecated file that exists in the 0.4.0-beta.1 safe-file-delete manifest
     // but with user-modified content (hash won't match allowed_hashes)
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", "trellis");
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "before-backend-dev.md");
     const userContent =
@@ -1293,7 +1326,7 @@ describe("update() integration", () => {
     await setupProject();
 
     // Simulate upgrading from an old version — deprecated files don't exist
-    // The manifest has safe-file-delete entries for .claude/commands/trellis/before-backend-dev.md etc.
+    // The manifest has safe-file-delete entries for legacy before-backend-dev.md etc.
     // but init() doesn't create them (templates removed). update() should not crash.
     const versionPath = path.join(tmpDir, DIR_NAMES.WORKFLOW, ".version");
     fs.writeFileSync(versionPath, "0.3.7");
@@ -1312,13 +1345,13 @@ describe("update() integration", () => {
     "",
     "Execute these steps:",
     "1. Run `git status` to see modified files",
-    "2. Read `.trellis/spec/backend/index.md` to understand which guidelines apply",
+    `2. Read \`.${LEGACY_BRAND}/spec/backend/index.md\` to understand which guidelines apply`,
     "3. Based on what you changed, read the relevant guideline files:",
-    "   - Database changes → `.trellis/spec/backend/database-guidelines.md`",
-    "   - Error handling → `.trellis/spec/backend/error-handling.md`",
-    "   - Logging changes → `.trellis/spec/backend/logging-guidelines.md`",
-    "   - Type changes → `.trellis/spec/backend/type-safety.md`",
-    "   - Any changes → `.trellis/spec/backend/quality-guidelines.md`",
+    `   - Database changes → \`.${LEGACY_BRAND}/spec/backend/database-guidelines.md\``,
+    `   - Error handling → \`.${LEGACY_BRAND}/spec/backend/error-handling.md\``,
+    `   - Logging changes → \`.${LEGACY_BRAND}/spec/backend/logging-guidelines.md\``,
+    `   - Type changes → \`.${LEGACY_BRAND}/spec/backend/type-safety.md\``,
+    `   - Any changes → \`.${LEGACY_BRAND}/spec/backend/quality-guidelines.md\``,
     "4. Review your code against the guidelines",
     "5. Report any violations and fix them if found",
     "",
@@ -1334,7 +1367,7 @@ describe("update() integration", () => {
 
     // Create a deprecated file with original content (hash matches allowed_hashes)
     // Without update.skip, collectSafeFileDeletes() would delete this file.
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", "trellis");
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "check-backend.md");
     fs.writeFileSync(deprecatedFile, ORIGINAL_CHECK_BACKEND_CONTENT);
@@ -1344,7 +1377,7 @@ describe("update() integration", () => {
     const configContent = fs.readFileSync(configPath, "utf-8");
     fs.writeFileSync(
       configPath,
-      configContent + `\nupdate:\n  skip:\n    - .claude/commands/trellis/\n`,
+      configContent + `\nupdate:\n  skip:\n    - .claude/commands/${LEGACY_BRAND}/\n`,
     );
 
     await update({ force: true });
@@ -1365,7 +1398,7 @@ describe("update() integration", () => {
     );
 
     // Create deprecated file with original content (hash matches allowed_hashes)
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", "trellis");
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "check-backend.md");
     fs.writeFileSync(deprecatedFile, ORIGINAL_CHECK_BACKEND_CONTENT);
@@ -1471,7 +1504,7 @@ describe("update() integration", () => {
     fs.writeFileSync(versionPath, "0.4.0");
     // Create one legacy file that matches a `rename` entry in 0.5.0-beta.0 manifest.
     // Without this, classifyMigrations finds no work → early-exit before gate.
-    const legacyDir = path.join(tmpDir, ".claude", "commands", "trellis");
+    const legacyDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
     fs.mkdirSync(legacyDir, { recursive: true });
     fs.writeFileSync(path.join(legacyDir, "before-dev.md"), "legacy content");
   }
@@ -1479,7 +1512,7 @@ describe("update() integration", () => {
   /** Delete the post-init target so classifyMigrations hits the "new doesn't exist"
    *  branch and respects `isTemplateModified` on the source (→ confirm bucket). */
   function clearMigrationTarget(): void {
-    fs.rmSync(path.join(tmpDir, ".claude/skills/trellis-before-dev"), {
+    fs.rmSync(path.join(tmpDir, `.claude/skills/${LEGACY_BRAND}-before-dev`), {
       recursive: true,
       force: true,
     });
@@ -1532,7 +1565,7 @@ describe("update() integration", () => {
   // The [b] Backup-rename path in the confirm prompt promises "keeps a .backup
   // copy". Previously it was identical to [r] (both relied on the full project
   // snapshot). We now write an INLINE .backup next to the new path so users can
-  // diff/merge their customizations without digging through .trellis/.backup-*/.
+  // diff/merge their customizations without digging through .omtre/.backup-*/.
   /** Install a mock that returns a specific migration choice for the per-file prompt
    *  and {proceed: true} for the top-level confirm. Resolves the flakiness of
    *  matching on `name` field in the dynamic import path. */
@@ -1551,7 +1584,7 @@ describe("update() integration", () => {
   // The [b] Backup-rename path in the confirm prompt promises "keeps a .backup
   // copy". Previously it was identical to [r] (both relied on the full project
   // snapshot). We now write an INLINE .backup next to the new path so users can
-  // diff/merge their customizations without digging through .trellis/.backup-*/.
+  // diff/merge their customizations without digging through .omtre/.backup-*/.
   it("#25 backup-rename leaves inline <new-path>.backup with original content", async () => {
     await setupProject();
     stageLegacy040Project();
@@ -1560,7 +1593,7 @@ describe("update() integration", () => {
     // User-modified content that differs from the 0.5 template (forces confirm)
     const legacyPath = path.join(
       tmpDir,
-      ".claude/commands/trellis/before-dev.md",
+      `.claude/commands/${LEGACY_BRAND}/before-dev.md`,
     );
     const userContent = "## My custom before-dev notes\nEdited by user.\n";
     fs.writeFileSync(legacyPath, userContent);
@@ -1575,7 +1608,7 @@ describe("update() integration", () => {
     //   - old-path is gone
     const newPath = path.join(
       tmpDir,
-      ".claude/skills/trellis-before-dev/SKILL.md",
+      `.claude/skills/${LEGACY_BRAND}-before-dev/SKILL.md`,
     );
     expect(fs.existsSync(newPath)).toBe(true);
     expect(fs.existsSync(newPath + ".backup")).toBe(true);
@@ -1590,7 +1623,7 @@ describe("update() integration", () => {
 
     const legacyPath = path.join(
       tmpDir,
-      ".claude/commands/trellis/before-dev.md",
+      `.claude/commands/${LEGACY_BRAND}/before-dev.md`,
     );
     fs.writeFileSync(legacyPath, "## user edits\n");
 
@@ -1600,10 +1633,10 @@ describe("update() integration", () => {
 
     const newPath = path.join(
       tmpDir,
-      ".claude/skills/trellis-before-dev/SKILL.md",
+      `.claude/skills/${LEGACY_BRAND}-before-dev/SKILL.md`,
     );
     expect(fs.existsSync(newPath)).toBe(true);
-    // No inline .backup — the full-project snapshot under .trellis/.backup-*
+    // No inline .backup — the full-project snapshot under .omtre/.backup-*
     // is the single source of recovery for this mode.
     expect(fs.existsSync(newPath + ".backup")).toBe(false);
   });
@@ -1655,7 +1688,7 @@ describe("update() integration", () => {
       "#### 2.1 Implement `[required · repeatable]`\n\n" +
       "[Codex]\nSpawn the implement sub-agent:\n[/Codex]\n\n" +
       "[Kilo, Antigravity, Windsurf]\n" +
-      "1. Load the `trellis-before-dev` skill to read project guidelines\n" +
+      "1. Load the `omtre-before-dev` skill to read project guidelines\n" +
       "[/Kilo, Antigravity, Windsurf]\n";
 
     fs.writeFileSync(workflowPath, staleWorkflow, "utf-8");

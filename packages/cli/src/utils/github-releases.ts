@@ -2,20 +2,20 @@ import { compareOhmyVersions } from "./compare-versions.js";
 
 /**
  * [oh-my] CLI tarballs publish as GitHub releases on
- * `ScoFan-official/oh-my-trellis` under `cli-v<upstream>-ohmy.<N>` tags.
+ * `ScoFan-official/omtre` under `cli-v<upstream>-ohmy.<N>` tags.
  *
  * That repo also ships its own pack releases tagged `vX.Y.Z`, and both tag
  * streams share the `/releases` list — so consumers must filter on the
  * `cli-v` prefix and pick the newest match themselves instead of calling
  * `/releases/latest` (which can resolve to a pack release).
  */
-export const RELEASES_REPO = "ScoFan-official/oh-my-trellis";
+export const RELEASES_REPO = "ScoFan-official/omtre";
 export const RELEASES_API = `https://api.github.com/repos/${RELEASES_REPO}/releases`;
 export const CLI_TAG_PREFIX = "cli-v";
 
 export const GITHUB_RELEASES_HEADERS = {
   Accept: "application/vnd.github+json",
-  "User-Agent": "oh-my-trellis",
+  "User-Agent": "omtre",
 };
 
 export interface GithubReleasePayload {

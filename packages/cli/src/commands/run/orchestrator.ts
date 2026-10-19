@@ -1,5 +1,5 @@
 /**
- * `orchestrator:` section of `.trellis/config.yaml` (dispatch-roster schema).
+ * `orchestrator:` section of `.omtre/config.yaml` (dispatch-roster schema).
  *
  * The orchestrator is itself an agent card — the config only names which one
  * drives the unattended loop, plus the model override and how many tickets it
@@ -20,12 +20,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { DIR_NAMES, FILE_NAMES } from "../../constants/paths.js";
 
 /** `max_parallel` default when the key is absent: serial dispatch. */
 export const ORCHESTRATOR_MAX_PARALLEL_DEFAULT = 1;
 
 export interface OrchestratorConfig {
-  /** Agent card name under `.trellis/agents/` (e.g. `orchestrator`). */
+  /** Agent card name under `.omtre/agents/` (e.g. `orchestrator`). */
   agent?: string;
   /** Model override applied at dispatch (card value wins over absent). */
   model?: string;
@@ -35,7 +36,7 @@ export interface OrchestratorConfig {
 
 /**
  * Strip a ` #…` inline comment — ` #` (whitespace + hash) opens a comment,
- * a `#` mid-token does not. Matches trellis_config.py's rule so the TS and
+ * a `#` mid-token does not. Matches omtre_config.py's rule so the TS and
  * Python readers accept the same config dialect.
  */
 function stripInlineComment(value: string): string {
@@ -47,7 +48,7 @@ function stripInlineComment(value: string): string {
   return value;
 }
 
-/** One layer of matching surrounding quotes, mirroring trellis_config._unquote. */
+/** One layer of matching surrounding quotes, mirroring omtre_config._unquote. */
 function unquote(value: string): string {
   if (value.length >= 2) {
     const first = value[0];
@@ -105,13 +106,13 @@ export function parseOrchestratorSection(
 }
 
 /**
- * Load the orchestrator config from `<cwd>/.trellis/config.yaml`.
+ * Load the orchestrator config from `<cwd>/.omtre/config.yaml`.
  * Returns `undefined` when the file or section is missing.
  */
 export function loadOrchestratorConfig(
   cwd: string,
 ): OrchestratorConfig | undefined {
-  const configPath = path.join(cwd, ".trellis", "config.yaml");
+  const configPath = path.join(cwd, DIR_NAMES.WORKFLOW, FILE_NAMES.CONFIG_YAML);
   let content: string;
   try {
     content = fs.readFileSync(configPath, "utf-8");
@@ -141,7 +142,7 @@ export function parseWorkerDefaultKey(content: string): string | undefined {
 }
 
 export function readWorkerDefault(cwd: string): string | undefined {
-  const configPath = path.join(cwd, ".trellis", "config.yaml");
+  const configPath = path.join(cwd, DIR_NAMES.WORKFLOW, FILE_NAMES.CONFIG_YAML);
   let content: string;
   try {
     content = fs.readFileSync(configPath, "utf-8");

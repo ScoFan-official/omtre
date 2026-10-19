@@ -7,7 +7,7 @@ import {
 } from "../../src/commands/upgrade.js";
 
 const TARBALL_URL =
-  "https://github.com/ScoFan-official/oh-my-trellis/releases/download/cli-v0.6.17-ohmy.2/oh-my-trellis-0.6.17-ohmy.2.tgz";
+  "https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.17-ohmy.2/omtre-0.6.17-ohmy.2.tgz";
 
 interface StubOptions {
   tagName?: string;
@@ -18,7 +18,7 @@ interface StubOptions {
 
 /**
  * Stub fetch to answer the GitHub releases API on
- * `ScoFan-official/oh-my-trellis`. The list endpoint returns an ARRAY (CLI
+ * `ScoFan-official/omtre`. The list endpoint returns an ARRAY (CLI
  * `cli-v*` releases share it with the pack's own `v*` releases); the
  * `/releases/tags/<tag>` endpoint returns a single release object.
  */
@@ -33,7 +33,7 @@ function stubReleaseFetch(options: StubOptions = {}) {
     assets: withTgz
       ? [
           { name: "source.zip", browser_download_url: "https://x/z" },
-          { name: "oh-my-trellis.tgz", browser_download_url: TARBALL_URL },
+          { name: "omtre.tgz", browser_download_url: TARBALL_URL },
         ]
       : [{ name: "source.zip", browser_download_url: "https://x/z" }],
   };
@@ -111,7 +111,7 @@ describe("upgrade command", () => {
     expect(
       urls.some((u) =>
         u.startsWith(
-          "https://api.github.com/repos/ScoFan-official/oh-my-trellis/releases",
+          "https://api.github.com/repos/ScoFan-official/omtre/releases",
         ),
       ),
     ).toBe(true);
@@ -122,7 +122,7 @@ describe("upgrade command", () => {
     const fetchMock = vi.mocked(fetch);
     await resolveReleaseTarball("0.6.17-ohmy.2");
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.github.com/repos/ScoFan-official/oh-my-trellis/releases/tags/cli-v0.6.17-ohmy.2",
+      "https://api.github.com/repos/ScoFan-official/omtre/releases/tags/cli-v0.6.17-ohmy.2",
       expect.anything(),
     );
   });
@@ -144,7 +144,7 @@ describe("upgrade command", () => {
       displayCommand: `npm install -g ${TARBALL_URL}`,
       target: TARBALL_URL,
       tag: "cli-v0.6.17-ohmy.2",
-      binaryCheckCommand: "which trellis",
+      binaryCheckCommand: "which omtre",
     });
   });
 
@@ -158,7 +158,7 @@ describe("upgrade command", () => {
       displayCommand: `npm install -g ${TARBALL_URL}`,
       target: TARBALL_URL,
       tag: "cli-v0.6.17-ohmy.2",
-      binaryCheckCommand: "where trellis",
+      binaryCheckCommand: "where omtre",
     });
   });
 
@@ -193,10 +193,10 @@ describe("upgrade command", () => {
       { stdio: "inherit", shell: false },
     );
     expect(log).toHaveBeenCalledWith(
-      expect.stringContaining("trellis --version"),
+      expect.stringContaining("omtre --version"),
     );
     expect(log).toHaveBeenCalledWith(
-      expect.stringContaining(isWindows ? "where trellis" : "which trellis"),
+      expect.stringContaining(isWindows ? "where omtre" : "which omtre"),
     );
 
     log.mockRestore();

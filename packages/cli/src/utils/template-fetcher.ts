@@ -1,8 +1,8 @@
 /**
- * Remote template fetcher for Trellis CLI
+ * Remote template fetcher for Omtre CLI
  *
  * [oh-my] Fetches spec/workflow templates from the fork's marketplace:
- * https://github.com/ScoFan-official/oh-my-trellis (marketplace/ directory)
+ * https://github.com/ScoFan-official/omtre (marketplace/ directory)
  */
 
 import { randomUUID } from "node:crypto";
@@ -10,6 +10,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { downloadTemplate } from "giget";
+import { DIR_NAMES, PATHS } from "../constants/paths.js";
 import { toPosix } from "./posix.js";
 
 // =============================================================================
@@ -17,17 +18,17 @@ import { toPosix } from "./posix.js";
 // =============================================================================
 
 export const TEMPLATE_INDEX_URL =
-  "https://raw.githubusercontent.com/ScoFan-official/oh-my-trellis/main/marketplace/index.json";
+  "https://raw.githubusercontent.com/ScoFan-official/omtre/main/marketplace/index.json";
 
 // Repo ROOT, not the marketplace/ subdir: index.json `path` values are
 // repo-root-relative (`marketplace/specs/agent-workflow`) and are appended to
 // this source by `downloadWithStrategy` — the same contract the explicit
 // `-r gh:…/marketplace` flow uses (`registry.repo` + `resolved.path`).
-const TEMPLATE_REPO = "gh:ScoFan-official/oh-my-trellis";
+const TEMPLATE_REPO = "gh:ScoFan-official/omtre";
 
 /** Map template type to installation path */
 const INSTALL_PATHS: Record<string, string> = {
-  spec: ".trellis/spec",
+  spec: PATHS.SPEC,
   skill: ".agents/skills",
   command: ".claude/commands",
   full: ".", // Entire project root
@@ -727,7 +728,7 @@ async function cloneRegistryRef(
   registry: RegistrySource,
 ): Promise<GitCheckout> {
   const dir = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), "trellis-registry-"),
+    path.join(os.tmpdir(), "omtre-registry-"),
   );
   try {
     try {
@@ -918,7 +919,7 @@ export async function downloadWithStrategy(
     // and millisecond resolution is not enough to keep two of them apart.
     // Two runs landing in the same millisecond share a directory, and the
     // first to finish cleaning up deletes the other's download mid-read.
-    const tempDir = path.join(os.tmpdir(), `trellis-template-${randomUUID()}`);
+    const tempDir = path.join(os.tmpdir(), `omtre-template-${randomUUID()}`);
     try {
       await withTimeout(
         downloadTemplate(gigetSource, {
@@ -951,7 +952,7 @@ export async function downloadWithStrategy(
     // and millisecond resolution is not enough to keep two of them apart.
     // Two runs landing in the same millisecond share a directory, and the
     // first to finish cleaning up deletes the other's download mid-read.
-    const tempDir = path.join(os.tmpdir(), `trellis-template-${randomUUID()}`);
+    const tempDir = path.join(os.tmpdir(), `omtre-template-${randomUUID()}`);
     try {
       await withTimeout(
         downloadTemplate(gigetSource, {
@@ -1367,14 +1368,14 @@ export function collectDirectoryFiles(
 
 /**
  * Download a direct registry spec into a temporary directory and return its
- * files as update-template entries under `.trellis/spec/**`.
+ * files as update-template entries under `.omtre/spec/**`.
  */
 export async function fetchRegistrySpecTemplates(
   registry: RegistrySource,
   registryBackend?: RegistryBackend,
 ): Promise<{ success: boolean; message?: string; files: Map<string, string> }> {
   const tempRoot = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), "trellis-registry-spec-"),
+    path.join(os.tmpdir(), "omtre-registry-spec-"),
   );
   try {
     const result = await downloadRegistryDirect(
@@ -1390,8 +1391,8 @@ export async function fetchRegistrySpecTemplates(
     return {
       success: true,
       files: collectDirectoryFiles(
-        path.join(tempRoot, ".trellis", "spec"),
-        ".trellis/spec",
+        path.join(tempRoot, DIR_NAMES.WORKFLOW, "spec"),
+        PATHS.SPEC,
       ),
     };
   } finally {

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import inquirer from "inquirer";
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({
@@ -39,8 +39,8 @@ describe("ablate()/restore() integration", () => {
   let originalStdinIsTtyDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
-    projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-ablate-int-"));
-    stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-ablate-state-"));
+    projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-ablate-int-"));
+    stateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-ablate-state-"));
     originalStateRoot = process.env[ABLATION_STATE_ROOT_ENV];
     originalStdinIsTtyDescriptor = Object.getOwnPropertyDescriptor(
       process.stdin,
@@ -90,7 +90,7 @@ describe("ablate()/restore() integration", () => {
     await initialize();
     const sensitiveTask = path.join(
       projectDir,
-      ".trellis",
+      ".omtre",
       "tasks",
       "private-context.md",
     );
@@ -102,7 +102,7 @@ describe("ablate()/restore() integration", () => {
     const before = projectFingerprint();
 
     await ablate({ yes: true });
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(false);
     expect(
       fs.readFileSync(path.join(projectDir, "application.txt"), "utf-8"),
     ).toBe("unchanged\n");
@@ -112,7 +112,7 @@ describe("ablate()/restore() integration", () => {
       fs.readFileSync(
         path.join(
           getTransactionPaths(projectDir).backupDir,
-          ".trellis",
+          ".omtre",
           "tasks",
           "private-context.md",
         ),
@@ -170,7 +170,7 @@ describe("ablate()/restore() integration", () => {
       /changed while ablated/,
     );
     expect(projectFingerprint()).toEqual(conflicted);
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(false);
 
     fs.rmSync(conflictPath);
     await restore({ yes: true });
@@ -183,7 +183,7 @@ describe("ablate()/restore() integration", () => {
     await expect(ablate({ yes: true })).rejects.toThrow(/already ablated/);
     await restore({ yes: true });
     await restore({ yes: true });
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(true);
   });
 
   it("#6 non-interactive mutation requires --yes", async () => {
@@ -200,7 +200,7 @@ describe("ablate()/restore() integration", () => {
 
     await expect(ablate({})).rejects.toThrow("process.exit(1)");
     expect(exitSpy).toHaveBeenCalledWith(1);
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(true);
   });
 
   it.skipIf(process.platform === "win32")(
@@ -209,7 +209,7 @@ describe("ablate()/restore() integration", () => {
       await init({ yes: true, codex: true, force: true });
       const originalCodex = path.join(projectDir, ".codex");
       const externalCodex = fs.mkdtempSync(
-        path.join(os.tmpdir(), "trellis-ablate-external-"),
+        path.join(os.tmpdir(), "omtre-ablate-external-"),
       );
       fs.cpSync(originalCodex, externalCodex, { recursive: true });
       fs.rmSync(originalCodex, { recursive: true });
@@ -234,14 +234,14 @@ describe("ablate()/restore() integration", () => {
     vi.mocked(console.log).mockClear();
     await ablate({ yes: true });
     expect(console.log).toHaveBeenCalledWith(
-      expect.stringContaining("Trellis is not installed in this project."),
+      expect.stringContaining("Omtre is not installed in this project."),
     );
 
     vi.mocked(console.log).mockClear();
     await restore({ yes: true });
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(
-        "No Trellis ablation transaction exists for this project.",
+        "No Omtre ablation transaction exists for this project.",
       ),
     );
     expect(fs.readdirSync(projectDir)).toEqual([]);
@@ -315,7 +315,7 @@ describe("ablate()/restore() integration", () => {
 
     await expect(restore({})).rejects.toThrow("process.exit(1)");
     expect(exitSpy).toHaveBeenCalledWith(1);
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(false);
     expect(fs.existsSync(getTransactionPaths(projectDir).stateFile)).toBe(true);
   });
 

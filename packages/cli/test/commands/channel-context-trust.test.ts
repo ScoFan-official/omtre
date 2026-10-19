@@ -30,25 +30,25 @@ describe("parseChannelTrustSection", () => {
       "  worker_guard:",
       "    idle_timeout: 5m",
       "  trusted_context_dirs:",
-      "    - /work/user/trellis_workspace",
+      "    - /work/user/omtre_workspace",
       "    - /another/dir  # trailing comment",
       "",
       "next_section: 1",
     ].join("\n");
     const result = parseChannelTrustSection(content);
     expect(result.trustedDirs).toEqual([
-      "/work/user/trellis_workspace",
+      "/work/user/omtre_workspace",
       "/another/dir",
     ]);
   });
 
-  it("parses auto_trust_trellis_symlinks true/false", () => {
+  it("parses auto_trust_omtre_symlinks true/false", () => {
     expect(
-      parseChannelTrustSection("channel:\n  auto_trust_trellis_symlinks: false\n")
+      parseChannelTrustSection("channel:\n  auto_trust_omtre_symlinks: false\n")
         .autoTrustSymlinks,
     ).toBe(false);
     expect(
-      parseChannelTrustSection("channel:\n  auto_trust_trellis_symlinks: true\n")
+      parseChannelTrustSection("channel:\n  auto_trust_omtre_symlinks: true\n")
         .autoTrustSymlinks,
     ).toBe(true);
   });
@@ -57,8 +57,8 @@ describe("parseChannelTrustSection", () => {
     const content = [
       "channel:",
       "  # trusted_context_dirs:",
-      "  #   - /work/user/trellis_workspace",
-      "  # auto_trust_trellis_symlinks: false",
+      "  #   - /work/user/omtre_workspace",
+      "  # auto_trust_omtre_symlinks: false",
     ].join("\n");
     const result = parseChannelTrustSection(content);
     expect(result.trustedDirs).toEqual([]);
@@ -70,7 +70,7 @@ describe("parseChannelTrustSection", () => {
       "channel:",
       "  trusted_context_dirs:",
       "    - /a",
-      "  auto_trust_trellis_symlinks: false",
+      "  auto_trust_omtre_symlinks: false",
     ].join("\n");
     const result = parseChannelTrustSection(content);
     expect(result.trustedDirs).toEqual(["/a"]);
@@ -83,9 +83,9 @@ describe("resolveTrustedRoots", () => {
   let cwd: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(realTmp(), "trellis-trust-test-"));
+    tmpDir = fs.mkdtempSync(path.join(realTmp(), "omtre-trust-test-"));
     cwd = path.join(tmpDir, "project");
-    fs.mkdirSync(path.join(cwd, ".trellis"), { recursive: true });
+    fs.mkdirSync(path.join(cwd, ".omtre"), { recursive: true });
   });
 
   afterEach(() => {
@@ -100,7 +100,7 @@ describe("resolveTrustedRoots", () => {
     const extDir = path.join(tmpDir, "ext");
     fs.mkdirSync(extDir, { recursive: true });
     fs.writeFileSync(
-      path.join(cwd, ".trellis", "config.yaml"),
+      path.join(cwd, ".omtre", "config.yaml"),
       `channel:\n  trusted_context_dirs:\n    - ${extDir}\n`,
     );
     const roots = resolveTrustedRoots(cwd);
@@ -110,7 +110,7 @@ describe("resolveTrustedRoots", () => {
   it("skips a non-existent trusted_context_dirs entry with a warning", () => {
     const missing = path.join(tmpDir, "does-not-exist");
     fs.writeFileSync(
-      path.join(cwd, ".trellis", "config.yaml"),
+      path.join(cwd, ".omtre", "config.yaml"),
       `channel:\n  trusted_context_dirs:\n    - ${missing}\n`,
     );
     const originalWrite = process.stderr.write.bind(process.stderr);
@@ -128,24 +128,24 @@ describe("resolveTrustedRoots", () => {
   });
 
   it.skipIf(isWin)(
-    "auto-trusts .trellis/tasks when it is a top-level symlink",
+    "auto-trusts .omtre/tasks when it is a top-level symlink",
     () => {
       const extTasks = path.join(tmpDir, "ext-tasks");
       fs.mkdirSync(extTasks, { recursive: true });
-      fs.symlinkSync(extTasks, path.join(cwd, ".trellis", "tasks"), "dir");
+      fs.symlinkSync(extTasks, path.join(cwd, ".omtre", "tasks"), "dir");
       const roots = resolveTrustedRoots(cwd);
       expect(roots).toEqual([fs.realpathSync(extTasks)]);
     },
   );
 
   it.skipIf(isWin)(
-    "auto-trusts .trellis/workspace when it is a top-level symlink",
+    "auto-trusts .omtre/workspace when it is a top-level symlink",
     () => {
       const extWorkspace = path.join(tmpDir, "ext-workspace");
       fs.mkdirSync(extWorkspace, { recursive: true });
       fs.symlinkSync(
         extWorkspace,
-        path.join(cwd, ".trellis", "workspace"),
+        path.join(cwd, ".omtre", "workspace"),
         "dir",
       );
       const roots = resolveTrustedRoots(cwd);
@@ -154,14 +154,14 @@ describe("resolveTrustedRoots", () => {
   );
 
   it.skipIf(isWin)(
-    "does not auto-trust when auto_trust_trellis_symlinks is false",
+    "does not auto-trust when auto_trust_omtre_symlinks is false",
     () => {
       const extTasks = path.join(tmpDir, "ext-tasks");
       fs.mkdirSync(extTasks, { recursive: true });
-      fs.symlinkSync(extTasks, path.join(cwd, ".trellis", "tasks"), "dir");
+      fs.symlinkSync(extTasks, path.join(cwd, ".omtre", "tasks"), "dir");
       fs.writeFileSync(
-        path.join(cwd, ".trellis", "config.yaml"),
-        "channel:\n  auto_trust_trellis_symlinks: false\n",
+        path.join(cwd, ".omtre", "config.yaml"),
+        "channel:\n  auto_trust_omtre_symlinks: false\n",
       );
       expect(resolveTrustedRoots(cwd)).toEqual([]);
     },
@@ -172,12 +172,12 @@ describe("resolveTrustedRoots", () => {
     () => {
       const evilTarget = path.join(tmpDir, "evil");
       fs.mkdirSync(evilTarget, { recursive: true });
-      fs.mkdirSync(path.join(cwd, ".trellis", "tasks", "x"), {
+      fs.mkdirSync(path.join(cwd, ".omtre", "tasks", "x"), {
         recursive: true,
       });
       fs.symlinkSync(
         evilTarget,
-        path.join(cwd, ".trellis", "tasks", "x", "evil"),
+        path.join(cwd, ".omtre", "tasks", "x", "evil"),
         "dir",
       );
       expect(resolveTrustedRoots(cwd)).toEqual([]);
@@ -190,9 +190,9 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
   let cwd: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(realTmp(), "trellis-trust-ctx-test-"));
+    tmpDir = fs.mkdtempSync(path.join(realTmp(), "omtre-trust-ctx-test-"));
     cwd = path.join(tmpDir, "project");
-    fs.mkdirSync(path.join(cwd, ".trellis"), { recursive: true });
+    fs.mkdirSync(path.join(cwd, ".omtre"), { recursive: true });
   });
 
   afterEach(() => {
@@ -200,7 +200,7 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
   });
 
   it.skipIf(isWin)(
-    "loads --jsonl-referenced files through an auto-trusted .trellis/tasks symlink",
+    "loads --jsonl-referenced files through an auto-trusted .omtre/tasks symlink",
     () => {
       const extTasks = path.join(tmpDir, "ext-tasks");
       const taskDir = path.join(extTasks, "x");
@@ -212,7 +212,7 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
         jsonlPath,
         `${JSON.stringify({ file: contextFile, reason: "prd" })}\n`,
       );
-      fs.symlinkSync(extTasks, path.join(cwd, ".trellis", "tasks"), "dir");
+      fs.symlinkSync(extTasks, path.join(cwd, ".omtre", "tasks"), "dir");
 
       const trustedRoots = resolveTrustedRoots(cwd);
       const result = assembleContext(cwd, [], [jsonlPath], trustedRoots);
@@ -233,10 +233,10 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
         jsonlPath,
         `${JSON.stringify({ file: contextFile, reason: "prd" })}\n`,
       );
-      fs.symlinkSync(extTasks, path.join(cwd, ".trellis", "tasks"), "dir");
+      fs.symlinkSync(extTasks, path.join(cwd, ".omtre", "tasks"), "dir");
       fs.writeFileSync(
-        path.join(cwd, ".trellis", "config.yaml"),
-        "channel:\n  auto_trust_trellis_symlinks: false\n",
+        path.join(cwd, ".omtre", "config.yaml"),
+        "channel:\n  auto_trust_omtre_symlinks: false\n",
       );
 
       const trustedRoots = resolveTrustedRoots(cwd);
@@ -270,11 +270,11 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
   });
 
   it.skipIf(isWin)(
-    "refuses a nested symlink planted under a non-symlinked .trellis/tasks",
+    "refuses a nested symlink planted under a non-symlinked .omtre/tasks",
     () => {
       const evilTarget = path.join(tmpDir, "evil-secret.txt");
       fs.writeFileSync(evilTarget, "top secret\n");
-      const taskDir = path.join(cwd, ".trellis", "tasks", "x");
+      const taskDir = path.join(cwd, ".omtre", "tasks", "x");
       fs.mkdirSync(taskDir, { recursive: true });
       const evilLink = path.join(taskDir, "evil");
       fs.symlinkSync(evilTarget, evilLink, "file");
@@ -294,7 +294,7 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
       const contextFile = path.join(extDir, "notes.md");
       fs.writeFileSync(contextFile, "notes content\n");
       fs.writeFileSync(
-        path.join(cwd, ".trellis", "config.yaml"),
+        path.join(cwd, ".omtre", "config.yaml"),
         `channel:\n  trusted_context_dirs:\n    - ${extDir}\n`,
       );
 
@@ -305,14 +305,14 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
   );
 
   it("refuses a sibling directory whose name merely prefix-matches a trusted root", () => {
-    const trustedDir = path.join(tmpDir, "trellis_workspace");
-    const evilSibling = path.join(tmpDir, "trellis_workspace-evil");
+    const trustedDir = path.join(tmpDir, "omtre_workspace");
+    const evilSibling = path.join(tmpDir, "omtre_workspace-evil");
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.mkdirSync(evilSibling, { recursive: true });
     const evilFile = path.join(evilSibling, "secret.md");
     fs.writeFileSync(evilFile, "should not load\n");
     fs.writeFileSync(
-      path.join(cwd, ".trellis", "config.yaml"),
+      path.join(cwd, ".omtre", "config.yaml"),
       `channel:\n  trusted_context_dirs:\n    - ${trustedDir}\n`,
     );
 
@@ -328,7 +328,7 @@ describe("assembleContext with trusted roots (#414 repro)", () => {
     const contextFile = path.join(extDir, "notes.md");
     fs.writeFileSync(contextFile, "relative entry content\n");
     fs.writeFileSync(
-      path.join(cwd, ".trellis", "config.yaml"),
+      path.join(cwd, ".omtre", "config.yaml"),
       "channel:\n  trusted_context_dirs:\n    - ../rel-allowlisted\n",
     );
 
@@ -344,9 +344,9 @@ describe("agent-loader honors trusted roots", () => {
   let cwd: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(realTmp(), "trellis-trust-agent-test-"));
+    tmpDir = fs.mkdtempSync(path.join(realTmp(), "omtre-trust-agent-test-"));
     cwd = path.join(tmpDir, "project");
-    fs.mkdirSync(path.join(cwd, ".trellis"), { recursive: true });
+    fs.mkdirSync(path.join(cwd, ".omtre"), { recursive: true });
   });
 
   afterEach(() => {
@@ -354,10 +354,10 @@ describe("agent-loader honors trusted roots", () => {
   });
 
   it.skipIf(isWin)(
-    "loads an agent reached through a trusted-root .trellis/agents symlink",
+    "loads an agent reached through a trusted-root .omtre/agents symlink",
     () => {
-      // .trellis itself isn't in the auto-trust list (only tasks/workspace),
-      // so exercise the allowlist path instead: symlink .trellis/agents to
+      // .omtre itself isn't in the auto-trust list (only tasks/workspace),
+      // so exercise the allowlist path instead: symlink .omtre/agents to
       // a dir inside a channel.trusted_context_dirs entry.
       const extRoot = path.join(tmpDir, "ext-root");
       const extAgents = path.join(extRoot, "agents");
@@ -368,9 +368,9 @@ describe("agent-loader honors trusted roots", () => {
           "\n",
         ),
       );
-      fs.symlinkSync(extAgents, path.join(cwd, ".trellis", "agents"), "dir");
+      fs.symlinkSync(extAgents, path.join(cwd, ".omtre", "agents"), "dir");
       fs.writeFileSync(
-        path.join(cwd, ".trellis", "config.yaml"),
+        path.join(cwd, ".omtre", "config.yaml"),
         `channel:\n  trusted_context_dirs:\n    - ${extRoot}\n`,
       );
 
@@ -382,9 +382,9 @@ describe("agent-loader honors trusted roots", () => {
   );
 
   it("without trusted roots, agent files still resolve normally under agentsRoot", () => {
-    fs.mkdirSync(path.join(cwd, ".trellis", "agents"), { recursive: true });
+    fs.mkdirSync(path.join(cwd, ".omtre", "agents"), { recursive: true });
     fs.writeFileSync(
-      path.join(cwd, ".trellis", "agents", "architect.md"),
+      path.join(cwd, ".omtre", "agents", "architect.md"),
       ["---", "name: architect", "provider: claude", "---", "", "Body"].join(
         "\n",
       ),

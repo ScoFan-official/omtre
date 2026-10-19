@@ -6,7 +6,7 @@
  * This script copies src/templates/ to dist/templates/ (excluding .ts files).
  *
  * The templates are GENERIC templates for user projects:
- * - src/templates/trellis/ - Workflow scripts and config
+ * - src/templates/omtre/ - Workflow scripts and config
  * - src/templates/claude/ - Claude Code commands, agents, hooks
  * - src/templates/cursor/ - Cursor commands
  * - src/templates/iflow/ - iFlow CLI commands, agents, hooks
@@ -18,8 +18,8 @@
  * - src/templates/gemini/ - Gemini CLI commands (TOML)
  * - src/templates/markdown/ - Markdown templates (spec, guides)
  *
- * Note: We NO LONGER copy from the project's own .trellis/, .cursor/, .claude/
- * because those may be customized for the Trellis project itself.
+ * Note: We NO LONGER copy from the project's own .omtre/, .cursor/, .claude/
+ * because those may be customized for the Omtre project itself.
  */
 
 import { cpSync, readdirSync, statSync, mkdirSync } from "node:fs";

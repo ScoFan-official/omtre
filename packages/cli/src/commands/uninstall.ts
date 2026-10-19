@@ -1,20 +1,20 @@
 /**
- * `trellis uninstall` — remove every file written by `trellis init` / `update`
- * from the current project, plus the `.trellis/` directory itself.
+ * `omtre uninstall` — remove every file written by `omtre init` / `update`
+ * from the current project, plus the `.omtre/` directory itself.
  *
- * The single source of truth for "what trellis wrote" is
- * `.trellis/.template-hashes.json`. Files outside that manifest are never
+ * The single source of truth for "what omtre wrote" is
+ * `.omtre/.template-hashes.json`. Files outside that manifest are never
  * touched (e.g. user-added hooks under `.cursor/hooks/`).
  *
  * Manifest-listed files split into two groups:
  *   A. Opaque content files (`.py` / `.md` / `.ts` / etc.) — unlinked outright.
  *   B. Structured config files (settings.json / hooks.json / config.toml /
- *      package.json) — passed through a scrubber that strips just the trellis
+ *      package.json) — passed through a scrubber that strips just the omtre
  *      fields, leaving user-added neighbors intact. If the scrubber says the
  *      file is fully empty afterwards, we delete it.
  *
  * Whether the user has modified a manifest-listed file or not, it is removed
- * (per the PRD: "全删"). The `.trellis/` tree is removed unconditionally.
+ * (per the PRD: "全删"). The `.omtre/` tree is removed unconditionally.
  */
 
 import { execFileSync } from "node:child_process";
@@ -50,9 +50,9 @@ type UninstallPlan = ManagedRemovalPlan;
  * Render the two-column uninstall plan to stdout.
  */
 function renderPlan(cwd: string, plan: UninstallPlan): void {
-  const trellisDir = path.join(cwd, DIR_NAMES.WORKFLOW);
+  const omtreDir = path.join(cwd, DIR_NAMES.WORKFLOW);
 
-  console.log(chalk.bold("\nTrellis uninstall plan\n"));
+  console.log(chalk.bold("\nOmtre uninstall plan\n"));
 
   const deletePaths = plan.deletions
     .filter((d) => !d.missing)
@@ -64,7 +64,7 @@ function renderPlan(cwd: string, plan: UninstallPlan): void {
   for (const p of deletePaths) {
     console.log(`  ${chalk.red("-")} ${p}`);
   }
-  if (plan.removeTrellisDir && fs.existsSync(trellisDir)) {
+  if (plan.removeWorkflowDir && fs.existsSync(omtreDir)) {
     console.log(
       `  ${chalk.red("-")} ${DIR_NAMES.WORKFLOW}/  ${chalk.gray(
         "(entire directory — including your specs, task PRDs, journals, and memory)",
@@ -119,13 +119,13 @@ async function promptContinue(): Promise<boolean> {
 
 /**
  * List uncommitted (modified, staged, or untracked) files under the
- * user-data subdirectories of `.trellis/` — spec/, tasks/, workspace/ — which
+ * user-data subdirectories of `.omtre/` — spec/, tasks/, workspace/ — which
  * hold user-authored specs, task PRDs, and journals that `update.ts` marks as
- * PROTECTED. Uninstall deletes the whole `.trellis/` tree with no backup, so
+ * PROTECTED. Uninstall deletes the whole `.omtre/` tree with no backup, so
  * these are surfaced before the destructive step. Returns `[]` when this is
  * not a git repo or git is unavailable (nothing we can check).
  */
-export function collectUncommittedTrellisData(cwd: string): string[] {
+export function collectUncommittedOmtreData(cwd: string): string[] {
   const w = DIR_NAMES.WORKFLOW;
   const userDataDirs = [
     `${w}/${DIR_NAMES.SPEC}`,
@@ -154,7 +154,7 @@ export function collectUncommittedTrellisData(cwd: string): string[] {
 
 /** Whether the uncommitted-data guard has been explicitly overridden. */
 function dirtyUninstallBypassEnabled(): boolean {
-  return process.env.TRELLIS_ALLOW_DIRTY_UNINSTALL === "1";
+  return process.env.OMTRE_ALLOW_DIRTY_UNINSTALL === "1";
 }
 
 /**
@@ -170,26 +170,26 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   }
 
   const cwd = process.cwd();
-  const trellisDir = path.join(cwd, DIR_NAMES.WORKFLOW);
+  const omtreDir = path.join(cwd, DIR_NAMES.WORKFLOW);
 
-  // Pre-check 1: must have a `.trellis/` directory.
-  if (!fs.existsSync(trellisDir)) {
+  // Pre-check 1: must have a `.omtre/` directory.
+  if (!fs.existsSync(omtreDir)) {
     console.log(
       chalk.gray(
-        "Trellis is not installed in this project (no .trellis/ directory found).",
+        "Omtre is not installed in this project (no .omtre/ directory found).",
       ),
     );
     return;
   }
 
   // Pre-check 2: must have a manifest. Without it we cannot determine which
-  // platform files are trellis-owned vs user-owned.
+  // platform files are omtre-owned vs user-owned.
   const hashes = loadHashes(cwd);
   if (Object.keys(hashes).length === 0) {
     console.error(
       chalk.red(
-        "Trellis directory found but manifest is missing — cannot determine which platform files to remove. " +
-          "You can manually delete .trellis/ if needed.",
+        "Omtre directory found but manifest is missing — cannot determine which platform files to remove. " +
+          "You can manually delete .omtre/ if needed.",
       ),
     );
     process.exit(1);
@@ -203,7 +203,7 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   // Dry-run: still compute the pruned hashes (so the plan reflects post-prune
   // reality) but pass `persist: false` so no disk write happens. The actual
   // disk write defers to executePlan time, where we'd be rewriting the
-  // manifest only to delete the whole .trellis/ dir anyway — but the
+  // manifest only to delete the whole .omtre/ dir anyway — but the
   // computation must remain to keep the rendered plan honest.
   const configuredPlatforms = getConfiguredPlatforms(cwd);
   const { pruned, hashes: prunedHashes } = pruneOrphanManifestKeys(
@@ -217,7 +217,7 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
     // without giving them an actionable signal.
     console.log(
       chalk.gray(
-        `   Pruned ${pruned.length} orphan manifest entries (user-owned files trellis did not write).`,
+        `   Pruned ${pruned.length} orphan manifest entries (user-owned files omtre did not write).`,
       ),
     );
   }
@@ -225,15 +225,15 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   const plan = buildManagedRemovalPlan(cwd, prunedHashes);
   renderPlan(cwd, plan);
 
-  // .trellis/ holds user-authored specs, task PRDs, and journals that have no
+  // .omtre/ holds user-authored specs, task PRDs, and journals that have no
   // backup here. Surface any uncommitted such files before deleting the tree,
   // and — for scripted `--yes` runs where nobody reads the warning — fail
   // closed unless explicitly overridden.
-  const uncommitted = collectUncommittedTrellisData(cwd);
+  const uncommitted = collectUncommittedOmtreData(cwd);
   if (uncommitted.length > 0) {
     console.warn(
       chalk.red.bold(
-        `\n⚠ ${uncommitted.length} uncommitted file(s) under .trellis/ (spec/tasks/workspace) ` +
+        `\n⚠ ${uncommitted.length} uncommitted file(s) under .omtre/ (spec/tasks/workspace) ` +
           `will be permanently deleted with no backup:`,
       ),
     );
@@ -256,9 +256,9 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   if (uncommitted.length > 0 && options.yes && !dirtyUninstallBypassEnabled()) {
     console.error(
       chalk.red(
-        "Refusing to uninstall with --yes while .trellis/ has uncommitted user data " +
+        "Refusing to uninstall with --yes while .omtre/ has uncommitted user data " +
           "(spec/tasks/workspace). Commit or stash it, re-run without --yes to confirm " +
-          "interactively, or set TRELLIS_ALLOW_DIRTY_UNINSTALL=1 to override.",
+          "interactively, or set OMTRE_ALLOW_DIRTY_UNINSTALL=1 to override.",
       ),
     );
     process.exit(1);
@@ -267,7 +267,7 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   if (!options.yes) {
     // Make sure stdin is in a usable state for the prompt; in scripted
     // environments that closed stdin, inquirer would otherwise raise. We
-    // honor the same UX as `trellis update` (which also fails closed in
+    // honor the same UX as `omtre update` (which also fails closed in
     // that case).
     if (!process.stdin.isTTY) {
       console.error(
@@ -293,7 +293,7 @@ export async function uninstall(options: UninstallOptions = {}): Promise<void> {
   console.log();
   console.log(
     chalk.green(
-      `Uninstalled trellis: ${summary.deletedFiles} files deleted, ` +
+      `Uninstalled omtre: ${summary.deletedFiles} files deleted, ` +
         `${summary.modifiedFiles} files modified, ` +
         `${summary.deletedDirs} directories removed.`,
     ),

@@ -2,7 +2,7 @@
  * Unit tests for the workflow template resolver.
  *
  * Native resolution is offline (no fetch). Marketplace resolution is exercised
- * by stubbing `fetch` on the default Trellis marketplace URL.
+ * by stubbing `fetch` on the default Omtre marketplace URL.
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +17,7 @@ import {
 import {
   ohMyWorkflowMdTemplate,
   workflowMdTemplate,
-} from "../../src/templates/trellis/index.js";
+} from "../../src/templates/extract.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();

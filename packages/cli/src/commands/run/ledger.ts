@@ -1,6 +1,6 @@
 /**
- * Run ledger — one JSONL file per `trellis run`, under
- * `.trellis/.runtime/runs/` (gitignored, same area as `.runtime/sessions/`).
+ * Run ledger — one JSONL file per `omtre run`, under
+ * `.omtre/.runtime/runs/` (gitignored, same area as `.runtime/sessions/`).
  *
  * Each line is one action the runner took, so a run can be reconstructed
  * after the fact: which ticket, which worker, which commit, which verify
@@ -13,6 +13,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { DIR_NAMES } from "../../constants/paths.js";
 
 export type LedgerAction =
   | "run_start"
@@ -49,11 +50,14 @@ export interface Ledger {
 
 /** `20261009T101112Z` — sortable, collision-free at second granularity. */
 export function ledgerStamp(now: Date): string {
-  return now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  return now
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 export function runsDir(repoRoot: string): string {
-  return path.join(repoRoot, ".trellis", ".runtime", "runs");
+  return path.join(repoRoot, DIR_NAMES.WORKFLOW, ".runtime", "runs");
 }
 
 /**

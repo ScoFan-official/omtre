@@ -30,7 +30,7 @@ const { fakeHome } = vi.hoisted(() => {
   const o = require("node:os") as typeof import("node:os");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const p = require("node:path") as typeof import("node:path");
-  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "trellis-mem-int-"));
+  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "omtre-mem-int-"));
   return { fakeHome };
 });
 
@@ -120,7 +120,7 @@ function seedPiPhaseSession(): string {
         timestamp: "2026-06-18T11:00:04.000Z",
         message: {
           role: "bashExecution",
-          command: "task.py start .trellis/tasks/06-18-pi-cli",
+          command: "task.py start .omtre/tasks/06-18-pi-cli",
           output: "",
         },
       },
@@ -429,7 +429,7 @@ describe("runMem subcommand integration", () => {
               name: "Bash",
               input: {
                 command:
-                  "python3 ./.trellis/scripts/task.py create --slug demo",
+                  "python3 ./.omtre/scripts/task.py create --slug demo",
               },
             },
           ],
@@ -454,7 +454,7 @@ describe("runMem subcommand integration", () => {
               name: "Bash",
               input: {
                 command:
-                  "python3 ./.trellis/scripts/task.py start .trellis/tasks/demo",
+                  "python3 ./.omtre/scripts/task.py start .omtre/tasks/demo",
               },
             },
           ],
@@ -667,7 +667,7 @@ describe("runMem subcommand integration", () => {
   it("help command prints usage", () => {
     runMem(["help"]);
     const joined = logs.join("\n");
-    expect(joined).toContain("trellis mem");
+    expect(joined).toContain("omtre mem");
     expect(joined).toContain("claude|codex|devin|grok|opencode|pi|zcode|all");
   });
 

@@ -32,7 +32,7 @@ describe("downloadWithStrategy — #383 preferOffline removed", () => {
   });
 
   it("does not set preferOffline for a fresh directory download", async () => {
-    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-dl-"));
+    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-dl-"));
     fs.rmSync(destDir, { recursive: true, force: true });
 
     await downloadWithStrategy("gh:org/repo/spec", destDir, "skip");
@@ -45,7 +45,7 @@ describe("downloadWithStrategy — #383 preferOffline removed", () => {
   });
 
   it("does not set preferOffline for overwrite strategy", async () => {
-    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-dl-"));
+    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-dl-"));
     fs.writeFileSync(path.join(destDir, "existing.txt"), "old");
 
     await downloadWithStrategy("gh:org/repo/spec", destDir, "overwrite");
@@ -58,7 +58,7 @@ describe("downloadWithStrategy — #383 preferOffline removed", () => {
   });
 
   it("does not set preferOffline for append strategy", async () => {
-    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-dl-"));
+    const destDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-dl-"));
     fs.writeFileSync(path.join(destDir, "existing.txt"), "old");
 
     await downloadWithStrategy("gh:org/repo/spec", destDir, "append");

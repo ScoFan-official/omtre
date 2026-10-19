@@ -27,7 +27,7 @@ import type { LedgerInput } from "../../src/commands/run/ledger.js";
 import type { WorkerOutcome, WorkerRequest } from "../../src/commands/run/worker.js";
 
 const ROOT = "/repo";
-const wtOf = (dir: string): string => `${ROOT}/.trellis/.runtime/worktrees/${dir}`;
+const wtOf = (dir: string): string => `${ROOT}/.omtre/.runtime/worktrees/${dir}`;
 const OID = "abc1234def5678";
 
 interface Script {
@@ -276,7 +276,7 @@ function harness(script: Script = {}): Harness {
       return false;
     },
     ticketDocs(dir) {
-      return [`${ROOT}/.trellis/tasks/${dir}/prd.md`, `${ROOT}/.trellis/tasks/${dir}/implement.md`];
+      return [`${ROOT}/.omtre/tasks/${dir}/prd.md`, `${ROOT}/.omtre/tasks/${dir}/implement.md`];
     },
     async worker(req): Promise<WorkerOutcome> {
       h.workerRequests.push(req);
@@ -727,7 +727,7 @@ describe("runLoop — the stop lines", () => {
     const h = harness({
       ready: [{ dir: "01-01-alpha" }],
       commitsAhead: 0,
-      dirty: [".trellis/tasks/01-01-alpha/task.json", "greet.txt"],
+      dirty: [".omtre/tasks/01-01-alpha/task.json", "greet.txt"],
     });
     const result = await runLoop(baseOptions(), h.ports);
 
@@ -742,7 +742,7 @@ describe("runLoop — the stop lines", () => {
     const h = harness({
       ready: [{ dir: "01-01-alpha" }],
       commitsAhead: 0,
-      dirty: [".trellis/tasks/01-01-alpha/check.jsonl"],
+      dirty: [".omtre/tasks/01-01-alpha/check.jsonl"],
     });
     const result = await runLoop({ ...baseOptions(), failThreshold: 1 }, h.ports);
 

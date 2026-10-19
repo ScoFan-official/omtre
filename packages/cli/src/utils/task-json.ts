@@ -4,15 +4,12 @@
  * `@omtre/core` task API; this module re-exports them under
  * the legacy `TaskJson` / `emptyTaskJson` names for CLI call sites.
  *
- * New code should prefer `TrellisTaskRecord` / `emptyTaskRecord` from
+ * New code should prefer `OmtreTaskRecord` / `emptyTaskRecord` from
  * `@omtre/core/task` directly.
  */
 
-import {
-  emptyTaskRecord,
-  type TrellisTaskRecord,
-} from "@omtre/core/task";
+import { emptyTaskRecord, type OmtreTaskRecord } from "@omtre/core/task";
 
-export type TaskJson = TrellisTaskRecord;
+export type TaskJson = OmtreTaskRecord;
 
 export const emptyTaskJson = emptyTaskRecord;

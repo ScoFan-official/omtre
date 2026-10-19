@@ -1,7 +1,7 @@
 /**
  * Zero-dependency read-only SQLite file parser.
  *
- * `@mindfoldhq/trellis-core` is intentionally free of runtime dependencies —
+ * `@omtre/core` is intentionally free of runtime dependencies —
  * `better-sqlite3` was tried for the OpenCode adapter and reverted because its
  * native build chain broke `npm install` on Windows + restricted networks. This
  * parser is the minimum viable reader needed by the ZCode `mem` adapter: list

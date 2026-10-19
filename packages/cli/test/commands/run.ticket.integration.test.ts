@@ -4,7 +4,7 @@
  * simulated worker (a file write stands in for the headless provider, exactly
  * the seam `RunnerPorts.worker` exists for).
  *
- *   trellis run --ticket … → worktree → start → worker → always-stop ×2 →
+ *   omtre run --ticket … → worktree → start → worker → always-stop ×2 →
  *   verify → delivery-gate → …
  *
  * The repo sits at `hands-off`, so a verified ticket defers at the gate —
@@ -25,11 +25,7 @@ import path from "node:path";
 
 import { realPorts, runTicket } from "../../src/commands/run.js";
 import { openLedger } from "../../src/commands/run/ledger.js";
-
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+import { getAllScripts } from "../../src/templates/extract.js";
 
 function findBin(candidates: string[]): string | null {
   for (const bin of candidates) {
@@ -47,7 +43,7 @@ const PYTHON = findBin(["python3", "python"]);
 const GIT = findBin(["git"]);
 
 function testEnv(): NodeJS.ProcessEnv {
-  return { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" };
+  return { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" };
 }
 
 function runIn(repo: string, cmd: string, args: string[]): void {
@@ -63,7 +59,7 @@ function runIn(repo: string, cmd: string, args: string[]): void {
 
 function taskDir(repo: string, slug: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(slug));
   if (!dir) throw new Error(`no task dir matching ${slug}`);
   return dir;
@@ -75,16 +71,18 @@ const cleanup: string[] = [];
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "run-ticket-itest-"));
   cleanup.push(repo);
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
-    recursive: true,
-  });
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  for (const [rel, content] of getAllScripts()) {
+    const dest = path.join(repo, ".omtre", "scripts", rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, content, "utf-8");
+  }
   runIn(repo, PYTHON as string, [
-    ".trellis/scripts/init_developer.py",
+    ".omtre/scripts/init_developer.py",
     "tester",
   ]);
   fs.writeFileSync(
-    path.join(repo, ".trellis", "config.yaml"),
+    path.join(repo, ".omtre", "config.yaml"),
     "autonomy: hands-off\n",
     "utf-8",
   );
@@ -100,13 +98,13 @@ afterEach(() => {
 });
 
 describe.skipIf(PYTHON === null || GIT === null)(
-  "trellis run --ticket e2e",
+  "omtre run --ticket e2e",
   () => {
     it("runs one ticket to delivery_deferred under hands-off, leaving the ledger contract on disk", async () => {
       // A ticket with the two things the pipeline reads: branch metadata and a
       // trivially passing verification contract.
       runIn(repo, PYTHON as string, [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "create",
         "Alpha",
         "--slug",
@@ -117,19 +115,19 @@ describe.skipIf(PYTHON === null || GIT === null)(
       ]);
       const dir = taskDir(repo, "alpha");
       runIn(repo, PYTHON as string, [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "set-branch",
         dir,
         "feature/alpha",
       ]);
       runIn(repo, PYTHON as string, [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "set-base-branch",
         dir,
         "main",
       ]);
       runIn(repo, PYTHON as string, [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "add-verify",
         dir,
         "exit 0",
@@ -214,7 +212,7 @@ describe.skipIf(PYTHON === null || GIT === null)(
 
       // The worker really ran inside the ticket worktree.
       expect(workerCwds).toEqual([
-        path.join(repo, ".trellis", ".runtime", "worktrees", dir),
+        path.join(repo, ".omtre", ".runtime", "worktrees", dir),
       ]);
       // The worktree is always transient.
       expect(fs.existsSync(workerCwds[0] as string)).toBe(false);
@@ -223,7 +221,7 @@ describe.skipIf(PYTHON === null || GIT === null)(
       // and a deferred ticket was not archived.
       const taskJson = JSON.parse(
         fs.readFileSync(
-          path.join(repo, ".trellis", "tasks", dir, "task.json"),
+          path.join(repo, ".omtre", "tasks", dir, "task.json"),
           "utf-8",
         ),
       ) as { meta?: Record<string, unknown> };

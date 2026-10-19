@@ -172,7 +172,7 @@ const codexAdapter: WorkerAdapter<CodexCtx> = {
       ctx,
       "initialize",
       {
-        clientInfo: { name: "trellis-channel", version: "0.1" },
+        clientInfo: { name: "omtre-channel", version: "0.1" },
         capabilities: {},
       },
       "initialize",

@@ -51,7 +51,7 @@ export function registerChannelCommand(program: Command): void {
     .description("Create a new channel (collaboration session)")
     .option("--scope <scope>", "channel scope: project | global")
     .option("--type <type>", "channel type: chat | forum", "chat")
-    .option("--task <path>", "associated Trellis task directory")
+    .option("--task <path>", "associated Omtre task directory")
     .option("--project <slug>", "project slug")
     .option("--labels <csv>", "comma-separated labels")
     .option("--description <text>", "stable channel description")
@@ -280,7 +280,7 @@ export function registerChannelCommand(program: Command): void {
     .option("--scope <scope>", "channel scope: project | global")
     .option(
       "--agent <agent-name>",
-      "load .trellis/agents/<name>.md (sets default --provider / --model / system prompt)",
+      "load .omtre/agents/<name>.md (sets default --provider / --model / system prompt)",
     )
     .option(
       "--provider <provider>",
@@ -321,13 +321,13 @@ export function registerChannelCommand(program: Command): void {
     )
     .option(
       "--jsonl <path>",
-      "parse a Trellis jsonl manifest ({file, reason} per line) and include each referenced file (repeatable)",
+      "parse an Omtre jsonl manifest ({file, reason} per line) and include each referenced file (repeatable)",
       (val: string, prev: string[] | undefined) => [...(prev ?? []), val],
       [] as string[],
     )
     .option(
       "--by <agent>",
-      "identity recorded as the spawn author (defaults to TRELLIS_CHANNEL_AS env or 'main')",
+      "identity recorded as the spawn author (defaults to OMTRE_CHANNEL_AS env or 'main')",
     )
     .option(
       "--inbox-policy <policy>",
@@ -408,7 +408,7 @@ export function registerChannelCommand(program: Command): void {
     )
     .option(
       "--agent <agent-name>",
-      "load .trellis/agents/<name>.md (sets default --provider / --as / system prompt)",
+      "load .omtre/agents/<name>.md (sets default --provider / --as / system prompt)",
     )
     .option(
       "--provider <provider>",
@@ -433,7 +433,7 @@ export function registerChannelCommand(program: Command): void {
     )
     .option(
       "--jsonl <path>",
-      "parse a Trellis jsonl manifest and include each referenced file (repeatable)",
+      "parse an Omtre jsonl manifest and include each referenced file (repeatable)",
       (val: string, prev: string[] | undefined) => [...(prev ?? []), val],
       [] as string[],
     )
@@ -565,7 +565,7 @@ export function registerChannelCommand(program: Command): void {
   channel
     .command("list")
     .description(
-      "List channels in ~/.trellis/channels/ with worker / activity summary",
+      "List channels in ~/.omtre/channels/ with worker / activity summary",
     )
     .option("--scope <scope>", "channel scope: project | global")
     .option("--json", "emit JSON instead of a formatted table")

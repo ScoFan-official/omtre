@@ -64,7 +64,7 @@ export async function channelThreadPost(
   const parsed = parseThreadAction(opts.action);
   if (parsed === "rename") {
     throw new Error(
-      "Use `trellis channel thread rename <channel> <old> <new>` instead of `post rename`.",
+      "Use `omtre channel thread rename <channel> <old> <new>` instead of `post rename`.",
     );
   }
   const action = parsed as Exclude<ThreadAction, "rename">;

@@ -12,8 +12,8 @@ import {
 
 /**
  * [oh-my] CLI releases ship as GitHub release tarballs on
- * `ScoFan-official/oh-my-trellis` under `cli-v*` tags (channel A), not on
- * npm. `trellis upgrade` resolves the requested release tag to its `.tgz`
+ * `ScoFan-official/omtre` under `cli-v*` tags (channel A), not on
+ * npm. `omtre upgrade` resolves the requested release tag to its `.tgz`
  * asset and installs it with `npm install -g <url>` — the same mechanism the
  * devin `oh-my-update` workflow uses.
  */
@@ -88,7 +88,9 @@ async function fetchReleasePayload(tag: string): Promise<GithubReleasePayload> {
       );
     }
     const releases = (await response.json()) as GithubReleasePayload[];
-    const latest = pickLatestCliRelease(Array.isArray(releases) ? releases : []);
+    const latest = pickLatestCliRelease(
+      Array.isArray(releases) ? releases : [],
+    );
     if (!latest) {
       throw new Error(
         `No cli-v* release found on github.com/${RELEASES_REPO}.`,
@@ -136,7 +138,7 @@ export async function resolveReleaseTarball(
 function binaryCheckCommand(
   platform: NodeJS.Platform = process.platform,
 ): string {
-  return platform === "win32" ? "where trellis" : "which trellis";
+  return platform === "win32" ? "where omtre" : "which omtre";
 }
 
 export function buildUpgradeCommand(
@@ -177,9 +179,9 @@ function troubleshooting(plan: UpgradeCommandPlan): string {
     "Troubleshooting:",
     `- Manual command: ${plan.displayCommand}`,
     "- Check npm global prefix and PATH: npm config get prefix",
-    `- Check which Trellis binary your shell resolves: ${plan.binaryCheckCommand}`,
-    "- If this is a permissions error, fix your Node/npm install or npm prefix; Trellis does not run sudo.",
-    "- If npm reports an existing binary or locked file, resolve that npm error manually; Trellis does not run --force.",
+    `- Check which Omtre binary your shell resolves: ${plan.binaryCheckCommand}`,
+    "- If this is a permissions error, fix your Node/npm install or npm prefix; Omtre does not run sudo.",
+    "- If npm reports an existing binary or locked file, resolve that npm error manually; Omtre does not run --force.",
   ].join("\n");
 }
 
@@ -191,7 +193,7 @@ export async function upgrade(
   const release = await resolveReleaseTarball(tag);
   const plan = buildUpgradeCommand(release.tarballUrl, release.tagName);
 
-  console.log(chalk.cyan(`Upgrading Trellis CLI to ${release.tagName}`));
+  console.log(chalk.cyan(`Upgrading Omtre CLI to ${release.tagName}`));
   console.log(chalk.gray(`Run: ${plan.displayCommand}`));
 
   if (options.dryRun) {
@@ -221,7 +223,7 @@ export async function upgrade(
     );
   }
 
-  console.log(chalk.green("\n✓ Trellis CLI upgrade completed"));
-  console.log(chalk.gray(`Run: trellis --version (was ${VERSION})`));
+  console.log(chalk.green("\n✓ Omtre CLI upgrade completed"));
+  console.log(chalk.gray(`Run: omtre --version (was ${VERSION})`));
   console.log(chalk.gray(`Run: ${plan.binaryCheckCommand}`));
 }

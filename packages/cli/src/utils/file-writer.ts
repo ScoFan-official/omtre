@@ -30,7 +30,7 @@ export function getWriteMode(): WriteMode {
 // ---------------------------------------------------------------------------
 // Write recording
 //
-// `trellis init` uses recording to capture exactly which files were actually
+// `omtre init` uses recording to capture exactly which files were actually
 // written this run (vs skipped because they already existed). The captured
 // set is what `.template-hashes.json` should contain — NOT a blind directory
 // walk of `.codex/` / `.claude/` / etc, which would include user-owned files
@@ -134,7 +134,7 @@ export async function writeFile(
   if (existingContent === content) {
     // Content identical, but no disk write happened. Do not record it for
     // init-time manifests: pre-existing user files can legitimately be
-    // byte-identical to a Trellis template and still not be Trellis-owned.
+    // byte-identical to an Omtre template and still not be Omtre-owned.
     return false;
   }
 
@@ -159,7 +159,7 @@ export async function writeFile(
 
   if (mode === "skip") {
     console.log(chalk.gray(`  ○ Skipped: ${displayPath} (already exists)`));
-    // Skipped: trellis did NOT write this file — caller should not track it
+    // Skipped: omtre did NOT write this file — caller should not track it
     // in the manifest. This is the AGENTS.md skip-existing case.
     return false;
   }
@@ -167,7 +167,7 @@ export async function writeFile(
   if (mode === "append") {
     appendToFile(filePath, content, options);
     console.log(chalk.blue(`  + Appended: ${displayPath}`));
-    // Append: trellis added trellis content to a user-owned file. Tracking
+    // Append: omtre added omtre content to a user-owned file. Tracking
     // is risky here (uninstall would unlink the whole file), so we do NOT
     // record appended files. Users on `--append` get a fresh manifest miss
     // on next update; that's the safer default.

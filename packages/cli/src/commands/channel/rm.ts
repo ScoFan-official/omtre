@@ -1,8 +1,8 @@
 /**
- * `trellis channel rm <name>` — kill any live workers, then remove the
- * channel directory under `~/.trellis/channels/`.
+ * `omtre channel rm <name>` — kill any live workers, then remove the
+ * channel directory under `~/.omtre/channels/`.
  *
- * `trellis channel prune [--all | --idle <duration> | --empty]` — bulk
+ * `omtre channel prune [--all | --idle <duration> | --empty]` — bulk
  * cleanup matching criteria.
  */
 

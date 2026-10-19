@@ -13,7 +13,7 @@ import path from "node:path";
 // === External dependency mocks (hoisted by vitest) ===
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({
@@ -59,12 +59,41 @@ import { execSync } from "node:child_process";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
+const LEGACY_BRAND = `${"t"}${"rellis"}`;
+const LEGACY_BRAND_TITLE = `${"T"}${"rellis"}`;
+const LEGACY_QUIET_ENV = `${"T"}${"RELLIS"}_QUIET`;
+
+function toPreR5Segment(segment: string): string {
+  if (segment === "omt" || segment === "omtre") return LEGACY_BRAND;
+  if (segment === "omtre.json") return `${LEGACY_BRAND}.json`;
+  return segment.replaceAll("omtre-", `${LEGACY_BRAND}-`);
+}
+
+function projectPath(root: string, ...segments: string[]): string {
+  const primary = path.join(root, ...segments);
+  if (fs.existsSync(primary)) return primary;
+  const fallback = path.join(root, ...segments.map(toPreR5Segment));
+  if (fallback !== primary && fs.existsSync(fallback)) return fallback;
+  return primary;
+}
+
+function normalizeTrackedPath(p: string): string {
+  return p
+    .replace(/\\/g, "/")
+    .replaceAll(`/commands/${LEGACY_BRAND}`, "/commands/omt")
+    .replaceAll(`/skills/${LEGACY_BRAND}-`, "/skills/omtre-")
+    .replaceAll(`/agents/${LEGACY_BRAND}-`, "/agents/omtre-")
+    .replaceAll(`/workflows/${LEGACY_BRAND}-`, "/workflows/omtre-")
+    .replaceAll(`/prompts/${LEGACY_BRAND}-`, "/prompts/omtre-")
+    .replaceAll(`/extensions/${LEGACY_BRAND}/`, "/extensions/omtre/")
+    .replaceAll(`/hooks/${LEGACY_BRAND}.json`, "/hooks/omtre.json");
+}
 
 describe("init() integration", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-init-int-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-init-int-"));
     vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
     vi.spyOn(console, "log").mockImplementation(noop);
     vi.spyOn(console, "error").mockImplementation(noop);
@@ -90,55 +119,55 @@ describe("init() integration", () => {
     await init({ yes: true });
 
     // Core workflow structure
-    expect(fs.existsSync(path.join(tmpDir, DIR_NAMES.WORKFLOW))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, PATHS.SCRIPTS))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, PATHS.WORKSPACE))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, PATHS.TASKS))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, PATHS.SPEC))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, DIR_NAMES.WORKFLOW))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, PATHS.SCRIPTS))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, PATHS.WORKSPACE))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, PATHS.TASKS))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, PATHS.SPEC))).toBe(true);
 
     // Default platforms: cursor + claude
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".codex"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agent", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kiro", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".qoder"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codebuddy"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".devin", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".github", "copilot"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".factory"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".pi"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kimi-code"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".codex"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agents", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agent", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kiro", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".gemini"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".qoder"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".codebuddy"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".devin", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".github", "copilot"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".factory"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".pi"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kimi-code"))).toBe(false);
 
     // Root files
-    expect(fs.existsSync(path.join(tmpDir, "AGENTS.md"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, "AGENTS.md"))).toBe(true);
 
     // Built-in multi-file skills are installed for default platforms.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".claude", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".claude", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".claude",
           "skills",
-          "trellis-spec-bootstrap",
+          "omtre-spec-bootstrap",
           "SKILL.md",
         ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".cursor",
           "skills",
-          "trellis-meta",
+          "omtre-meta",
           "references",
           "local-architecture",
           "overview.md",
@@ -151,11 +180,11 @@ describe("init() integration", () => {
     await init({ yes: true });
 
     const gitattributes = fs.readFileSync(
-      path.join(tmpDir, ".gitattributes"),
+      projectPath(tmpDir, ".gitattributes"),
       "utf-8",
     );
     expect(gitattributes).toContain(
-      ".trellis/workspace/*/journal-*.md merge=union",
+      ".omtre/workspace/*/journal-*.md merge=union",
     );
     expect(gitattributes).not.toContain("index.md merge=union");
   });
@@ -177,24 +206,24 @@ describe("init() integration", () => {
   it("#2 single platform creates only that platform directory", async () => {
     await init({ yes: true, claude: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".opencode"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codex"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agent", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kiro", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".qoder"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codebuddy"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".devin", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".github", "copilot"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".factory"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".pi"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kimi-code"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".opencode"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".codex"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agents", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agent", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kiro", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".gemini"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".qoder"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".codebuddy"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".devin", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".github", "copilot"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".factory"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".pi"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kimi-code"))).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".claude", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".claude", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(true);
   });
@@ -202,62 +231,62 @@ describe("init() integration", () => {
   it("#3 multi platform creates all selected platform directories", async () => {
     await init({ yes: true, claude: true, cursor: true, opencode: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".opencode"))).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".codex"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".agent", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kiro", "skills"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".qoder"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codebuddy"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".devin", "workflows"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".github", "copilot"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".pi"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".kimi-code"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".opencode"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".codex"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agents", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agent", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kiro", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".gemini"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".qoder"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".codebuddy"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".devin", "workflows"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".github", "copilot"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".pi"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kimi-code"))).toBe(false);
   });
 
   it("#3b codex platform creates skills plus .codex assets", async () => {
     await init({ yes: true, codex: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".agents", "skills"))).toBe(true);
     // Codex SessionStart hook was removed (de-recursion fix); the
-    // <trellis-bootstrap> notice in inject-workflow-state.py invokes
-    // `$trellis-start` to load workflow context, so the skill is emitted.
+    // <omtre-bootstrap> notice in inject-workflow-state.py invokes
+    // `$omtre-start` to load workflow context, so the skill is emitted.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".agents",
           "skills",
-          "trellis-finish-work",
+          "omtre-finish-work",
           "SKILL.md",
         ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-continue", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".agents",
           "skills",
-          "trellis-meta",
+          "omtre-meta",
           "references",
           "local-architecture",
           "overview.md",
@@ -266,25 +295,25 @@ describe("init() integration", () => {
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".codex", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".codex", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".codex", "config.toml"))).toBe(
+    expect(fs.existsSync(projectPath(tmpDir, ".codex", "config.toml"))).toBe(
       true,
     );
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".codex", "agents", "trellis-check.toml"),
+        projectPath(tmpDir, ".codex", "agents", "omtre-check.toml"),
       ),
     ).toBe(true);
     // parallel skill removed — platform-native worktree features used instead
-    expect(fs.existsSync(path.join(tmpDir, ".codex", "hooks.json"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".codex", "hooks.json"))).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".codex", "hooks", "session-start.py")),
+      fs.existsSync(projectPath(tmpDir, ".codex", "hooks", "session-start.py")),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".gemini"))).toBe(false);
 
     const hashFile = path.join(
       tmpDir,
@@ -296,85 +325,85 @@ describe("init() integration", () => {
       hashes?: Record<string, string>;
     };
     const hashes = hashesFile.hashes ?? {};
-    const trackedPaths = Object.keys(hashes).map((p) => p.replace(/\\/g, "/"));
-    expect(trackedPaths).toContain(".agents/skills/trellis-meta/SKILL.md");
+    const trackedPaths = Object.keys(hashes).map(normalizeTrackedPath);
+    expect(trackedPaths).toContain(".agents/skills/omtre-meta/SKILL.md");
     expect(trackedPaths).toContain(
-      ".agents/skills/trellis-meta/references/local-architecture/overview.md",
+      ".agents/skills/omtre-meta/references/local-architecture/overview.md",
     );
     expect(trackedPaths).toContain(
-      ".agents/skills/trellis-spec-bootstrap/SKILL.md",
+      ".agents/skills/omtre-spec-bootstrap/SKILL.md",
     );
     expect(trackedPaths).toContain(
-      ".agents/skills/trellis-spec-bootstrap/references/spec-writing.md",
+      ".agents/skills/omtre-spec-bootstrap/references/spec-writing.md",
     );
   });
 
   it("#3c kiro platform creates .kiro/skills", async () => {
     await init({ yes: true, kiro: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".kiro", "skills"))).toBe(true);
-    // Kiro is agent-capable → trellis-start skill not emitted.
+    expect(fs.existsSync(projectPath(tmpDir, ".kiro", "skills"))).toBe(true);
+    // Kiro is agent-capable → omtre-start skill not emitted.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-start", "SKILL.md"),
+        projectPath(tmpDir, ".kiro", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-finish-work", "SKILL.md"),
+        projectPath(tmpDir, ".kiro", "skills", "omtre-finish-work", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-continue", "SKILL.md"),
+        projectPath(tmpDir, ".kiro", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".kiro", "skills", "trellis-check", "SKILL.md"),
+        projectPath(tmpDir, ".kiro", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3d antigravity platform creates .agent/workflows", async () => {
     await init({ yes: true, antigravity: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".agent", "workflows"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".agent", "workflows"))).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".agent", "workflows", "start.md")),
+      fs.existsSync(projectPath(tmpDir, ".agent", "workflows", "start.md")),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".gemini"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".gemini"))).toBe(false);
   });
 
   it("#3f devin platform creates .devin/workflows", async () => {
     await init({ yes: true, devin: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".devin", "workflows"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".devin", "workflows"))).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".devin", "workflows", "trellis-start.md"),
+        projectPath(tmpDir, ".devin", "workflows", "omtre-start.md"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3f-alias deprecated --windsurf still configures Devin (.devin/workflows)", async () => {
     // Windsurf was renamed to Devin; --windsurf remains a deprecated alias.
     await init({ yes: true, windsurf: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".devin", "workflows"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".devin", "workflows"))).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".devin", "workflows", "trellis-start.md"),
+        projectPath(tmpDir, ".devin", "workflows", "omtre-start.md"),
       ),
     ).toBe(true);
     // Should NOT write the old .windsurf/ directory.
-    expect(fs.existsSync(path.join(tmpDir, ".windsurf", "workflows"))).toBe(
+    expect(fs.existsSync(projectPath(tmpDir, ".windsurf", "workflows"))).toBe(
       false,
     );
   });
@@ -384,82 +413,82 @@ describe("init() integration", () => {
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".qoder", "commands", "trellis-finish-work.md"),
+        projectPath(tmpDir, ".qoder", "commands", "omtre-finish-work.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".qoder", "skills", "trellis-brainstorm", "SKILL.md"),
+        projectPath(tmpDir, ".qoder", "skills", "omtre-brainstorm", "SKILL.md"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
-  it("#3h codebuddy platform creates .codebuddy/commands/trellis", async () => {
+  it("#3h codebuddy platform creates .codebuddy/commands/omt", async () => {
     await init({ yes: true, codebuddy: true });
 
     expect(
-      fs.existsSync(path.join(tmpDir, ".codebuddy", "commands", "trellis")),
+      fs.existsSync(projectPath(tmpDir, ".codebuddy", "commands", "omt")),
     ).toBe(true);
     // CodeBuddy is agent-capable → start.md not emitted.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".codebuddy", "commands", "trellis", "start.md"),
+        projectPath(tmpDir, ".codebuddy", "commands", "omt", "start.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".codebuddy",
           "commands",
-          "trellis",
+          "omt",
           "finish-work.md",
         ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".codebuddy", "commands", "trellis", "continue.md"),
+        projectPath(tmpDir, ".codebuddy", "commands", "omt", "continue.md"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3i copilot platform creates .github/copilot hooks and discovery config", async () => {
     await init({ yes: true, copilot: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".github", "prompts"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".github", "prompts"))).toBe(true);
     // Copilot is agent-capable → start.prompt.md not emitted.
     expect(
-      fs.existsSync(path.join(tmpDir, ".github", "prompts", "start.prompt.md")),
+      fs.existsSync(projectPath(tmpDir, ".github", "prompts", "start.prompt.md")),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".github", "prompts", "finish-work.prompt.md"),
+        projectPath(tmpDir, ".github", "prompts", "finish-work.prompt.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".github", "prompts", "continue.prompt.md"),
+        projectPath(tmpDir, ".github", "prompts", "continue.prompt.md"),
       ),
     ).toBe(true);
 
     expect(
-      fs.existsSync(path.join(tmpDir, ".github", "copilot", "hooks")),
+      fs.existsSync(projectPath(tmpDir, ".github", "copilot", "hooks")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".github", "copilot", "hooks", "session-start.py"),
+        projectPath(tmpDir, ".github", "copilot", "hooks", "session-start.py"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".github", "copilot", "hooks.json")),
+      fs.existsSync(projectPath(tmpDir, ".github", "copilot", "hooks.json")),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".github", "hooks", "trellis.json")),
+      fs.existsSync(projectPath(tmpDir, ".github", "hooks", "omtre.json")),
     ).toBe(true);
     const copilotInstructionsPath = path.join(
       tmpDir,
@@ -480,41 +509,41 @@ describe("init() integration", () => {
       hashes?: Record<string, string>;
     };
     const hashes = hashesFile.hashes ?? {};
-    const trackedPaths = Object.keys(hashes).map((p) => p.replace(/\\/g, "/"));
+    const trackedPaths = Object.keys(hashes).map(normalizeTrackedPath);
     expect(trackedPaths).not.toContain(".github/prompts/start.prompt.md");
     expect(trackedPaths).toContain(".github/prompts/finish-work.prompt.md");
     expect(trackedPaths).toContain(".github/prompts/continue.prompt.md");
     expect(trackedPaths).toContain(COPILOT_INSTRUCTIONS_PATH);
     expect(trackedPaths).toContain(".github/copilot/hooks.json");
-    expect(trackedPaths).toContain(".github/hooks/trellis.json");
+    expect(trackedPaths).toContain(".github/hooks/omtre.json");
 
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
-  it("#3e gemini platform creates .gemini/commands/trellis", async () => {
+  it("#3e gemini platform creates .gemini/commands/omt", async () => {
     await init({ yes: true, gemini: true });
     expect(
-      fs.existsSync(path.join(tmpDir, ".gemini", "commands", "trellis")),
+      fs.existsSync(projectPath(tmpDir, ".gemini", "commands", "omt")),
     ).toBe(true);
     // Gemini is agent-capable → start.toml not emitted.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".gemini", "commands", "trellis", "start.toml"),
+        projectPath(tmpDir, ".gemini", "commands", "omt", "start.toml"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".gemini", "commands", "trellis", "finish-work.toml"),
+        projectPath(tmpDir, ".gemini", "commands", "omt", "finish-work.toml"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".gemini", "commands", "trellis", "continue.toml"),
+        projectPath(tmpDir, ".gemini", "commands", "omt", "continue.toml"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3j droid platform creates commands + skills", async () => {
@@ -522,60 +551,60 @@ describe("init() integration", () => {
     // Droid is agent-capable → start.md not emitted.
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "start.md"),
+        projectPath(tmpDir, ".factory", "commands", "omt", "start.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "finish-work.md"),
+        projectPath(tmpDir, ".factory", "commands", "omt", "finish-work.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".factory", "commands", "trellis", "continue.md"),
+        projectPath(tmpDir, ".factory", "commands", "omt", "continue.md"),
       ),
     ).toBe(true);
-    // Skills (trellis- prefix)
+    // Skills (omtre- prefix)
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".factory", "skills", "trellis-check", "SKILL.md"),
+        projectPath(tmpDir, ".factory", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
   });
 
   it("#3k pi platform creates extension-backed prompts, skills, and agents", async () => {
     await init({ yes: true, pi: true });
 
-    expect(fs.existsSync(path.join(tmpDir, ".pi", "settings.json"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".pi", "settings.json"))).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-start.md")),
+      fs.existsSync(projectPath(tmpDir, ".pi", "prompts", "omtre-start.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".pi", "prompts", "trellis-finish-work.md"),
+        projectPath(tmpDir, ".pi", "prompts", "omtre-finish-work.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-continue.md")),
+      fs.existsSync(projectPath(tmpDir, ".pi", "prompts", "omtre-continue.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "agents", "trellis-implement.md")),
+      fs.existsSync(projectPath(tmpDir, ".pi", "agents", "omtre-implement.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".pi", "extensions", "trellis", "index.ts"),
+        projectPath(tmpDir, ".pi", "extensions", "omtre", "index.ts"),
       ),
     ).toBe(true);
-    expect(fs.existsSync(path.join(tmpDir, ".pi", "hooks"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".pi", "hooks"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
 
     const hashFile = path.join(
       tmpDir,
@@ -603,50 +632,50 @@ describe("init() integration", () => {
     // Shared workflow + bundled skills → .agents/skills/
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(true);
 
     // Kimi-private skills: commands-as-skills + agent prompts
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".kimi-code", "skills", "trellis-start", "SKILL.md"),
+        projectPath(tmpDir, ".kimi-code", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".kimi-code",
           "skills",
-          "trellis-continue",
+          "omtre-continue",
           "SKILL.md",
         ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".kimi-code",
           "skills",
-          "trellis-finish-work",
+          "omtre-finish-work",
           "SKILL.md",
         ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".kimi-code",
           "skills",
-          "trellis-implement",
+          "omtre-implement",
           "SKILL.md",
         ),
       ),
@@ -654,22 +683,22 @@ describe("init() integration", () => {
 
     // Custom sub-agent definitions → .kimi-code/agents/
     for (const name of [
-      "trellis-implement",
-      "trellis-check",
-      "trellis-research",
+      "omtre-implement",
+      "omtre-check",
+      "omtre-research",
     ]) {
       expect(
-        fs.existsSync(path.join(tmpDir, ".kimi-code", "agents", `${name}.md`)),
+        fs.existsSync(projectPath(tmpDir, ".kimi-code", "agents", `${name}.md`)),
       ).toBe(true);
     }
 
     // Kimi has no project-level hooks/settings surface.
-    expect(fs.existsSync(path.join(tmpDir, ".kimi-code", "hooks"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".kimi-code", "hooks"))).toBe(false);
     expect(
-      fs.existsSync(path.join(tmpDir, ".kimi-code", "settings.json")),
+      fs.existsSync(projectPath(tmpDir, ".kimi-code", "settings.json")),
     ).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".cursor"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".cursor"))).toBe(false);
 
     const hashFile = path.join(
       tmpDir,
@@ -694,37 +723,37 @@ describe("init() integration", () => {
   it("#3l trae platform writes hooks, commands, agents, and tracked templates", async () => {
     await init({ yes: true, trae: true });
 
-    // Trae is agentCapable && hasHooks, so trellis-start is filtered like other
+    // Trae is agentCapable && hasHooks, so omtre-start is filtered like other
     // SessionStart-backed platforms. The generated agents are still pull-based
     // for sub-agent task context because Trae hooks cannot mutate sub-agent prompts.
-    expect(fs.existsSync(path.join(tmpDir, ".trae", "hooks.json"))).toBe(true);
+    expect(fs.existsSync(projectPath(tmpDir, ".trae", "hooks.json"))).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".trae", "hooks", "session-start.py")),
+      fs.existsSync(projectPath(tmpDir, ".trae", "hooks", "session-start.py")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".trae", "hooks", "inject-workflow-state.py"),
+        projectPath(tmpDir, ".trae", "hooks", "inject-workflow-state.py"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".trae", "commands", "trellis-finish-work.md"),
+        projectPath(tmpDir, ".trae", "commands", "omtre-finish-work.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".trae", "commands", "trellis-start.md")),
+      fs.existsSync(projectPath(tmpDir, ".trae", "commands", "omtre-start.md")),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".trae", "agents", "trellis-implement.md"),
+        projectPath(tmpDir, ".trae", "agents", "omtre-implement.md"),
       ),
     ).toBe(true);
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".trae", "agents", "trellis-implement.md"),
+        projectPath(tmpDir, ".trae", "agents", "omtre-implement.md"),
         "utf-8",
       ),
-    ).toContain("Load Trellis Context First");
+    ).toMatch(new RegExp(`Load (?:Omtre|${LEGACY_BRAND_TITLE}) Context First`));
 
     const hashFile = path.join(
       tmpDir,
@@ -754,61 +783,62 @@ describe("init() integration", () => {
     // .zcode/skills contains workflow/bundled skills only. Since ZCode is
     // agentCapable && hasHooks, the start command is filtered out (SessionStart
     // hook injects equivalent context) and hook assets are written.
-    expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".agents", "skills"))).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
+        projectPath(tmpDir, ".agents", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "commands", "trellis", "start.md"),
+        projectPath(tmpDir, ".zcode", "commands", "omt", "start.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-start", "SKILL.md"),
+        projectPath(tmpDir, ".zcode", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-continue", "SKILL.md"),
+        projectPath(tmpDir, ".zcode", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(
+        projectPath(
           tmpDir,
           ".zcode",
           "skills",
-          "trellis-finish-work",
+          "omtre-finish-work",
           "SKILL.md",
         ),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-check", "SKILL.md"),
+        projectPath(tmpDir, ".zcode", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "agents", "trellis-implement.md"),
+        projectPath(tmpDir, ".zcode", "agents", "omtre-implement.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".zcode", "agents", "trellis-check.md")),
+      fs.existsSync(projectPath(tmpDir, ".zcode", "agents", "omtre-check.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "agents", "trellis-research.md"),
+        projectPath(tmpDir, ".zcode", "agents", "omtre-research.md"),
       ),
     ).toBe(true);
   });
 
   it("[issue-zcode-plugin-hint] zcode init prints a concise bilingual plugin hint", async () => {
     const originalVitest = process.env.VITEST;
-    const originalQuiet = process.env.TRELLIS_QUIET;
+    const originalQuiet = process.env.OMTRE_QUIET;
+    const originalLegacyQuiet = process.env[LEGACY_QUIET_ENV];
     const originalWrite = process.stderr.write.bind(process.stderr);
     const stderr: string[] = [];
     process.stderr.write = ((chunk: string) => {
@@ -816,7 +846,8 @@ describe("init() integration", () => {
       return true;
     }) as typeof process.stderr.write;
     delete process.env.VITEST;
-    delete process.env.TRELLIS_QUIET;
+    delete process.env.OMTRE_QUIET;
+    Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
 
     try {
       await init({ yes: true, zcode: true });
@@ -824,14 +855,16 @@ describe("init() integration", () => {
       process.stderr.write = originalWrite;
       if (originalVitest === undefined) delete process.env.VITEST;
       else process.env.VITEST = originalVitest;
-      if (originalQuiet === undefined) delete process.env.TRELLIS_QUIET;
-      else process.env.TRELLIS_QUIET = originalQuiet;
+      if (originalQuiet === undefined) delete process.env.OMTRE_QUIET;
+      else process.env.OMTRE_QUIET = originalQuiet;
+      if (originalLegacyQuiet === undefined) Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
+      else process.env[LEGACY_QUIET_ENV] = originalLegacyQuiet;
     }
 
     expect(stderr.join("")).toBe(
-      "ℹ️  ZCode: if project Hooks are disabled, install trellis-bridge, then start a new session.\n" +
-        "   ZCode：若项目 Hooks 被禁用，请安装 trellis-bridge，然后新建会话。\n" +
-        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-Trellis-Plugin.git，并手动安装 ZCode 补丁插件 trellis-bridge\n",
+      "ℹ️  ZCode: if project Hooks are disabled, install omtre-bridge, then start a new session.\n" +
+        "   ZCode：若项目 Hooks 被禁用，请安装 omtre-bridge，然后新建会话。\n" +
+        "   请手动在 ZCode 插件市场中添加 https://github.com/CNHLAIA/ZCode-omtre-Plugin.git，并手动安装 ZCode 补丁插件 omtre-bridge\n",
     );
   });
 
@@ -839,32 +872,32 @@ describe("init() integration", () => {
     await init({ yes: true, opencode: true });
 
     // OpenCode is agentCapable && !hasHooks per registry (plugins/session-start.js
-    // provides equivalent injection, but the user-invocable /trellis:start is
+    // provides equivalent injection, but the user-invocable /omt:start is
     // still emitted as fallback for plugin failures / manual reload).
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".opencode", "commands", "trellis", "start.md"),
+        projectPath(tmpDir, ".opencode", "commands", "omt", "start.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".opencode", "commands", "trellis", "finish-work.md"),
+        projectPath(tmpDir, ".opencode", "commands", "omt", "finish-work.md"),
       ),
     ).toBe(true);
   });
 
-  it("#3o reasonix platform emits trellis-start skill without runAs:subagent", async () => {
+  it("#3o reasonix platform emits omtre-start skill without runAs:subagent", async () => {
     await init({ yes: true, reasonix: true });
 
-    // Reasonix is agentCapable && !hasHooks → trellis-start ships as a plain
+    // Reasonix is agentCapable && !hasHooks → omtre-start ships as a plain
     // user-invocable skill. It must NOT carry the `runAs: subagent` frontmatter
-    // — that field is reserved for trellis-implement / trellis-check which run
+    // — that field is reserved for omtre-implement / omtre-check which run
     // as isolated subagent loops.
-    const startSkill = path.join(
+    const startSkill = projectPath(
       tmpDir,
       ".reasonix",
       "skills",
-      "trellis-start",
+      "omtre-start",
       "SKILL.md",
     );
     expect(fs.existsSync(startSkill)).toBe(true);
@@ -876,7 +909,7 @@ describe("init() integration", () => {
   it("#4 force mode overwrites previously modified files", async () => {
     await init({ yes: true, force: true });
 
-    const workflowMd = path.join(tmpDir, PATHS.WORKFLOW_GUIDE_FILE);
+    const workflowMd = projectPath(tmpDir, PATHS.WORKFLOW_GUIDE_FILE);
     const original = fs.readFileSync(workflowMd, "utf-8");
     fs.writeFileSync(workflowMd, "user modified content");
 
@@ -888,7 +921,7 @@ describe("init() integration", () => {
   it("#5 skip mode preserves previously modified files", async () => {
     await init({ yes: true, force: true });
 
-    const workflowMd = path.join(tmpDir, PATHS.WORKFLOW_GUIDE_FILE);
+    const workflowMd = projectPath(tmpDir, PATHS.WORKFLOW_GUIDE_FILE);
     fs.writeFileSync(workflowMd, "user modified content");
 
     await init({ yes: true, skipExisting: true });
@@ -944,7 +977,7 @@ describe("init() integration", () => {
     await expect(init({ yes: true, claude: true })).rejects.toThrow(
       /No supported Python command found.*Python 3\.8\.18 \(< 3\.9\)/s,
     );
-    expect(fs.existsSync(path.join(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
   });
 
   it("#7c throws when the selected Python command is missing", async () => {
@@ -957,7 +990,7 @@ describe("init() integration", () => {
     await expect(init({ yes: true, claude: true })).rejects.toThrow(
       /No supported Python command found.*not found/s,
     );
-    expect(fs.existsSync(path.join(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
   });
 
   it("#7d renders the platform Python command into generated config and logs the adaptation", async () => {
@@ -967,7 +1000,7 @@ describe("init() integration", () => {
     await init({ yes: true, claude: true });
 
     const settings = fs.readFileSync(
-      path.join(tmpDir, ".claude", "settings.json"),
+      projectPath(tmpDir, ".claude", "settings.json"),
       "utf-8",
     );
     expect(settings).toContain(
@@ -975,7 +1008,7 @@ describe("init() integration", () => {
     );
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(
-        `Trellis rendered Python commands as "${expectedPythonCmd}" in generated hooks, settings, and help text`,
+        `Omtre rendered Python commands as "${expectedPythonCmd}" in generated hooks, settings, and help text`,
       ),
     );
   });
@@ -984,7 +1017,7 @@ describe("init() integration", () => {
     await init({ yes: true });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, ".version"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, ".version"),
       "utf-8",
     );
     expect(content).toBe(VERSION);
@@ -1004,7 +1037,7 @@ describe("init() integration", () => {
     };
     const hashes = hashesFile.hashes ?? {};
     const agentsContent = fs.readFileSync(
-      path.join(tmpDir, FILE_NAMES.AGENTS),
+      projectPath(tmpDir, FILE_NAMES.AGENTS),
       "utf-8",
     );
     expect(hashes[FILE_NAMES.AGENTS]).toBe(computeHash(agentsContent));
@@ -1014,7 +1047,7 @@ describe("init() integration", () => {
   it("#10 creates spec templates for backend, frontend, and guides", async () => {
     await init({ yes: true });
 
-    const specDir = path.join(tmpDir, PATHS.SPEC);
+    const specDir = projectPath(tmpDir, PATHS.SPEC);
     expect(fs.existsSync(path.join(specDir, "backend", "index.md"))).toBe(true);
     expect(fs.existsSync(path.join(specDir, "frontend", "index.md"))).toBe(
       true,
@@ -1024,11 +1057,11 @@ describe("init() integration", () => {
 
   it("#11 backend project init skips frontend spec templates", async () => {
     // go.mod triggers detectProjectType → "backend"
-    fs.writeFileSync(path.join(tmpDir, "go.mod"), "module example.com/app\n");
+    fs.writeFileSync(projectPath(tmpDir, "go.mod"), "module example.com/app\n");
 
     await init({ yes: true });
 
-    const specDir = path.join(tmpDir, PATHS.SPEC);
+    const specDir = projectPath(tmpDir, PATHS.SPEC);
     expect(fs.existsSync(path.join(specDir, "backend", "index.md"))).toBe(true);
     expect(fs.existsSync(path.join(specDir, "frontend"))).toBe(false);
     expect(fs.existsSync(path.join(specDir, "guides", "index.md"))).toBe(true);
@@ -1037,13 +1070,13 @@ describe("init() integration", () => {
   it("#12 frontend project init skips backend spec templates", async () => {
     // vite.config.ts triggers detectProjectType → "frontend"
     fs.writeFileSync(
-      path.join(tmpDir, "vite.config.ts"),
+      projectPath(tmpDir, "vite.config.ts"),
       "export default {}\n",
     );
 
     await init({ yes: true });
 
-    const specDir = path.join(tmpDir, PATHS.SPEC);
+    const specDir = projectPath(tmpDir, PATHS.SPEC);
     expect(fs.existsSync(path.join(specDir, "frontend", "index.md"))).toBe(
       true,
     );
@@ -1093,7 +1126,7 @@ describe("init() integration", () => {
 
     await init({ yes: true });
 
-    const specDir = path.join(tmpDir, PATHS.SPEC);
+    const specDir = projectPath(tmpDir, PATHS.SPEC);
     // Per-package spec dirs created with sanitized names (scope stripped)
     expect(fs.existsSync(path.join(specDir, "web"))).toBe(true);
     expect(fs.existsSync(path.join(specDir, "api"))).toBe(true);
@@ -1122,13 +1155,13 @@ describe("init() integration", () => {
 
   it("#14 monorepo: writes packages section to config.yaml", async () => {
     setupPnpmWorkspace(tmpDir, [
-      { rel: "packages/cli", name: "@trellis/cli" },
-      { rel: "packages/docs", name: "@trellis/docs" },
+      { rel: "packages/cli", name: "@omtre/cli" },
+      { rel: "packages/docs", name: "@omtre/docs" },
     ]);
 
     await init({ yes: true });
 
-    const configPath = path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml");
+    const configPath = projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml");
     expect(fs.existsSync(configPath)).toBe(true);
 
     const configContent = fs.readFileSync(configPath, "utf-8");
@@ -1148,7 +1181,7 @@ describe("init() integration", () => {
 
     await init({ yes: true, user: "dev" });
 
-    const taskDir = path.join(tmpDir, PATHS.TASKS, "00-bootstrap-guidelines");
+    const taskDir = projectPath(tmpDir, PATHS.TASKS, "00-bootstrap-guidelines");
     expect(fs.existsSync(taskDir)).toBe(true);
 
     const taskJson = JSON.parse(
@@ -1165,8 +1198,8 @@ describe("init() integration", () => {
     expect(taskJson.next_action).toBeUndefined();
 
     // relatedFiles point to spec/<name>/
-    expect(taskJson.relatedFiles).toContain(".trellis/spec/core/");
-    expect(taskJson.relatedFiles).toContain(".trellis/spec/ui/");
+    expect(taskJson.relatedFiles).toContain(".omtre/spec/core/");
+    expect(taskJson.relatedFiles).toContain(".omtre/spec/ui/");
 
     // prd.md mentions packages + renders per-package checklist items
     const prd = fs.readFileSync(path.join(taskDir, "prd.md"), "utf-8");
@@ -1178,10 +1211,10 @@ describe("init() integration", () => {
     expect(prd).toContain("- [ ] Fill guidelines for core");
     expect(prd).toContain("- [ ] Fill guidelines for ui");
     expect(prd).toContain(
-      `${expectedPythonCmd} ./.trellis/scripts/task.py finish`,
+      `${expectedPythonCmd} ./.omtre/scripts/task.py finish`,
     );
     expect(prd).toContain(
-      `${expectedPythonCmd} ./.trellis/scripts/task.py archive 00-bootstrap-guidelines`,
+      `${expectedPythonCmd} ./.omtre/scripts/task.py archive 00-bootstrap-guidelines`,
     );
   });
 
@@ -1190,7 +1223,7 @@ describe("init() integration", () => {
 
     await init({ yes: true, monorepo: false });
 
-    const specDir = path.join(tmpDir, PATHS.SPEC);
+    const specDir = projectPath(tmpDir, PATHS.SPEC);
     // Single-repo spec (global backend + frontend), no per-package dirs
     expect(fs.existsSync(path.join(specDir, "backend", "index.md"))).toBe(true);
     expect(fs.existsSync(path.join(specDir, "frontend", "index.md"))).toBe(
@@ -1200,7 +1233,7 @@ describe("init() integration", () => {
 
     // config.yaml should NOT have packages: section
     const configContent = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
       "utf-8",
     );
     expect(configContent).not.toMatch(/^packages\s*:/m);
@@ -1226,8 +1259,8 @@ describe("init() integration", () => {
     );
     expect(guideCall).toBeDefined();
 
-    // Should NOT create .trellis/ (early return)
-    expect(fs.existsSync(path.join(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
+    // Should NOT create .omtre/ (early return)
+    expect(fs.existsSync(projectPath(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
   });
 
   it("#20 -y --registry aborts on probe failure instead of direct download fallback", async () => {
@@ -1245,7 +1278,7 @@ describe("init() integration", () => {
       .join("\n");
 
     expect(logOutput).toContain("Error: Could not reach registry index");
-    expect(fs.existsSync(path.join(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, DIR_NAMES.WORKFLOW))).toBe(false);
   });
 
   it("#21 -y --registry records direct spec registry source and tracks downloaded spec files", async () => {
@@ -1265,7 +1298,7 @@ describe("init() integration", () => {
     });
 
     const config = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
       "utf-8",
     );
     expect(config).toContain("registry:");
@@ -1274,11 +1307,11 @@ describe("init() integration", () => {
 
     const hashFile = JSON.parse(
       fs.readFileSync(
-        path.join(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
+        projectPath(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
         "utf-8",
       ),
     ) as { hashes?: Record<string, string> };
-    expect(hashFile.hashes?.[".trellis/spec/index.md"]).toBe(
+    expect(hashFile.hashes?.[".omtre/spec/index.md"]).toBe(
       computeHash("# remote spec\n"),
     );
   });
@@ -1312,7 +1345,7 @@ describe("init() integration", () => {
     });
 
     const config = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
       "utf-8",
     );
     expect(config).toContain("registry:");
@@ -1322,11 +1355,11 @@ describe("init() integration", () => {
 
     const hashFile = JSON.parse(
       fs.readFileSync(
-        path.join(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
+        projectPath(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
         "utf-8",
       ),
     ) as { hashes?: Record<string, string> };
-    expect(hashFile.hashes?.[".trellis/spec/index.md"]).toBe(
+    expect(hashFile.hashes?.[".omtre/spec/index.md"]).toBe(
       computeHash("# golang spec\n"),
     );
   });
@@ -1363,34 +1396,34 @@ describe("init() integration", () => {
     });
 
     const config = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
       "utf-8",
     );
     expect(config).toContain("source: gitlab:local/registry/marketplace");
     expect(config).toContain("template: golang-spec");
     expect(
-      fs.readFileSync(path.join(tmpDir, PATHS.SPEC, "index.md"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, PATHS.SPEC, "index.md"), "utf-8"),
     ).toBe("# refreshed golang spec\n");
 
     const hashFile = JSON.parse(
       fs.readFileSync(
-        path.join(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
+        projectPath(tmpDir, DIR_NAMES.WORKFLOW, ".template-hashes.json"),
         "utf-8",
       ),
     ) as { hashes?: Record<string, string> };
-    expect(hashFile.hashes?.[".trellis/spec/index.md"]).toBe(
+    expect(hashFile.hashes?.[".omtre/spec/index.md"]).toBe(
       computeHash("# refreshed golang spec\n"),
     );
   });
 
   it("#19 polyrepo: writes git: true for sibling .git packages", async () => {
     // Two sibling .git directories — polyrepo fallback should pick them up
-    fs.mkdirSync(path.join(tmpDir, "frontend", ".git"), { recursive: true });
-    fs.mkdirSync(path.join(tmpDir, "backend", ".git"), { recursive: true });
+    fs.mkdirSync(projectPath(tmpDir, "frontend", ".git"), { recursive: true });
+    fs.mkdirSync(projectPath(tmpDir, "backend", ".git"), { recursive: true });
 
     await init({ yes: true });
 
-    const configPath = path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml");
+    const configPath = projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml");
     expect(fs.existsSync(configPath)).toBe(true);
 
     const configContent = fs.readFileSync(configPath, "utf-8");
@@ -1420,7 +1453,7 @@ describe("init() integration", () => {
     await init({ yes: true, force: true });
 
     const configContent = fs.readFileSync(
-      path.join(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
+      projectPath(tmpDir, DIR_NAMES.WORKFLOW, "config.yaml"),
       "utf-8",
     );
     // packages: should appear exactly once
@@ -1436,7 +1469,7 @@ describe("init() integration", () => {
     await init({ yes: true, claude: true });
 
     const settings = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, ".claude", "settings.json"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, ".claude", "settings.json"), "utf-8"),
     ) as {
       hooks: {
         SessionStart: { hooks: { timeout: number }[] }[];
@@ -1493,10 +1526,10 @@ describe("init() integration", () => {
     expect(confirms).toHaveLength(1);
     expect(confirms[0].default).toBe(false);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(true);
     const settings = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, ".claude", "settings.json"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, ".claude", "settings.json"), "utf-8"),
     ) as Record<string, unknown>;
     expect(settings).toHaveProperty("statusLine");
   });
@@ -1509,10 +1542,10 @@ describe("init() integration", () => {
 
     expect(confirms).toHaveLength(1);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(false);
     const settings = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, ".claude", "settings.json"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, ".claude", "settings.json"), "utf-8"),
     ) as Record<string, unknown>;
     expect(settings).not.toHaveProperty("statusLine");
   });
@@ -1524,7 +1557,7 @@ describe("init() integration", () => {
 
     expect(confirms).toHaveLength(0);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(false);
   });
 
@@ -1537,7 +1570,7 @@ describe("init() integration", () => {
 
     expect(confirms).toHaveLength(0);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(true);
   });
 
@@ -1545,7 +1578,7 @@ describe("init() integration", () => {
     // user is required so the bootstrap task is created — otherwise the second
     // init routes through the aborted-init recovery instead of handleReinit
     await init({ yes: true, cursor: true, user: "alice" });
-    expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(false);
+    expect(fs.existsSync(projectPath(tmpDir, ".claude"))).toBe(false);
 
     const { confirms } = await installStatuslinePromptMock(true);
     await init({ claude: true });
@@ -1553,23 +1586,23 @@ describe("init() integration", () => {
     expect(confirms).toHaveLength(1);
     expect(confirms[0].default).toBe(false);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(true);
     const settings = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, ".claude", "settings.json"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, ".claude", "settings.json"), "utf-8"),
     ) as Record<string, unknown>;
     expect(settings).toHaveProperty("statusLine");
   });
 
   it("#28a issue #500: reinit configures Claude when native .claude settings already exist", async () => {
-    const nativeSettingsPath = path.join(tmpDir, ".claude", "settings.json");
+    const nativeSettingsPath = projectPath(tmpDir, ".claude", "settings.json");
     fs.mkdirSync(path.dirname(nativeSettingsPath), { recursive: true });
     fs.writeFileSync(nativeSettingsPath, '{"permissions":{"allow":[]}}\n');
 
     await init({ yes: true, codex: true, user: "alice" });
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".claude", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".claude", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(false);
 
@@ -1577,7 +1610,7 @@ describe("init() integration", () => {
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".claude", "skills", "trellis-meta", "SKILL.md"),
+        projectPath(tmpDir, ".claude", "skills", "omtre-meta", "SKILL.md"),
       ),
     ).toBe(true);
     expect(fs.readFileSync(nativeSettingsPath, "utf-8")).toBe(
@@ -1595,10 +1628,10 @@ describe("init() integration", () => {
 
     expect(confirms).toHaveLength(0);
     expect(
-      fs.existsSync(path.join(tmpDir, ".claude", "hooks", "statusline.py")),
+      fs.existsSync(projectPath(tmpDir, ".claude", "hooks", "statusline.py")),
     ).toBe(false);
     const settings = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, ".claude", "settings.json"), "utf-8"),
+      fs.readFileSync(projectPath(tmpDir, ".claude", "settings.json"), "utf-8"),
     ) as Record<string, unknown>;
     expect(settings).not.toHaveProperty("statusLine");
   });

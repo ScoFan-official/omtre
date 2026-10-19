@@ -26,7 +26,7 @@ describe("cleanupEmptyDirs", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-cleanup-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-cleanup-"));
   });
 
   afterEach(() => {
@@ -64,26 +64,26 @@ describe("cleanupEmptyDirs", () => {
     expect(fs.existsSync(path.join(tmpDir, ".claude"))).toBe(true);
   });
 
-  it("[CR#1] does not delete .trellis root even if empty", () => {
-    fs.mkdirSync(path.join(tmpDir, ".trellis"), { recursive: true });
-    cleanupEmptyDirs(tmpDir, ".trellis");
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(true);
+  it("[CR#1] does not delete .omtre root even if empty", () => {
+    fs.mkdirSync(path.join(tmpDir, ".omtre"), { recursive: true });
+    cleanupEmptyDirs(tmpDir, ".omtre");
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(true);
   });
 
   it("recursively cleans parent directories but stops at root", () => {
-    // Create .trellis/scripts/multi_agent/ (all empty)
-    fs.mkdirSync(path.join(tmpDir, ".trellis", "scripts", "multi_agent"), {
+    // Create .omtre/scripts/multi_agent/ (all empty)
+    fs.mkdirSync(path.join(tmpDir, ".omtre", "scripts", "multi_agent"), {
       recursive: true,
     });
-    cleanupEmptyDirs(tmpDir, ".trellis/scripts/multi_agent");
+    cleanupEmptyDirs(tmpDir, ".omtre/scripts/multi_agent");
 
     // multi_agent and scripts should be removed (both empty)
     expect(
-      fs.existsSync(path.join(tmpDir, ".trellis", "scripts", "multi_agent")),
+      fs.existsSync(path.join(tmpDir, ".omtre", "scripts", "multi_agent")),
     ).toBe(false);
-    expect(fs.existsSync(path.join(tmpDir, ".trellis", "scripts"))).toBe(false);
-    // .trellis root must survive
-    expect(fs.existsSync(path.join(tmpDir, ".trellis"))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, ".omtre", "scripts"))).toBe(false);
+    // .omtre root must survive
+    expect(fs.existsSync(path.join(tmpDir, ".omtre"))).toBe(true);
   });
 
   it("handles non-existent directory gracefully", () => {
@@ -95,8 +95,8 @@ describe("cleanupEmptyDirs", () => {
     const userDir = path.join(tmpDir, "user-empty-dir");
     fs.mkdirSync(userDir);
 
-    cleanupEmptyDirs(tmpDir, ".trellis/../user-empty-dir");
-    cleanupEmptyDirs(tmpDir, ".trellis/./../user-empty-dir");
+    cleanupEmptyDirs(tmpDir, ".omtre/../user-empty-dir");
+    cleanupEmptyDirs(tmpDir, ".omtre/./../user-empty-dir");
 
     expect(fs.existsSync(userDir)).toBe(true);
   });
@@ -105,15 +105,15 @@ describe("cleanupEmptyDirs", () => {
     "does not follow a managed parent symlink outside the project",
     () => {
       const external = fs.mkdtempSync(
-        path.join(os.tmpdir(), "trellis-cleanup-external-"),
+        path.join(os.tmpdir(), "omtre-cleanup-external-"),
       );
       const externalEmpty = path.join(external, "empty");
       fs.mkdirSync(externalEmpty);
-      fs.mkdirSync(path.join(tmpDir, ".trellis"));
-      fs.symlinkSync(external, path.join(tmpDir, ".trellis", "linked"), "dir");
+      fs.mkdirSync(path.join(tmpDir, ".omtre"));
+      fs.symlinkSync(external, path.join(tmpDir, ".omtre", "linked"), "dir");
 
       try {
-        cleanupEmptyDirs(tmpDir, ".trellis/linked/empty");
+        cleanupEmptyDirs(tmpDir, ".omtre/linked/empty");
         expect(fs.existsSync(externalEmpty)).toBe(true);
       } finally {
         fs.rmSync(external, { recursive: true, force: true });
@@ -130,8 +130,8 @@ describe("loadUpdateSkipPaths", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-skip-"));
-    fs.mkdirSync(path.join(tmpDir, ".trellis"), { recursive: true });
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-skip-"));
+    fs.mkdirSync(path.join(tmpDir, ".omtre"), { recursive: true });
   });
 
   afterEach(() => {
@@ -140,7 +140,7 @@ describe("loadUpdateSkipPaths", () => {
 
   it("strips double quotes from skip paths", () => {
     fs.writeFileSync(
-      path.join(tmpDir, ".trellis", "config.yaml"),
+      path.join(tmpDir, ".omtre", "config.yaml"),
       'update:\n  skip:\n    - ".claude/commands/"\n',
     );
     const paths = loadUpdateSkipPaths(tmpDir);
@@ -149,7 +149,7 @@ describe("loadUpdateSkipPaths", () => {
 
   it("strips single quotes from skip paths", () => {
     fs.writeFileSync(
-      path.join(tmpDir, ".trellis", "config.yaml"),
+      path.join(tmpDir, ".omtre", "config.yaml"),
       "update:\n  skip:\n    - '.claude/commands/'\n",
     );
     const paths = loadUpdateSkipPaths(tmpDir);
@@ -158,7 +158,7 @@ describe("loadUpdateSkipPaths", () => {
 
   it("handles unquoted skip paths", () => {
     fs.writeFileSync(
-      path.join(tmpDir, ".trellis", "config.yaml"),
+      path.join(tmpDir, ".omtre", "config.yaml"),
       "update:\n  skip:\n    - .claude/commands/\n",
     );
     const paths = loadUpdateSkipPaths(tmpDir);
@@ -183,7 +183,7 @@ describe("sortMigrationsForExecution", () => {
   it("puts rename-dir before rename and delete", () => {
     const items = [
       { type: "rename" as const, from: ".claude/a.md", to: ".claude/b.md" },
-      { type: "rename-dir" as const, from: ".trellis/old", to: ".trellis/new" },
+      { type: "rename-dir" as const, from: ".omtre/old", to: ".omtre/new" },
       { type: "delete" as const, from: ".claude/c.md" },
     ];
     const sorted = sortMigrationsForExecution(items);
@@ -192,18 +192,18 @@ describe("sortMigrationsForExecution", () => {
 
   it("sorts rename-dir by path depth (deeper first)", () => {
     const items = [
-      { type: "rename-dir" as const, from: ".trellis/a", to: ".trellis/x" },
+      { type: "rename-dir" as const, from: ".omtre/a", to: ".omtre/x" },
       {
         type: "rename-dir" as const,
-        from: ".trellis/a/b/c",
-        to: ".trellis/x/y/z",
+        from: ".omtre/a/b/c",
+        to: ".omtre/x/y/z",
       },
-      { type: "rename-dir" as const, from: ".trellis/a/b", to: ".trellis/x/y" },
+      { type: "rename-dir" as const, from: ".omtre/a/b", to: ".omtre/x/y" },
     ];
     const sorted = sortMigrationsForExecution(items);
-    expect(sorted[0].from).toBe(".trellis/a/b/c"); // depth 4
-    expect(sorted[1].from).toBe(".trellis/a/b"); // depth 3
-    expect(sorted[2].from).toBe(".trellis/a"); // depth 2
+    expect(sorted[0].from).toBe(".omtre/a/b/c"); // depth 4
+    expect(sorted[1].from).toBe(".omtre/a/b"); // depth 3
+    expect(sorted[2].from).toBe(".omtre/a"); // depth 2
   });
 
   it("preserves relative order of rename and delete items", () => {
@@ -254,41 +254,41 @@ describe("shouldExcludeFromBackup", () => {
   });
 
   it("excludes domain boards/REGISTRY/worklogs (user data)", () => {
-    expect(shouldExcludeFromBackup(".trellis/domains/REGISTRY.md")).toBe(true);
+    expect(shouldExcludeFromBackup(".omtre/domains/REGISTRY.md")).toBe(true);
     expect(
-      shouldExcludeFromBackup(".trellis/domains/deap/worklog/dev.md"),
+      shouldExcludeFromBackup(".omtre/domains/deap/worklog/dev.md"),
     ).toBe(true);
   });
 
   it.each([
     ".opencode/node_modules/@opencode-ai/sdk/package.json",
-    ".trellis/.backup-2026-04-22T10-24-27/.opencode/node_modules/zod/index.js",
+    ".omtre/.backup-2026-04-22T10-24-27/.opencode/node_modules/zod/index.js",
   ])("excludes dependency tree %s", (p) => {
     expect(shouldExcludeFromBackup(p)).toBe(true);
   });
 
   it.each([
-    ".trellis/workspace/developer/journal-1.md",
-    ".trellis/tasks/04-17-foo/prd.md",
-    ".trellis/spec/cli/backend/index.md",
-    ".trellis/backlog/idea.md",
-    ".trellis/agent-traces/trace.jsonl",
+    ".omtre/workspace/developer/journal-1.md",
+    ".omtre/tasks/04-17-foo/prd.md",
+    ".omtre/spec/cli/backend/index.md",
+    ".omtre/backlog/idea.md",
+    ".omtre/agent-traces/trace.jsonl",
   ])("excludes user data %s", (p) => {
     expect(shouldExcludeFromBackup(p)).toBe(true);
   });
 
   it("excludes previous backups", () => {
     expect(
-      shouldExcludeFromBackup(".trellis/.backup-2026-04-20T01-00-00/x"),
+      shouldExcludeFromBackup(".omtre/.backup-2026-04-20T01-00-00/x"),
     ).toBe(true);
   });
 
   it.each([
-    ".claude/commands/trellis/continue.md",
-    ".claude/skills/trellis-check/SKILL.md",
-    ".trellis/workflow.md",
-    ".trellis/scripts/get_context.py",
-    ".agents/skills/trellis-check/SKILL.md",
+    ".claude/commands/omt/continue.md",
+    ".claude/skills/omtre-check/SKILL.md",
+    ".omtre/workflow.md",
+    ".omtre/scripts/get_context.py",
+    ".agents/skills/omtre-check/SKILL.md",
   ])("includes managed file %s", (p) => {
     expect(shouldExcludeFromBackup(p)).toBe(false);
   });
@@ -301,14 +301,14 @@ describe("shouldExcludeFromBackup", () => {
 
   // Windows `path.relative` returns backslash paths. The slash-prefixed
   // exclude patterns (/worktrees/, /tasks/, /spec/, ...) must still match
-  // after normalization, otherwise Trellis's native worktree protection
+  // after normalization, otherwise Omtre's native worktree protection
   // silently fails on Windows and `collectAllFiles` descends into nested
   // full project copies (observed in the field: stack-overflow crash on
-  // `trellis update --migrate`, late April 2026).
+  // `omtre update --migrate`, late April 2026).
   it.each([
     ".claude\\worktrees\\feat-x\\src\\main.ts",
-    ".trellis\\tasks\\04-17-foo\\prd.md",
-    ".trellis\\workspace\\dev\\journal-1.md",
+    ".omtre\\tasks\\04-17-foo\\prd.md",
+    ".omtre\\workspace\\dev\\journal-1.md",
     ".opencode\\node_modules\\zod\\index.js",
   ])("excludes Windows-style backslash path %s", (p) => {
     expect(shouldExcludeFromBackup(p)).toBe(true);
@@ -324,7 +324,7 @@ describe("renameTracesToJournal", () => {
   let ws: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-traces-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-traces-"));
     ws = path.join(tmpDir, "workspace");
     fs.mkdirSync(path.join(ws, "alice"), { recursive: true });
   });
@@ -418,8 +418,8 @@ describe("classifyMigrations rename-dir ownership gate", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-renamedir-"));
-    // A user-owned .windsurf/workflows that Trellis never created.
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-renamedir-"));
+    // A user-owned .windsurf/workflows that Omtre never created.
     fs.mkdirSync(path.join(tmpDir, ".windsurf", "workflows"), {
       recursive: true,
     });
@@ -444,7 +444,7 @@ describe("classifyMigrations rename-dir ownership gate", () => {
     expect(result.skip[0].from).toBe(".windsurf/workflows");
   });
 
-  it("auto-migrates when Trellis owns the source dir (manifest has entries)", () => {
+  it("auto-migrates when Omtre owns the source dir (manifest has entries)", () => {
     const hashes = { ".windsurf/workflows/user.md": "some-hash" };
     const result = classifyMigrations(migration, tmpDir, hashes, new Map());
     expect(result.skip).toHaveLength(0);

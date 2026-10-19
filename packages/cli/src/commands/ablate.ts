@@ -1,4 +1,4 @@
-/** Full, reversible project-level Trellis ablation and exact restoration. */
+/** Full, reversible project-level Omtre ablation and exact restoration. */
 
 import fs from "node:fs";
 import path from "node:path";
@@ -54,7 +54,7 @@ export interface RestoreOptions {
   dryRun?: boolean;
 }
 
-function isTrellisPath(relativePath: string): boolean {
+function isOmtrePath(relativePath: string): boolean {
   return (
     relativePath === DIR_NAMES.WORKFLOW ||
     relativePath.startsWith(`${DIR_NAMES.WORKFLOW}/`)
@@ -97,9 +97,9 @@ function renderAblatePlan(
   transactionDir: string,
 ): void {
   const deletions = plan.deletions.filter(
-    (entry) => !entry.missing && !isTrellisPath(entry.posixPath),
+    (entry) => !entry.missing && !isOmtrePath(entry.posixPath),
   );
-  console.log(chalk.bold("\nTrellis full ablation plan\n"));
+  console.log(chalk.bold("\nOmtre full ablation plan\n"));
   console.log(
     chalk.red.bold(
       `Will be removed (${deletions.length + 1} managed entries):`,
@@ -128,20 +128,20 @@ function renderAblatePlan(
   console.log(chalk.gray(`\nRecovery transaction: ${transactionDir}`));
   console.log(
     chalk.yellow(
-      "Recovery copies exact .trellis task/spec/workspace bytes, which may contain user-authored sensitive text. " +
+      "Recovery copies exact .omtre task/spec/workspace bytes, which may contain user-authored sensitive text. " +
         "The private transaction is retained until verified restore.\n",
     ),
   );
 }
 
 function renderRestorePlan(transaction: LoadedAblationTransaction): void {
-  console.log(chalk.bold("\nTrellis restore plan\n"));
+  console.log(chalk.bold("\nOmtre restore plan\n"));
   console.log(
     `Will restore ${transaction.state.entries.length} managed path(s) from ${transaction.paths.transactionDir}`,
   );
   console.log(
     chalk.gray(
-      `Transaction created with Trellis ${transaction.state.trellisVersion} at ${transaction.state.createdAt}.\n`,
+      `Transaction created with Omtre ${transaction.state.omtreVersion} at ${transaction.state.createdAt}.\n`,
     ),
   );
 }
@@ -151,7 +151,7 @@ function relativeFromRoot(projectRoot: string, absPath: string): string {
 }
 
 function isManagedDirectoryTerritory(relativeDir: string): boolean {
-  if (relativeDir === DIR_NAMES.WORKFLOW || isTrellisPath(relativeDir)) {
+  if (relativeDir === DIR_NAMES.WORKFLOW || isOmtrePath(relativeDir)) {
     return false;
   }
   return ALL_MANAGED_DIRS.filter(
@@ -171,7 +171,7 @@ function collectPrunableDirectories(
 ): string[] {
   const deleted = new Set(
     plan.deletions
-      .filter((entry) => !entry.missing && !isTrellisPath(entry.posixPath))
+      .filter((entry) => !entry.missing && !isOmtrePath(entry.posixPath))
       .map((entry) => path.resolve(entry.absPath)),
   );
   const candidates = new Set<string>();
@@ -244,7 +244,7 @@ function buildAblationEntries(
   const seen = new Set<string>();
 
   for (const deletion of plan.deletions) {
-    if (isTrellisPath(deletion.posixPath)) continue;
+    if (isOmtrePath(deletion.posixPath)) continue;
     const pre = fingerprintPath(deletion.absPath);
     if (pre.kind === "directory") {
       throw new Error(
@@ -280,8 +280,8 @@ function buildAblationEntries(
     );
   }
 
-  const trellisPath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
-  addEntry(entries, seen, DIR_NAMES.WORKFLOW, fingerprintPath(trellisPath), {
+  const omtrePath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
+  addEntry(entries, seen, DIR_NAMES.WORKFLOW, fingerprintPath(omtrePath), {
     kind: "absent",
   });
   return entries;
@@ -305,7 +305,7 @@ function applyAblationPlan(
   }
 
   for (const deletion of plan.deletions) {
-    if (deletion.missing || isTrellisPath(deletion.posixPath)) continue;
+    if (deletion.missing || isOmtrePath(deletion.posixPath)) continue;
     const stat = fs.lstatSync(deletion.absPath);
     if (stat.isDirectory() && !stat.isSymbolicLink()) {
       throw new Error(
@@ -315,12 +315,12 @@ function applyAblationPlan(
     fs.unlinkSync(deletion.absPath);
   }
 
-  const trellisPath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
-  const trellisStat = lstatIfPresent(trellisPath);
-  if (trellisStat?.isSymbolicLink()) {
-    fs.unlinkSync(trellisPath);
-  } else if (trellisStat) {
-    fs.rmSync(trellisPath, { recursive: true, force: false });
+  const omtrePath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
+  const omtreStat = lstatIfPresent(omtrePath);
+  if (omtreStat?.isSymbolicLink()) {
+    fs.unlinkSync(omtrePath);
+  } else if (omtreStat) {
+    fs.rmSync(omtrePath, { recursive: true, force: false });
   }
 
   for (const relativeDir of prunableDirectories) {
@@ -362,19 +362,19 @@ export async function ablate(options: AblateOptions = {}): Promise<void> {
   const transactionPaths = getTransactionPaths(projectRoot, stateRoot);
   if (fs.existsSync(transactionPaths.transactionDir)) {
     throw new Error(
-      "This project is already ablated or has an interrupted ablation. Run `trellis restore` first.",
+      "This project is already ablated or has an interrupted ablation. Run `omtre restore` first.",
     );
   }
 
-  const trellisPath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
-  if (!lstatIfPresent(trellisPath)) {
-    console.log(chalk.gray("Trellis is not installed in this project."));
+  const omtrePath = path.join(projectRoot, DIR_NAMES.WORKFLOW);
+  if (!lstatIfPresent(omtrePath)) {
+    console.log(chalk.gray("Omtre is not installed in this project."));
     return;
   }
   const hashes = loadHashes(projectRoot);
   if (Object.keys(hashes).length === 0) {
     throw new Error(
-      "Trellis manifest is missing or not v2. Run the current `trellis update` before ablation.",
+      "Omtre manifest is missing or not v2. Run the current `omtre update` before ablation.",
     );
   }
 
@@ -398,7 +398,7 @@ export async function ablate(options: AblateOptions = {}): Promise<void> {
   } catch (error) {
     throw new Error(
       `${error instanceof Error ? error.message : String(error)} ` +
-        "Restore the managed file to its Trellis-generated form or remove its stale manifest entry, then retry.",
+        "Restore the managed file to its Omtre-generated form or remove its stale manifest entry, then retry.",
       { cause: error },
     );
   }
@@ -413,9 +413,7 @@ export async function ablate(options: AblateOptions = {}): Promise<void> {
   if (!options.yes) {
     if (!process.stdin.isTTY) refuseNonInteractivePrompt("ablate");
     if (
-      !(await promptContinue(
-        "Temporarily remove all project Trellis surfaces?",
-      ))
+      !(await promptContinue("Temporarily remove all project Omtre surfaces?"))
     ) {
       console.log(chalk.yellow("Ablation cancelled. No files modified."));
       return;
@@ -426,7 +424,7 @@ export async function ablate(options: AblateOptions = {}): Promise<void> {
   withAblationProjectLock(transactionPaths, () => {
     if (lstatIfPresent(transactionPaths.transactionDir)) {
       throw new Error(
-        "This project is already ablated or has an interrupted ablation. Run `trellis restore` first.",
+        "This project is already ablated or has an interrupted ablation. Run `omtre restore` first.",
       );
     }
     const transaction = stageAblationTransaction(
@@ -447,13 +445,13 @@ export async function ablate(options: AblateOptions = {}): Promise<void> {
     }
   });
 
-  console.log(chalk.green("Trellis is fully ablated for this project."));
+  console.log(chalk.green("Omtre is fully ablated for this project."));
   console.log(
     chalk.yellow("Start a fresh agent session before comparing behavior."),
   );
   console.log(
     chalk.gray(
-      "Git may show Trellis-managed deletions. The global CLI, channel logs, and host transcripts were not removed.",
+      "Git may show Omtre-managed deletions. The global CLI, channel logs, and host transcripts were not removed.",
     ),
   );
 }
@@ -464,7 +462,7 @@ export async function restore(options: RestoreOptions = {}): Promise<void> {
   const transaction = loadAblationTransaction(projectRoot);
   if (!transaction) {
     console.log(
-      chalk.gray("No Trellis ablation transaction exists for this project."),
+      chalk.gray("No Omtre ablation transaction exists for this project."),
     );
     return;
   }
@@ -472,7 +470,7 @@ export async function restore(options: RestoreOptions = {}): Promise<void> {
   if (!options.dryRun && !options.yes) {
     if (!process.stdin.isTTY) refuseNonInteractivePrompt("restore");
     if (
-      !(await promptContinue("Restore the exact pre-ablation Trellis state?"))
+      !(await promptContinue("Restore the exact pre-ablation Omtre state?"))
     ) {
       console.log(chalk.yellow("Restore cancelled. No files modified."));
       return;
@@ -491,9 +489,9 @@ export async function restore(options: RestoreOptions = {}): Promise<void> {
     );
     return;
   }
-  console.log(chalk.green("Trellis project state restored exactly."));
+  console.log(chalk.green("Omtre project state restored exactly."));
   console.log(
-    chalk.yellow("Start a fresh agent session to resume with Trellis."),
+    chalk.yellow("Start a fresh agent session to resume with Omtre."),
   );
 }
 

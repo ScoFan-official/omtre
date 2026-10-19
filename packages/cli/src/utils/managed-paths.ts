@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { DIR_NAMES } from "../constants/paths.js";
 import { isManagedPath, isManagedRootDir } from "../configurators/index.js";
 
 export const OMTRE_BLOCK_START = "<!-- OMTRE:START -->";
@@ -10,6 +11,18 @@ export const OMTRE_COPILOT_GUIDANCE_START =
 export const OMTRE_COPILOT_GUIDANCE_END = "<!-- OMTRE:COPILOT-GUIDANCE:END -->";
 export const OMTRE_HOOK_INJECTED_MARKER = "omtre-hook-injected";
 export const OMTRE_EMITTED_MARKER = "omtre-emitted";
+
+function isWorkflowOrManagedPath(dirPosix: string): boolean {
+  return (
+    dirPosix === DIR_NAMES.WORKFLOW ||
+    dirPosix.startsWith(`${DIR_NAMES.WORKFLOW}/`) ||
+    isManagedPath(dirPosix)
+  );
+}
+
+function isWorkflowOrManagedRootDir(dirPosix: string): boolean {
+  return dirPosix === DIR_NAMES.WORKFLOW || isManagedRootDir(dirPosix);
+}
 
 /** Remove empty managed parents without deleting a managed root directory. */
 export function cleanupEmptyDirs(cwd: string, dirPath: string): void {
@@ -21,8 +34,8 @@ export function cleanupEmptyDirs(cwd: string, dirPath: string): void {
     segments.some(
       (segment) => segment === "" || segment === "." || segment === "..",
     ) ||
-    !isManagedPath(dirPosix) ||
-    isManagedRootDir(dirPosix)
+    !isWorkflowOrManagedPath(dirPosix) ||
+    isWorkflowOrManagedRootDir(dirPosix)
   ) {
     return;
   }
@@ -58,7 +71,11 @@ export function cleanupEmptyDirs(cwd: string, dirPath: string): void {
     if (fs.readdirSync(fullPath).length === 0) {
       fs.rmdirSync(fullPath);
       const parent = path.posix.dirname(dirPosix);
-      if (parent !== "." && parent !== dirPosix && !isManagedRootDir(parent)) {
+      if (
+        parent !== "." &&
+        parent !== dirPosix &&
+        !isWorkflowOrManagedRootDir(parent)
+      ) {
         cleanupEmptyDirs(cwd, parent);
       }
     }

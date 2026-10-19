@@ -3,7 +3,7 @@
  * string to be embedded in the worker's system prompt.
  *
  * --file <path-or-glob>     direct file inclusion (glob expanded via fs.globSync)
- * --jsonl <path>            parse a Trellis jsonl manifest where each line is
+ * --jsonl <path>            parse an Omtre jsonl manifest where each line is
  *                           {"file": "<path>", "reason": "<why>"} and include
  *                           each referenced file (reason becomes part of header)
  *
@@ -63,7 +63,7 @@ function jailedRealpath(
   ) {
     process.stderr.write(
       `[channel spawn] context path escapes cwd, refusing: ${path.relative(cwd, target) || target} ` +
-        `(add its real directory to channel.trusted_context_dirs in .trellis/config.yaml to allow)\n`,
+        `(add its real directory to channel.trusted_context_dirs in .omtre/config.yaml to allow)\n`,
     );
     return null;
   }

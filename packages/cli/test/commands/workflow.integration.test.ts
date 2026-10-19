@@ -1,15 +1,15 @@
 /**
- * Integration tests for `trellis workflow` and the init/update hash boundary
+ * Integration tests for `omtre workflow` and the init/update hash boundary
  * for non-oh-my workflow selection.
  *
  * Coverage:
- * - `trellis init` (default): writes bundled oh-my content, keeps hash.
- * - `trellis init --workflow native`: writes bundled native content, removes
+ * - `omtre init` (default): writes bundled oh-my content, keeps hash.
+ * - `omtre init --workflow native`: writes bundled native content, removes
  *   hash (native is user-managed in the oh-my fork).
- * - `trellis workflow --template oh-my`: writes bundled content, keeps hash.
- * - `trellis workflow --template tdd`: writes marketplace content, removes hash.
- * - `trellis init --workflow tdd`: marketplace content is written, hash removed.
- * - `trellis update` after switch to tdd does NOT silently restore oh-my.
+ * - `omtre workflow --template oh-my`: writes bundled content, keeps hash.
+ * - `omtre workflow --template tdd`: writes marketplace content, removes hash.
+ * - `omtre init --workflow tdd`: marketplace content is written, hash removed.
+ * - `omtre update` after switch to tdd does NOT silently restore oh-my.
  * - Non-interactive modified workflow.md fails without --force / --create-new.
  * - `--create-new` writes `.new` and leaves workflow.md + hash untouched.
  */
@@ -20,7 +20,7 @@ import os from "node:os";
 import path from "node:path";
 
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({
@@ -42,7 +42,7 @@ import { loadHashes } from "../../src/utils/template-hash.js";
 import {
   ohMyWorkflowMdTemplate,
   workflowMdTemplate,
-} from "../../src/templates/trellis/index.js";
+} from "../../src/templates/extract.js";
 import { replacePythonCommandLiterals } from "../../src/configurators/shared.js";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -89,11 +89,11 @@ function stubMarketplaceFetch(): void {
   );
 }
 
-describe("trellis workflow integration", () => {
+describe("omtre workflow integration", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-workflow-int-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-workflow-int-"));
     vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
     vi.spyOn(console, "log").mockImplementation(noop);
     vi.spyOn(console, "error").mockImplementation(noop);
@@ -127,7 +127,7 @@ describe("trellis workflow integration", () => {
     expect(fs.readFileSync(wfPath, "utf-8")).toBe(
       replacePythonCommandLiterals(workflowMdTemplate),
     );
-    // [oh-my] Only the fork's `oh-my` default is managed by `trellis update`;
+    // [oh-my] Only the fork's `oh-my` default is managed by `omtre update`;
     // explicit `native` is an opt-out (user-managed → no hash entry).
     const hashes = loadHashes(tmpDir);
     expect(hashes[PATHS.WORKFLOW_GUIDE_FILE]).toBeUndefined();
@@ -193,7 +193,7 @@ describe("trellis workflow integration", () => {
     ).rejects.toThrow(/workflow template/i);
   });
 
-  it("trellis workflow --template oh-my refreshes hash after switching from tdd", async () => {
+  it("omtre workflow --template oh-my refreshes hash after switching from tdd", async () => {
     stubMarketplaceFetch();
     await init({ yes: true, workflow: "tdd" } as Record<string, unknown>);
     expect(
@@ -214,7 +214,7 @@ describe("trellis workflow integration", () => {
     expect(loadHashes(tmpDir)[PATHS.WORKFLOW_GUIDE_FILE]).toBeTruthy();
   });
 
-  it("trellis workflow --template native stays user-managed", async () => {
+  it("omtre workflow --template native stays user-managed", async () => {
     stubMarketplaceFetch();
     await init({ yes: true });
     expect(loadHashes(tmpDir)[PATHS.WORKFLOW_GUIDE_FILE]).toBeTruthy();
@@ -228,7 +228,7 @@ describe("trellis workflow integration", () => {
     expect(loadHashes(tmpDir)[PATHS.WORKFLOW_GUIDE_FILE]).toBeUndefined();
   });
 
-  it("trellis workflow --template tdd writes marketplace content and removes the hash", async () => {
+  it("omtre workflow --template tdd writes marketplace content and removes the hash", async () => {
     stubMarketplaceFetch();
     await init({ yes: true });
     expect(loadHashes(tmpDir)[PATHS.WORKFLOW_GUIDE_FILE]).toBeTruthy();
@@ -317,7 +317,7 @@ describe("trellis workflow integration", () => {
     expect(loadHashes(tmpDir)[PATHS.WORKFLOW_GUIDE_FILE]).toBe(originalHash);
   });
 
-  it("trellis update after switching to tdd does not silently restore oh-my workflow", async () => {
+  it("omtre update after switching to tdd does not silently restore oh-my workflow", async () => {
     stubMarketplaceFetch();
     await init({ yes: true });
     await runWorkflowCommand({ template: "tdd" });

@@ -1,5 +1,5 @@
 /**
- * `trellis run` — the unattended loop runner (design D5).
+ * `omtre run` — the unattended loop runner (design D5).
  *
  * Takes the frontier head, gives it an isolated worktree, hands it to one
  * headless worker, runs the ticket's own verification contract, and records
@@ -8,7 +8,7 @@
  * `autonomy: supervised-delivery` with a matching `delivery.auto_push_refs`
  * entry lets the runner push at all (AC5).
  *
- * Why everything happens in the worktree: `.trellis/` is committed content, so
+ * Why everything happens in the worktree: `.omtre/` is committed content, so
  * a worktree carries its own copy of the task tree. Claim, verify and archive
  * therefore land as commits on the ticket branch, and the orchestrating repo is
  * never mutated — no dirty `task.json`, no half-applied bookkeeping. When the
@@ -33,7 +33,11 @@ import { spawnSync } from "node:child_process";
 
 import { loadTaskRecord } from "@omtre/core/task";
 
-import { isProvider, listProviders, type Provider } from "./channel/adapters/index.js";
+import {
+  isProvider,
+  listProviders,
+  type Provider,
+} from "./channel/adapters/index.js";
 import { loadAgent } from "./channel/agent-loader.js";
 import { resolveWorkerGuardConfig } from "./channel/guard.js";
 import { parseDuration } from "./channel/wait.js";
@@ -45,7 +49,11 @@ import {
   type TicketDispatch,
 } from "./run/dispatch.js";
 import { openLedger, type LedgerInput } from "./run/ledger.js";
-import { oneShotWorker, type WorkerOutcome, type WorkerRequest } from "./run/worker.js";
+import {
+  oneShotWorker,
+  type WorkerOutcome,
+  type WorkerRequest,
+} from "./run/worker.js";
 
 const DEFAULT_MAX_TICKETS = 5;
 const DEFAULT_FAIL_THRESHOLD = 3;
@@ -84,7 +92,12 @@ export interface RunnerPorts {
    * refusal class (`tier` / `protected` / `whitelist` / `config` / `deferred`);
    * callers branch on it, never on the human `reason` prose.
    */
-  deliveryGate(ref: string): { allow: boolean; reason: string; tier: string; code: string };
+  deliveryGate(ref: string): {
+    allow: boolean;
+    reason: string;
+    tier: string;
+    code: string;
+  };
   /**
    * CLAI-10: may these paths go into an automated commit? The rule list lives
    * in `task.py check-commit`, not here — the runner and an agent committing
@@ -102,13 +115,13 @@ export interface RunnerPorts {
    */
   taskMeta(dir: string): Record<string, unknown>;
   /**
-   * The dispatch-relevant slice of `.trellis/agents/<name>.md` frontmatter,
+   * The dispatch-relevant slice of `.omtre/agents/<name>.md` frontmatter,
    * read in the orchestrating repo. `null` when the card is missing or
    * unreadable — spawn re-reads the card inside the ticket worktree, so an
    * uncommitted card is undispatchable.
    */
   agentCard(name: string): AgentCardInfo | null;
-  /** `.trellis/config.yaml` `worker_default:`; null when unset. */
+  /** `.omtre/config.yaml` `worker_default:`; null when unset. */
   workerDefault(): string | null;
   /**
    * Whether the ticket's own branch exists but no longer carries the task dir —
@@ -173,13 +186,22 @@ export interface VerifySummary {
 export type TicketStep =
   | { kind: "archived"; verify?: VerifySummary }
   | { kind: "failed"; reason: string; verify?: VerifySummary }
-  | { kind: "stop"; reason: StopReason; detail: string; verify?: VerifySummary };
+  | {
+      kind: "stop";
+      reason: StopReason;
+      detail: string;
+      verify?: VerifySummary;
+    };
 
 /** The machine-readable outcome vocabulary of a single-ticket run. */
-export type TicketOutcome = "delivered" | "failed" | "stop-line" | "delivery_deferred";
+export type TicketOutcome =
+  | "delivered"
+  | "failed"
+  | "stop-line"
+  | "delivery_deferred";
 
 /**
- * The structured result `trellis run --ticket` prints (one JSON line) and
+ * The structured result `omtre run --ticket` prints (one JSON line) and
  * mirrors into the run ledger (`ticket_result`). The orchestrator reads this
  * row; `attempt_started`/`attempt_finished` are the lifecycle pair it uses to
  * spot an attempt that never reported back.
@@ -228,7 +250,10 @@ function positiveInt(
   }
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) {
-    return { ok: false, error: `${flag} must be a positive integer, got "${value}"` };
+    return {
+      ok: false,
+      error: `${flag} must be a positive integer, got "${value}"`,
+    };
   }
   return { ok: true, value: parsed };
 }
@@ -255,9 +280,14 @@ function plannedActions(dispatch: TicketDispatch, delivery: string): string[] {
  * their context from the entry point, so the ticket's own documents travel with
  * the prompt instead of being assumed.
  */
-function buildPrompt(dir: string, docs: string[], worktree: string, pythonCmd: string): string {
+function buildPrompt(
+  dir: string,
+  docs: string[],
+  worktree: string,
+  pythonCmd: string,
+): string {
   return [
-    `You are the unattended implementation worker for Trellis ticket \`${dir}\`.`,
+    `You are the unattended implementation worker for Omtre ticket \`${dir}\`.`,
     `Your working directory is that ticket's own worktree: ${worktree}`,
     ``,
     `Read the ticket brief first — it carries the requirement, the acceptance`,
@@ -268,18 +298,22 @@ function buildPrompt(dir: string, docs: string[], worktree: string, pythonCmd: s
     `1. Implement the acceptance items. Keep the scope inside this ticket.`,
     `2. Commit your work on this branch with a message naming the ticket.`,
     `   Do NOT push, do NOT open PRs, never touch the default branch or tags.`,
-    `3. Do not touch other tickets, \`.trellis/domains/\` boards or worklogs —`,
+    `3. Do not touch other tickets, \`.omtre/domains/\` boards or worklogs —`,
     `   board bookkeeping belongs to the orchestrating session, not to this`,
     `   worker, and a domain-layer anchor check will reject your commit anyway.`,
     `4. Before finishing, run the ticket's own contract:`,
-    `   ${pythonCmd} ./.trellis/scripts/task.py run-verify ${dir}`,
+    `   ${pythonCmd} ./.omtre/scripts/task.py run-verify ${dir}`,
     `   If it fails, fix it or say so plainly — do not record a passing run you`,
     `   did not observe.`,
   ].join("\n");
 }
 
 /** Curate the ticket's context lists so `start`'s empty-seed guard stays meaningful. */
-function curateContext(dir: string, worktree: string, ports: RunnerPorts): void {
+function curateContext(
+  dir: string,
+  worktree: string,
+  ports: RunnerPorts,
+): void {
   for (const doc of ports.ticketDocs(dir)) {
     for (const list of ["implement", "check"]) {
       ports.task(
@@ -296,7 +330,9 @@ export function parsePorcelain(out: string): string[] {
   for (const line of out.split("\n")) {
     if (!line.trim()) continue;
     const body = line.slice(3);
-    const target = body.includes(" -> ") ? (body.split(" -> ").pop() as string) : body;
+    const target = body.includes(" -> ")
+      ? (body.split(" -> ").pop() as string)
+      : body;
     const trimmed = target.trim();
     files.push(
       trimmed.startsWith('"') && trimmed.endsWith('"')
@@ -314,7 +350,7 @@ export function parsePorcelain(out: string): string[] {
  * commit un-revertable (rename/delete conflict), and 「每票一 commit 可单独
  * revert」 is the whole point of the ledger.
  */
-const BOOKKEEPING_PREFIXES = [".trellis/tasks/", ".trellis/.runtime/"];
+const BOOKKEEPING_PREFIXES = [".omtre/tasks/", ".omtre/.runtime/"];
 
 function isBookkeeping(p: string): boolean {
   const norm = p.toLowerCase().replace(/\\/g, "/");
@@ -339,7 +375,10 @@ function runnerFallbackCommit(
 ): FallbackCommit {
   const status = ports.git(["status", "--porcelain"], worktree);
   if (status.status !== 0) {
-    return { ok: false, reason: `status_failed(${firstLine(status.stderr || status.stdout)})` };
+    return {
+      ok: false,
+      reason: `status_failed(${firstLine(status.stderr || status.stdout)})`,
+    };
   }
   const changed = parsePorcelain(status.stdout);
   const paths = changed.filter((p) => !isBookkeeping(p));
@@ -347,9 +386,10 @@ function runnerFallbackCommit(
   if (paths.length === 0) {
     return {
       ok: false,
-      reason: changed.length === 0
-        ? "no_work(worker neither committed nor changed the tree)"
-        : `no_work(only task bookkeeping changed: ${changed.length} path(s); the worker committed nothing)`,
+      reason:
+        changed.length === 0
+          ? "no_work(worker neither committed nor changed the tree)"
+          : `no_work(only task bookkeeping changed: ${changed.length} path(s); the worker committed nothing)`,
     };
   }
   const blocked = ports.commitGuard(paths);
@@ -362,14 +402,20 @@ function runnerFallbackCommit(
 
   const staged = ports.git(["add", "--", ...paths], worktree);
   if (staged.status !== 0) {
-    return { ok: false, reason: `stage_failed(${firstLine(staged.stderr || staged.stdout)})` };
+    return {
+      ok: false,
+      reason: `stage_failed(${firstLine(staged.stderr || staged.stdout)})`,
+    };
   }
   const committed = ports.git(
     ["commit", "-m", `run(${dir}): worker output committed by the runner`],
     worktree,
   );
   if (committed.status !== 0) {
-    return { ok: false, reason: `commit_failed(${firstLine(committed.stderr || committed.stdout)})` };
+    return {
+      ok: false,
+      reason: `commit_failed(${firstLine(committed.stderr || committed.stdout)})`,
+    };
   }
 
   const head = ports.git(["rev-parse", "HEAD"], worktree);
@@ -386,7 +432,10 @@ async function processOne(
   const branch = ports.taskField(dir, "branch");
   const base = ports.taskField(dir, "base_branch");
   if (!branch || !base) {
-    return { kind: "failed", reason: "no_branch_metadata(set-branch/set-base-branch first)" };
+    return {
+      kind: "failed",
+      reason: "no_branch_metadata(set-branch/set-base-branch first)",
+    };
   }
 
   const worktree = ports.worktreePath(dir);
@@ -394,25 +443,45 @@ async function processOne(
     return { kind: "failed", reason: `worktree_occupied(${worktree})` };
   }
 
-  const hasBranch = ports.git(["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]);
+  const hasBranch = ports.git([
+    "rev-parse",
+    "--verify",
+    "--quiet",
+    `refs/heads/${branch}`,
+  ]);
   const addArgs =
     hasBranch.status === 0
       ? ["worktree", "add", worktree, branch]
       : ["worktree", "add", worktree, "-b", branch, base];
   const added = ports.git(addArgs);
   if (added.status !== 0) {
-    return { kind: "failed", reason: `worktree_add_failed(${firstLine(added.stderr || added.stdout)})` };
+    return {
+      kind: "failed",
+      reason: `worktree_add_failed(${firstLine(added.stderr || added.stdout)})`,
+    };
   }
   ports.ledgerAppend({ ticket: dir, action: "worktree", detail: worktree });
-  if (!ports.pathExists(path.join(worktree, ".trellis", "scripts", "task.py"))) {
+  if (!ports.pathExists(path.join(worktree, ".omtre", "scripts", "task.py"))) {
     // `get_repo_root()` walks up from cwd, so a worktree without its own
-    // committed .trellis/ would silently aim at the orchestrating repo instead.
+    // committed .omtre/ would silently aim at the orchestrating repo instead.
     ports.git(["worktree", "remove", "--force", worktree]);
-    return { kind: "failed", reason: `worktree_has_no_trellis(commit .trellis on ${base} first)` };
+    return {
+      kind: "failed",
+      reason: `worktree_has_no_omtre(commit .omtre on ${base} first)`,
+    };
   }
 
   try {
-    return await runAttempt(dir, info, branch, base, worktree, dispatch, workerTimeoutMs, ports);
+    return await runAttempt(
+      dir,
+      info,
+      branch,
+      base,
+      worktree,
+      dispatch,
+      workerTimeoutMs,
+      ports,
+    );
   } finally {
     // The worktree is always transient — it would otherwise make the ticket
     // ungrabbable and the strike counter could never reach the threshold. The
@@ -440,11 +509,22 @@ async function runAttempt(
 
   const started = ports.task(["start", dir], worktree);
   if (started.status !== 0) {
-    return { kind: "failed", reason: `start_refused(${firstLine(started.stderr || started.stdout)})` };
+    return {
+      kind: "failed",
+      reason: `start_refused(${firstLine(started.stderr || started.stdout)})`,
+    };
   }
-  ports.ledgerAppend({ ticket: dir, action: "ticket_start", detail: `priority=${info.priority ?? "-"} branch=${branch}` });
+  ports.ledgerAppend({
+    ticket: dir,
+    action: "ticket_start",
+    detail: `priority=${info.priority ?? "-"} branch=${branch}`,
+  });
 
-  const docs = ports.ticketDocs(dir).map((doc) => path.join(worktree, ".trellis", "tasks", dir, path.basename(doc)));
+  const docs = ports
+    .ticketDocs(dir)
+    .map((doc) =>
+      path.join(worktree, ".omtre", "tasks", dir, path.basename(doc)),
+    );
   const outcome = await ports.worker({
     ticket: dir,
     cwd: worktree,
@@ -465,7 +545,9 @@ async function runAttempt(
   const report = firstLine(outcome.text);
   let oid = ports.git(["rev-parse", "HEAD"], worktree).stdout.trim();
   let commits = Number.parseInt(
-    (ports.git(["rev-list", "--count", `${base}..HEAD`], worktree).stdout || "").trim(),
+    (
+      ports.git(["rev-list", "--count", `${base}..HEAD`], worktree).stdout || ""
+    ).trim(),
     10,
   );
   let stagedByRunner = "";
@@ -486,7 +568,10 @@ async function runAttempt(
       "; ";
     oid = fallback.oid;
     commits = Number.parseInt(
-      (ports.git(["rev-list", "--count", `${base}..HEAD`], worktree).stdout || "0").trim(),
+      (
+        ports.git(["rev-list", "--count", `${base}..HEAD`], worktree).stdout ||
+        "0"
+      ).trim(),
       10,
     );
   }
@@ -522,13 +607,20 @@ async function runAttempt(
   let verified = false;
   let verifyReason: string | undefined;
   try {
-    const parsed = JSON.parse(verify.stdout) as { verified?: boolean; reason?: string };
+    const parsed = JSON.parse(verify.stdout) as {
+      verified?: boolean;
+      reason?: string;
+    };
     verified = parsed.verified === true;
     verifyReason = parsed.reason;
   } catch {
     verifyReason = "unreadable_output";
   }
-  const verifySummary: VerifySummary = { verified, reason: verifyReason, exit: verify.status };
+  const verifySummary: VerifySummary = {
+    verified,
+    reason: verifyReason,
+    exit: verify.status,
+  };
   ports.ledgerAppend({
     ticket: dir,
     action: "verify",
@@ -593,7 +685,7 @@ async function runAttempt(
       "--title",
       info.title ?? dir,
       "--body",
-      `Unattended run for ticket \`${dir}\`. Verify: \`${ports.pythonCommand()} ./.trellis/scripts/task.py run-verify ${dir}\`.`,
+      `Unattended run for ticket \`${dir}\`. Verify: \`${ports.pythonCommand()} ./.omtre/scripts/task.py run-verify ${dir}\`.`,
     ]);
     if (pr.status !== 0) {
       return {
@@ -611,7 +703,12 @@ async function runAttempt(
       };
     }
     ports.task(["set-pr", dir, url], worktree);
-    ports.ledgerAppend({ ticket: dir, action: "delivery", commit: oid, detail: url });
+    ports.ledgerAppend({
+      ticket: dir,
+      action: "delivery",
+      commit: oid,
+      detail: url,
+    });
   } else {
     // WORKLOG-PROTOCOL 第 0 铁律 degradation: with no remote there is nothing to
     // push, so the commit on the ticket branch IS the accounting.
@@ -671,7 +768,11 @@ function reasonCode(reason: string): string {
  * folds the step vocabulary into four terminal classes; `code` keeps the
  * machine reason for anything that did not deliver.
  */
-function ticketResult(dir: string, dispatch: TicketDispatch, step: TicketStep): TicketResult {
+function ticketResult(
+  dir: string,
+  dispatch: TicketDispatch,
+  step: TicketStep,
+): TicketResult {
   const base = {
     dir,
     dispatch,
@@ -685,15 +786,35 @@ function ticketResult(dir: string, dispatch: TicketDispatch, step: TicketStep): 
     ...(step.verify ? { verify: step.verify } : {}),
   };
   if (step.kind === "archived") {
-    return { ...base, outcome: "delivered", code: "delivered", detail: `archived on the ticket branch` };
+    return {
+      ...base,
+      outcome: "delivered",
+      code: "delivered",
+      detail: `archived on the ticket branch`,
+    };
   }
   if (step.kind === "failed") {
-    return { ...base, outcome: "failed", code: reasonCode(step.reason), detail: step.reason };
+    return {
+      ...base,
+      outcome: "failed",
+      code: reasonCode(step.reason),
+      detail: step.reason,
+    };
   }
   if (step.reason === "delivery_deferred") {
-    return { ...base, outcome: "delivery_deferred", code: "delivery_deferred", detail: step.detail };
+    return {
+      ...base,
+      outcome: "delivery_deferred",
+      code: "delivery_deferred",
+      detail: step.detail,
+    };
   }
-  return { ...base, outcome: "stop-line", code: step.reason, detail: step.detail };
+  return {
+    ...base,
+    outcome: "stop-line",
+    code: step.reason,
+    detail: step.detail,
+  };
 }
 
 /**
@@ -824,7 +945,10 @@ function dispatchRefusal(
   };
 }
 
-export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<RunResult> {
+export async function runLoop(
+  opts: RunOptions,
+  ports: RunnerPorts,
+): Promise<RunResult> {
   const strikes = new Map<string, number>();
   const delivered = new Set<string>();
   let attempted = 0;
@@ -839,14 +963,20 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 
   for (;;) {
     const front = ports.task(
-      opts.board ? ["frontier", "--json", "--board", opts.board] : ["frontier", "--json"],
+      opts.board
+        ? ["frontier", "--json", "--board", opts.board]
+        : ["frontier", "--json"],
     );
     let snapshot: FrontierSnapshot;
     try {
       snapshot = JSON.parse(front.stdout) as FrontierSnapshot;
     } catch {
       const detail = firstLine(front.stderr || front.stdout) || "no output";
-      ports.ledgerAppend({ ticket: "-", action: "stop", reason: `frontier_unreadable: ${detail}` });
+      ports.ledgerAppend({
+        ticket: "-",
+        action: "stop",
+        reason: `frontier_unreadable: ${detail}`,
+      });
       ports.log(`Stopped: frontier output unreadable — ${detail}`);
       return { stopped: "frontier_error", attempted, archived, failed };
     }
@@ -860,7 +990,11 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
     }
 
     if (attempted >= opts.maxTickets) {
-      ports.ledgerAppend({ ticket: "-", action: "stop", reason: "max_tickets reached" });
+      ports.ledgerAppend({
+        ticket: "-",
+        action: "stop",
+        reason: "max_tickets reached",
+      });
       return { stopped: "max_tickets", attempted, archived, failed };
     }
 
@@ -896,11 +1030,15 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
     }
 
     if (candidates.length === 0) {
-      const reason = skipped.length > 0 ? "no_grabbable_ticket" : "frontier_empty";
+      const reason =
+        skipped.length > 0 ? "no_grabbable_ticket" : "frontier_empty";
       ports.ledgerAppend({
         ticket: "-",
         action: "stop",
-        reason: skipped.length > 0 ? `nothing grabbable: ${skipped.join("; ")}` : "frontier empty",
+        reason:
+          skipped.length > 0
+            ? `nothing grabbable: ${skipped.join("; ")}`
+            : "frontier empty",
       });
       if (skipped.length > 0) ports.log(`Stopped: ${skipped.join("; ")}`);
       return { stopped: reason, attempted, archived, failed };
@@ -924,7 +1062,9 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
             tier: gate.tier,
             dispatch: resolved.ok ? resolved.dispatch : null,
             ...(resolved.ok ? {} : { dispatch_error: resolved.error }),
-            actions: resolved.ok ? plannedActions(resolved.dispatch, delivery) : ["dispatch_refused"],
+            actions: resolved.ok
+              ? plannedActions(resolved.dispatch, delivery)
+              : ["dispatch_refused"],
           },
           null,
           2,
@@ -953,7 +1093,11 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
     if (step.kind === "stop") {
       // The machine reason leads the ledger line: "why did the line stop" has
       // to be readable without re-parsing a human sentence.
-      ports.ledgerAppend({ ticket: head.dir, action: "stop", reason: `${step.reason}: ${step.detail}` });
+      ports.ledgerAppend({
+        ticket: head.dir,
+        action: "stop",
+        reason: `${step.reason}: ${step.detail}`,
+      });
       ports.log(`Stopped (${step.reason}): ${step.detail}`);
       return { stopped: step.reason, attempted, archived, failed };
     }
@@ -971,7 +1115,9 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
           reason: `dispatch refused: ${step.reason}`,
           detail: "marked triage=ready-for-human; fix the roster and rerun",
         });
-        ports.log(`Stopped: ${head.dir} dispatch refused — fix the roster and rerun.`);
+        ports.log(
+          `Stopped: ${head.dir} dispatch refused — fix the roster and rerun.`,
+        );
         return { stopped: "dispatch_refused", attempted, archived, failed };
       }
       // Charge what the ticket_result row charged: internal_error carries
@@ -979,7 +1125,9 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
       const count =
         (strikes.get(head.dir) ?? 0) + (ticketRun.result?.strikes ?? 1);
       strikes.set(head.dir, count);
-      ports.log(`✗ ${head.dir}: ${step.reason} (strike ${count}/${opts.failThreshold})`);
+      ports.log(
+        `✗ ${head.dir}: ${step.reason} (strike ${count}/${opts.failThreshold})`,
+      );
       if (count >= opts.failThreshold) {
         // Marked in the orchestrating repo: that is the copy a human reads when
         // the frontier line is handed back to them.
@@ -990,7 +1138,9 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
           reason: `${count} consecutive failures: ${step.reason}`,
           detail: "marked triage=ready-for-human; the whole line halts",
         });
-        ports.log(`Stopped: ${head.dir} failed ${count} times in a row — handed to a human.`);
+        ports.log(
+          `Stopped: ${head.dir} failed ${count} times in a row — handed to a human.`,
+        );
         return { stopped: "fail_threshold", attempted, archived, failed };
       }
       continue;
@@ -1001,7 +1151,11 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
     archived += 1;
     ports.log(`✓ ${head.dir} archived on its branch`);
     if (!opts.untilEmpty) {
-      ports.ledgerAppend({ ticket: "-", action: "stop", reason: "one ticket (--until-empty not set)" });
+      ports.ledgerAppend({
+        ticket: "-",
+        action: "stop",
+        reason: "one ticket (--until-empty not set)",
+      });
       return { stopped: "single_ticket", attempted, archived, failed };
     }
   }
@@ -1011,12 +1165,21 @@ export async function runLoop(opts: RunOptions, ports: RunnerPorts): Promise<Run
 // Real ports — thin adapters over subprocess and fs. No policy lives here.
 // -----------------------------------------------------------------------------
 
-function run(cmd: string, args: string[], cwd: string, input?: string): CommandResult {
+function run(
+  cmd: string,
+  args: string[],
+  cwd: string,
+  input?: string,
+): CommandResult {
   const res = spawnSync(cmd, args, { cwd, encoding: "utf-8", input });
   if (res.error && (res.error as NodeJS.ErrnoException).code === "ENOENT") {
     return { status: 127, stdout: "", stderr: `${cmd}: not found on PATH` };
   }
-  return { status: res.status ?? 1, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
+  return {
+    status: res.status ?? 1,
+    stdout: res.stdout ?? "",
+    stderr: res.stderr ?? "",
+  };
 }
 
 export function realPorts(
@@ -1027,7 +1190,7 @@ export function realPorts(
   },
 ): RunnerPorts {
   const python = resolveSupportedPython().command;
-  const taskPy = path.join(root, ".trellis", "scripts", "task.py");
+  const taskPy = path.join(root, ".omtre", "scripts", "task.py");
   // R5: the worker inherits the channel supervisor's guard policy, so a wedged
   // worker is given up on after `channel.worker_guard.idle_timeout` rather than
   // burning the whole wall clock, and the precedence (flag > env > config >
@@ -1040,7 +1203,9 @@ export function realPorts(
     task(args, cwd) {
       // task.py is resolved from the main repo so the interpreter and script
       // version stay one thing; `cwd` decides which task tree it operates on.
-      const script = cwd ? path.join(cwd, ".trellis", "scripts", "task.py") : taskPy;
+      const script = cwd
+        ? path.join(cwd, ".omtre", "scripts", "task.py")
+        : taskPy;
       return run(python, [script, ...args], cwd ?? root);
     },
     git(args, cwd) {
@@ -1063,7 +1228,9 @@ export function realPorts(
         };
         return {
           allow: parsed.allow === true,
-          reason: parsed.reason ?? `unreadable_output(${firstLine(res.stderr || res.stdout)})`,
+          reason:
+            parsed.reason ??
+            `unreadable_output(${firstLine(res.stderr || res.stdout)})`,
           tier: parsed.tier ?? "unknown",
           code: parsed.code ?? "unreadable",
         };
@@ -1089,7 +1256,10 @@ export function realPorts(
         `${paths.join("\n")}\n`,
       );
       try {
-        const parsed = JSON.parse(res.stdout) as { ok?: boolean; offending?: string[] };
+        const parsed = JSON.parse(res.stdout) as {
+          ok?: boolean;
+          offending?: string[];
+        };
         return {
           ok: parsed.ok === true && res.status === 0,
           offending: parsed.offending ?? [],
@@ -1106,7 +1276,7 @@ export function realPorts(
     taskField(dir, field) {
       try {
         const record = loadTaskRecord({
-          taskDir: path.join(root, ".trellis", "tasks", dir),
+          taskDir: path.join(root, ".omtre", "tasks", dir),
           cwd: root,
         }) as unknown as Record<string, unknown>;
         const value = record[field];
@@ -1118,7 +1288,7 @@ export function realPorts(
     taskMeta(dir) {
       try {
         const record = loadTaskRecord({
-          taskDir: path.join(root, ".trellis", "tasks", dir),
+          taskDir: path.join(root, ".omtre", "tasks", dir),
           cwd: root,
         }) as unknown as { meta?: Record<string, unknown> };
         return record.meta ?? {};
@@ -1146,20 +1316,24 @@ export function realPorts(
       return loadWorkerDefault(root);
     },
     worktreePath(dir) {
-      return path.join(root, ".trellis", ".runtime", "worktrees", dir);
+      return path.join(root, ".omtre", ".runtime", "worktrees", dir);
     },
     ticketClosedOnBranch(branch, dir) {
-      const ref = run("git", ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], root);
+      const ref = run(
+        "git",
+        ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
+        root,
+      );
       if (ref.status !== 0) return false;
       const onBranch = run(
         "git",
-        ["cat-file", "-e", `${branch}:.trellis/tasks/${dir}/task.json`],
+        ["cat-file", "-e", `${branch}:.omtre/tasks/${dir}/task.json`],
         root,
       );
       return onBranch.status !== 0;
     },
     worktreeOccupied(dir) {
-      const target = path.join(root, ".trellis", ".runtime", "worktrees", dir);
+      const target = path.join(root, ".omtre", ".runtime", "worktrees", dir);
       try {
         return fs.readdirSync(target).length > 0;
       } catch {
@@ -1170,7 +1344,7 @@ export function realPorts(
       return fs.existsSync(target);
     },
     ticketDocs(dir) {
-      const taskDir = path.join(root, ".trellis", "tasks", dir);
+      const taskDir = path.join(root, ".omtre", "tasks", dir);
       return ["prd.md", "design.md", "implement.md"]
         .map((name) => path.join(taskDir, name))
         .filter((p) => fs.existsSync(p));
@@ -1236,12 +1410,22 @@ export function normalizeOptions(
     };
   }
 
-  const maxTickets = positiveInt("--max-tickets", raw.maxTickets, DEFAULT_MAX_TICKETS);
+  const maxTickets = positiveInt(
+    "--max-tickets",
+    raw.maxTickets,
+    DEFAULT_MAX_TICKETS,
+  );
   if (!maxTickets.ok) return maxTickets;
-  const failThreshold = positiveInt("--max-failures", raw.maxFailures, DEFAULT_FAIL_THRESHOLD);
+  const failThreshold = positiveInt(
+    "--max-failures",
+    raw.maxFailures,
+    DEFAULT_FAIL_THRESHOLD,
+  );
   if (!failThreshold.ok) return failThreshold;
 
-  const timeout = parseDuration(typeof raw.timeout === "string" ? raw.timeout : undefined);
+  const timeout = parseDuration(
+    typeof raw.timeout === "string" ? raw.timeout : undefined,
+  );
 
   return {
     ok: true,
@@ -1261,9 +1445,9 @@ export async function runCommand(
   raw: Record<string, unknown>,
   root: string = process.cwd(),
 ): Promise<RunResult> {
-  if (!fs.existsSync(path.join(root, ".trellis", "scripts", "task.py"))) {
+  if (!fs.existsSync(path.join(root, ".omtre", "scripts", "task.py"))) {
     throw new Error(
-      "no .trellis/scripts/task.py here — `trellis run` drives a Trellis-managed repo",
+      "no .omtre/scripts/task.py here — `omtre run` drives an Omtre-managed repo",
     );
   }
   const normalized = normalizeOptions(raw, root);
@@ -1286,7 +1470,7 @@ export async function runCommand(
 }
 
 // -----------------------------------------------------------------------------
-// `trellis run --ticket <dir>` — one ticket, one attempt, one result row.
+// `omtre run --ticket <dir>` — one ticket, one attempt, one result row.
 // -----------------------------------------------------------------------------
 
 export interface TicketCommandOptions {
@@ -1315,12 +1499,22 @@ export function normalizeTicketOptions(
   raw: Record<string, unknown>,
   root: string,
 ): { ok: true; options: TicketCommandOptions } | { ok: false; error: string } {
-  const dir = typeof raw.ticket === "string" && raw.ticket.trim() ? raw.ticket.trim() : "";
+  const dir =
+    typeof raw.ticket === "string" && raw.ticket.trim()
+      ? raw.ticket.trim()
+      : "";
   if (!dir) {
-    return { ok: false, error: "--ticket needs a task dir name (e.g. --ticket 10-12-run-ticket)" };
+    return {
+      ok: false,
+      error: "--ticket needs a task dir name (e.g. --ticket 10-12-run-ticket)",
+    };
   }
   if (typeof raw.agent === "string" && raw.agent) {
-    return { ok: false, error: "--agent is not valid with --ticket — name the dispatch card with --worker" };
+    return {
+      ok: false,
+      error:
+        "--agent is not valid with --ticket — name the dispatch card with --worker",
+    };
   }
   if (raw.untilEmpty === true) {
     return {
@@ -1330,21 +1524,25 @@ export function normalizeTicketOptions(
         "one dir; the frontier loop is the other mode",
     };
   }
-  const provider = typeof raw.provider === "string" && raw.provider ? raw.provider : undefined;
+  const provider =
+    typeof raw.provider === "string" && raw.provider ? raw.provider : undefined;
   if (provider && !isProvider(provider)) {
     return {
       ok: false,
       error: `unknown --provider "${provider}" (known: ${listProviders().join(", ")})`,
     };
   }
-  const timeout = parseDuration(typeof raw.timeout === "string" ? raw.timeout : undefined);
+  const timeout = parseDuration(
+    typeof raw.timeout === "string" ? raw.timeout : undefined,
+  );
   return {
     ok: true,
     options: {
       root,
       dir,
       dryRun: raw.dryRun === true,
-      worker: typeof raw.worker === "string" && raw.worker ? raw.worker : undefined,
+      worker:
+        typeof raw.worker === "string" && raw.worker ? raw.worker : undefined,
       provider: provider as Provider | undefined,
       model: typeof raw.model === "string" && raw.model ? raw.model : undefined,
       workerTimeoutMs: timeout ?? DEFAULT_WORKER_TIMEOUT_MS,
@@ -1362,9 +1560,9 @@ export async function runTicketCommand(
   raw: Record<string, unknown>,
   root: string = process.cwd(),
 ): Promise<TicketCommandResult> {
-  if (!fs.existsSync(path.join(root, ".trellis", "scripts", "task.py"))) {
+  if (!fs.existsSync(path.join(root, ".omtre", "scripts", "task.py"))) {
     throw new Error(
-      "no .trellis/scripts/task.py here — `trellis run` drives a Trellis-managed repo",
+      "no .omtre/scripts/task.py here — `omtre run` drives an Omtre-managed repo",
     );
   }
   const normalized = normalizeTicketOptions(raw, root);
@@ -1397,7 +1595,14 @@ export async function runTicketCommand(
           dispatch: resolved.ok ? resolved.dispatch : null,
           ...(resolved.ok ? {} : { dispatch_error: resolved.error }),
           actions: resolved.ok
-            ? ["worktree:add", "ticket:start", "worker", "verify:run-verify", "delivery-gate", "archive"]
+            ? [
+                "worktree:add",
+                "ticket:start",
+                "worker",
+                "verify:run-verify",
+                "delivery-gate",
+                "archive",
+              ]
             : ["dispatch_refused"],
         },
         null,
@@ -1407,7 +1612,11 @@ export async function runTicketCommand(
     return { result: null, ledgerFile: ledger?.file };
   }
 
-  ports.ledgerAppend({ ticket: opts.dir, action: "run_start", detail: `ticket=${opts.dir}` });
+  ports.ledgerAppend({
+    ticket: opts.dir,
+    action: "run_start",
+    detail: `ticket=${opts.dir}`,
+  });
 
   if (!resolved.ok) {
     const { result } = dispatchRefusal(opts.dir, resolved, ports);
@@ -1415,7 +1624,9 @@ export async function runTicketCommand(
     return { result, ledgerFile: ledger?.file };
   }
 
-  ports.log(`→ ${opts.dir} as ${resolved.dispatch.agent ?? resolved.dispatch.provider}`);
+  ports.log(
+    `→ ${opts.dir} as ${resolved.dispatch.agent ?? resolved.dispatch.provider}`,
+  );
   const ticketRun = await runTicket(opts.dir, resolved.dispatch, ports, {
     workerTimeoutMs: opts.workerTimeoutMs,
   });

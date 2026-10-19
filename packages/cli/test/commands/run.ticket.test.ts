@@ -29,7 +29,7 @@ import type {
 
 const ROOT = "/repo";
 const DIR = "01-01-alpha";
-const WT = `${ROOT}/.trellis/.runtime/worktrees/${DIR}`;
+const WT = `${ROOT}/.omtre/.runtime/worktrees/${DIR}`;
 
 // ---------------------------------------------------------------------------
 // resolveDispatch — the roster chain
@@ -177,7 +177,7 @@ describe("resolveDispatch — fail closed, with a fix hint", () => {
     expect(out.ok).toBe(false);
     if (!out.ok) {
       expect(out.error).toContain("ghost");
-      expect(out.error).toContain(".trellis/agents/ghost.md");
+      expect(out.error).toContain(".omtre/agents/ghost.md");
     }
   });
 

@@ -405,7 +405,7 @@ export interface AppendablePartial {
  * in either direction. A torn tail must never reset `seq` to 1 or glue
  * the next record onto the incomplete line.
  *
- * @internal Trellis CLI-internal write primitive — downstream consumers
+ * @internal Omtre CLI-internal write primitive — downstream consumers
  *   must go through the typed mutation APIs (`createChannel`,
  *   `sendMessage`, etc.).
  */

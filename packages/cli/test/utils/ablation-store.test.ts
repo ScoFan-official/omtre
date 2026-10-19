@@ -33,13 +33,13 @@ describe("ablation-store", () => {
   let originalStateRoot: string | undefined;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-ablation-store-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-ablation-store-"));
     projectDir = path.join(tmpDir, "project");
     stateRoot = path.join(tmpDir, "state");
-    fs.mkdirSync(path.join(projectDir, ".trellis"), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, ".omtre"), { recursive: true });
     fs.writeFileSync(path.join(projectDir, "managed.txt"), "managed\n");
     fs.writeFileSync(
-      path.join(projectDir, ".trellis", "config.yaml"),
+      path.join(projectDir, ".omtre", "config.yaml"),
       "version: 1\n",
     );
     originalStateRoot = process.env[ABLATION_STATE_ROOT_ENV];
@@ -65,10 +65,10 @@ describe("ablation-store", () => {
         backupPath: "backup/managed.txt",
       },
       {
-        relativePath: ".trellis",
-        pre: fingerprintPath(path.join(projectDir, ".trellis")),
+        relativePath: ".omtre",
+        pre: fingerprintPath(path.join(projectDir, ".omtre")),
         expectedAblated: { kind: "absent" },
-        backupPath: "backup/.trellis",
+        backupPath: "backup/.omtre",
       },
     ];
   }
@@ -84,7 +84,7 @@ describe("ablation-store", () => {
 
   function removeManagedState(): void {
     fs.rmSync(path.join(projectDir, "managed.txt"), { force: true });
-    fs.rmSync(path.join(projectDir, ".trellis"), {
+    fs.rmSync(path.join(projectDir, ".omtre"), {
       recursive: true,
       force: true,
     });
@@ -102,7 +102,7 @@ describe("ablation-store", () => {
 
   it("fingerprints files, directories, and symlinks without dereferencing", () => {
     const file = fingerprintPath(path.join(projectDir, "managed.txt"));
-    const dir = fingerprintPath(path.join(projectDir, ".trellis"));
+    const dir = fingerprintPath(path.join(projectDir, ".omtre"));
     expect(file.kind).toBe("file");
     expect(dir.kind).toBe("directory");
 
@@ -154,7 +154,7 @@ describe("ablation-store", () => {
     const invalid = {
       ...transaction.state,
       entries: transaction.state.entries.map((entry, index) =>
-        index === 0 ? { ...entry, backupPath: "backup/.trellis" } : entry,
+        index === 0 ? { ...entry, backupPath: "backup/.omtre" } : entry,
       ),
     };
 
@@ -222,7 +222,7 @@ describe("ablation-store", () => {
 
   it("restores exact state and allows deleting the transaction only afterwards", () => {
     const beforeManaged = fingerprintPath(path.join(projectDir, "managed.txt"));
-    const beforeTrellis = fingerprintPath(path.join(projectDir, ".trellis"));
+    const beforeOmtre = fingerprintPath(path.join(projectDir, ".omtre"));
     const transaction = stage();
     removeManagedState();
     transitionAblationState(transaction, "applied");
@@ -238,8 +238,8 @@ describe("ablation-store", () => {
     ).toBe(true);
     expect(
       fingerprintsEqual(
-        fingerprintPath(path.join(projectDir, ".trellis")),
-        beforeTrellis,
+        fingerprintPath(path.join(projectDir, ".omtre")),
+        beforeOmtre,
       ),
     ).toBe(true);
 
@@ -403,11 +403,11 @@ describe("ablation-store", () => {
     const transaction = stage();
     removeManagedState();
     transitionAblationState(transaction, "applied");
-    const trellisPath = path.join(fs.realpathSync(projectDir), ".trellis");
+    const omtrePath = path.join(fs.realpathSync(projectDir), ".omtre");
     const originalRenameSync = fs.renameSync.bind(fs);
     vi.spyOn(fs, "renameSync").mockImplementation((source, destination) => {
       if (
-        destination === trellisPath &&
+        destination === omtrePath &&
         String(source).endsWith(".restore.tmp")
       ) {
         throw Object.assign(new Error("injected directory publish failure"), {
@@ -421,7 +421,7 @@ describe("ablation-store", () => {
       /injected directory publish failure/,
     );
     expect(transaction.state.status).toBe("restoring");
-    expect(fs.existsSync(trellisPath)).toBe(false);
+    expect(fs.existsSync(omtrePath)).toBe(false);
     expect(
       fs
         .readdirSync(projectDir)
@@ -446,6 +446,6 @@ describe("ablation-store", () => {
     expect(fs.readFileSync(path.join(projectDir, "managed.txt"), "utf-8")).toBe(
       "user edit\n",
     );
-    expect(fs.existsSync(path.join(projectDir, ".trellis"))).toBe(false);
+    expect(fs.existsSync(path.join(projectDir, ".omtre"))).toBe(false);
   });
 });

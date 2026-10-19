@@ -2,17 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { DIR_NAMES, PATHS } from "../constants/paths.js";
-import { copyTrellisDir } from "../templates/extract.js";
-
-// Import trellis templates (generic, not project-specific)
 import {
+  copyOmtreDir,
   ohMyWorkflowMdTemplate,
   configYamlTemplate,
   gitignoreTemplate,
   gitattributesTemplate,
   getAllAgents,
   getAllDomainFiles,
-} from "../templates/trellis/index.js";
+} from "../templates/extract.js";
 
 // Import markdown templates
 import {
@@ -166,7 +164,7 @@ export async function createWorkflowStructure(
   ensureDir(path.join(cwd, DIR_NAMES.WORKFLOW));
 
   // Copy scripts/ directory from templates
-  await copyTrellisDir("scripts", path.join(cwd, PATHS.SCRIPTS), {
+  await copyOmtreDir("scripts", path.join(cwd, PATHS.SCRIPTS), {
     executable: true,
   });
 

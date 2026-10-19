@@ -1,7 +1,7 @@
 /**
  * Cognition Devin CLI adapter tests. Fixtures are built with the system
  * python sqlite3 module; the block is skipped when no interpreter is
- * available. This is NOT Trellis `--devin` (Desktop / former Windsurf) and
+ * available. This is NOT Omtre `--devin` (Desktop / former Windsurf) and
  * NOT Factory Droid.
  *
  * `node:os` is mocked via `vi.hoisted` so `internal/paths.ts` captures a
@@ -33,7 +33,7 @@ const { fakeHome, snapshotTestState } = vi.hoisted(() => {
   const o = require("node:os") as typeof import("node:os");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const p = require("node:path") as typeof import("node:path");
-  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "trellis-mem-devin-home-"));
+  const fakeHome = f.mkdtempSync(p.join(o.tmpdir(), "omtre-mem-devin-home-"));
   return {
     fakeHome,
     snapshotTestState: {
@@ -656,14 +656,14 @@ describe.skipIf(!DEVIN_PY)("devin adapter", () => {
               name: "exec",
               arguments: {
                 command:
-                  'py ./.trellis/scripts/task.py create "my task" --slug my-task',
+                  'py ./.omtre/scripts/task.py create "my task" --slug my-task',
               },
             },
             {
               name: "exec",
               arguments: {
                 command:
-                  "py ./.trellis/scripts/task.py start .trellis/tasks/01-01-my-task",
+                  "py ./.omtre/scripts/task.py start .omtre/tasks/01-01-my-task",
               },
             },
           ]),
