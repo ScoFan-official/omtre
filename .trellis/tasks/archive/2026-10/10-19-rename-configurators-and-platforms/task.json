@@ -3,7 +3,7 @@
   "name": "rename-configurators-and-platforms",
   "title": "改名施工 5：全平台 Configurators 与 20 个平台专属模板改名",
   "description": "改写 configurators/ 全平台配置器与 20 个平台专属模板目录（子代理、工作流、插件、专属钩子）及对应单测",
-  "status": "planning",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "cli",
@@ -11,8 +11,8 @@
   "creator": "qihaonan",
   "assignee": "qihaonan",
   "createdAt": "2026-10-19",
-  "completedAt": null,
-  "branch": null,
+  "completedAt": "2026-10-19",
+  "branch": "main",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -30,5 +30,9 @@
     ".trellis/tasks/10-19-rename-constants-and-pkg",
     ".trellis/tasks/10-19-rename-python-runtime-scripts",
     ".trellis/tasks/10-19-rename-templates-common-and-hooks"
-  ]
+  ],
+  "verify_skipped": {
+    "reason": "Verified via rg zero-residual check, typecheck, lint, lint:py, and test/configurators",
+    "at": "2026-10-19T11:21:21Z"
+  }
 }
