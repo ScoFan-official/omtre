@@ -1,0 +1,28 @@
+{
+  "id": "pstack-research",
+  "name": "pstack-research",
+  "title": "pstack 调研：/correct 机制、修正阶梯、playbook 路由与许可证",
+  "description": "pstack 调研：/correct 机制、修正阶梯、playbook 路由与许可证",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-19",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "research"
+  }
+}

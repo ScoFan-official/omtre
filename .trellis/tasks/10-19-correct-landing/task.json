@@ -1,0 +1,32 @@
+{
+  "id": "correct-landing",
+  "name": "correct-landing",
+  "title": "pstack /correct 在 omtre 中的落地形态",
+  "description": "pstack /correct 在 omtre 中的落地形态",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "grilling"
+  },
+  "blocked_by": [
+    ".trellis/tasks/10-19-pstack-research",
+    ".trellis/tasks/10-19-absorption-mechanism"
+  ]
+}
