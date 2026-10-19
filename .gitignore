@@ -191,3 +191,13 @@ tmp1/
 .playwright-mcp
 .gitnexus
 .codegraph/
+
+# Skill pack (merged from oh-my-trellis)
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local agent / tool metadata
+.workbuddy/
+.qoder/
