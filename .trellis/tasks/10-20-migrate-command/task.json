@@ -1,0 +1,34 @@
+{
+  "id": "migrate-command",
+  "name": "migrate-command",
+  "title": "迁移施工 1：实现 omtre migrate 命令与测试",
+  "description": "按 T4 契约实现 omtre migrate 命令（三类文件分类迁移、--dry-run/--force、修改文件 .backup 备份、幂等 .migrated-from 与脏工作区保护）并补齐单元与集成测试。",
+  "status": "planning",
+  "dev_type": "backend",
+  "scope": "cli",
+  "package": "cli",
+  "priority": "P1",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-20",
+  "completedAt": null,
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [
+    "packages/cli/src/commands/migrate.ts",
+    "packages/cli/src/cli/index.ts",
+    "packages/cli/src/index.ts",
+    "packages/cli/test/commands/migrate.test.ts"
+  ],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  }
+}

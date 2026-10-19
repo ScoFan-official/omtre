@@ -42,12 +42,13 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 | [10-19-rename-test-suite-and-regression](../archive/2026-10/10-19-rename-test-suite-and-regression) | 改名施工 6：测试套件收尾与 regression.test.ts 迁移 | task | `10-19-rename-ts-core-and-cli`, `10-19-rename-python-runtime-scripts`, `10-19-rename-templates-common-and-hooks`, `10-19-rename-configurators-and-platforms` | done |
 | [10-19-rename-skills-marketplace-docs](../archive/2026-10/10-19-rename-skills-marketplace-docs) | 改名施工 7：技能包（skills/）、marketplace/、CI 与文档改名 | task | `10-19-rename-constants-and-pkg` | done |
 | [10-19-rename-residual-gate](../archive/2026-10/10-19-rename-residual-gate) | 改名施工 8：全仓旧名残留检查脚本与 CI 门禁 | task | `10-19-rename-test-suite-and-regression`, `10-19-rename-skills-marketplace-docs` | done |
+| [10-20-migrate-command](../10-20-migrate-command) | 迁移施工 1：实现 omtre migrate 命令与测试 | task | `10-19-rename-residual-gate` | ready |
+| [10-20-self-bootstrap](../10-20-self-bootstrap) | 迁移施工 2：执行本仓 .trellis → .omtre/ 自举与门禁收口 | task | `10-20-migrate-command` | blocked |
 
 ## Not yet specified
 
 - 发布流水线：本仓 CI、tag 方案、tgz 资产、一句话安装提示词改写。
-- 自举里程碑：本仓从 `.trellis/` 迁到 `.omtre/` 的时机与验收标准，依赖 migrate 合约。
-- 后续施工票拆分：migrate 实施（依赖改名施工完成）、两个试点实施（`/correct` 与 Firefox 原则）。
+- 后续施工票拆分：两个试点实施（`/correct` 与 Firefox 原则）。
 - 硬分叉后是否、以及怎样从 mindfold 上游手工挑提交移植。
 - fork 继承的上游旧任务（06-17、07-23、08-05、08-06、09-09 等）怎么处理。
 - 品牌改写：README、GLOSSARY（Laber 中“oh-my-trellis 是叠在 Trellis 之上的中间件”这条定义废止）、AGENTS.md 受管块文本。

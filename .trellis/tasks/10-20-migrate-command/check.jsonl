@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/archive/2026-10/10-19-migrate-contract/answer.md", "reason": "T4 authoritative contract for omtre migrate"}
+{"file": ".trellis/tasks/archive/2026-10/10-19-rename-rules/answer.md", "reason": "T3 authoritative rename rules"}
+{"file": ".trellis/spec/cli/backend/index.md", "reason": "CLI backend conventions"}
+{"file": ".trellis/spec/cli/unit-test/index.md", "reason": "CLI unit and integration test conventions"}

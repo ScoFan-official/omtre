@@ -35,7 +35,9 @@
     "10-19-rename-configurators-and-platforms",
     "10-19-rename-test-suite-and-regression",
     "10-19-rename-skills-marketplace-docs",
-    "10-19-rename-residual-gate"
+    "10-19-rename-residual-gate",
+    "10-20-migrate-command",
+    "10-20-self-bootstrap"
   ],
   "parent": null,
   "relatedFiles": [],
