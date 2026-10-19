@@ -1,7 +1,7 @@
 # Firefox 提示词放置原则在 omtre 中的落地形态
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: .trellis/tasks/10-19-firefox-prompt-research, .trellis/tasks/10-19-absorption-mechanism
 Map: .trellis/tasks/10-19-omtre-standalone/map.md
 

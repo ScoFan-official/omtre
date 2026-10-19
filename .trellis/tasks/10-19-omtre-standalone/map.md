@@ -28,6 +28,7 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 - [migrate 合约](10-19-migrate-contract): 受管文件重新生成（改过的留 `.backup`），用户数据整搬并改写路径，运行时缓存丢弃；仓库外文件只报告不改；工作区须干净；迁到一半拒绝执行；回滚只靠 git；`~/.trellis/channels` 不迁；结束时自检 4 项。
 - [吸收机制](10-19-absorption-mechanism): 每个候选开 research 票（挂在"吸收"父任务下），按 5 条标准判为原样拷贝、改写吸收或拒绝；落地形态按修正阶梯取最高可行档；原样拷贝先过许可证闸并由 CI 检查；出处统一登记在 `ATTRIBUTION.md`；流程做成技能 `skills/absorb/`，检查写成脚本；改写吸收的不跟踪上游。
 - [/correct 落地](10-19-correct-landing): 改写成原生技能 `omtre-correct`（`/omt:correct`），另加一个配对表检查脚本接入 CI；读 git fix/revert、check 结论、mem 纠正对话、PR 评审、注释；配对表放在 `.omtre/spec/rules.md`，按需加载；新检查要在历史出错提交上跑红；与 break-loop、rules-audit 并存分工；手动或用户纠正时触发；按三档自主权限执行，默认 gated。
+- [Firefox 原则落地](10-19-firefox-landing): 新增 `.omtre/spec/context-rules.yaml`，按改动路径给 check 和 implement 加载上下文，配 lint；子目录 AGENTS.md 只定作用域约定，由 update 生成路由表；指令文件 lint 检查 4 项：根文件不超过 150 行（ratchet）、description 不超过 500 字符且写明触发条件、引用路径存在、子目录文件首行写作用域；改动指令文件时自动把 writing-for-agents 和 voice 加载进 check；受管块加"工具优先"段和路由表；session-start 不改；Firefox 的许可证是 MPL-2.0，只吸收思想。
 
 ## Not yet specified
 
