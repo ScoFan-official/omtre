@@ -9,7 +9,7 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'package.json'
-      - 'marketplace'
+      - 'marketplace/**'
       - '**/*.py'
       - '.github/workflows/ci.yml'
   pull_request:
@@ -20,7 +20,7 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'package.json'
-      - 'marketplace'
+      - 'marketplace/**'
       - '**/*.py'
       - '.github/workflows/ci.yml'
 

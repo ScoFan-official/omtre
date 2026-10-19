@@ -77,9 +77,6 @@ packages:
     path: packages/cli
   core:
     path: packages/core
-  docs-site:
-    path: docs-site
-    type: submodule
 
 # Default package used when --package is not specified.
 default_package: cli
