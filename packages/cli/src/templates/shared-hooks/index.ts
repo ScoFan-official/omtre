@@ -1,7 +1,7 @@
 /**
  * Shared hook templates — platform-independent Python hook scripts.
  *
- * These scripts read only from .trellis/ paths (JSONL, prd.md, spec/) and
+ * These scripts read only from .omtre/ paths (JSONL, prd.md, spec/) and
  * have no platform-specific placeholders. They can be written as-is to any
  * platform's hooks directory.
  */
@@ -46,7 +46,7 @@ export type SharedHookPlatform =
 /**
  * Which shared hooks each platform actually invokes. Single source of truth
  * for shared-hook distribution — `collectSharedHooks` reads this table, and
- * both `trellis init` and `trellis update` consume the map it returns.
+ * both `omtre init` and `omtre update` consume the map it returns.
  *
  * Routing rules encoded here:
  * - `session-start.py` — shipped by every platform with a SessionStart
@@ -83,7 +83,7 @@ export type SharedHookPlatform =
  *   stdout directly to the conversation context (no JSON envelope).
  * - Claude Code `statusLine` is intentionally not installed by default.
  *   Users can add their own statusLine command in `.claude/settings.json`,
- *   or opt in to the Trellis one via `trellis init --with-statusline`
+ *   or opt in to the omtre one via `omtre init --with-statusline`
  *   (installed from `templates/claude/hooks/`, not from this table — no
  *   other platform has a statusLine event).
  * - ZCode (3.x) ships a workspace hook config at `.zcode/config.json` covering

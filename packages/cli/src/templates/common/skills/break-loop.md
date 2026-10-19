@@ -55,8 +55,8 @@ What broader problems does this bug reveal?
 
 Solidify insights into the system:
 
-- [ ] Update `.trellis/spec/guides/` thinking guides
-- [ ] Update relevant `.trellis/spec/` docs
+- [ ] Update `.omtre/spec/guides/` thinking guides
+- [ ] Update relevant `.omtre/spec/` docs
 - [ ] Create issue record (if applicable)
 - [ ] Create feature ticket for root fix
 - [ ] Update check guidelines if needed
@@ -177,7 +177,7 @@ Never express binary certainty when evidence is incomplete. Use "most likely", "
    - If it's a code reuse issue → update `code-reuse-thinking-guide.md`
    - If it's domain-specific → update `backend/*.md` or `frontend/*.md`
 
-2. **Sync templates** - After updating `.trellis/spec/`, sync to `src/templates/markdown/spec/`
+2. **Sync templates** - After updating `.omtre/spec/`, sync to `src/templates/markdown/spec/`
 
 3. **Commit the spec updates** - This is the primary output, not just the analysis text
 

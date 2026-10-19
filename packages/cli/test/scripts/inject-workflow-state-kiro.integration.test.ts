@@ -16,11 +16,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = getOmtreTemplatePath("scripts");
 const SHARED_HOOKS = path.resolve(
   __dirname,
   "../../src/templates/shared-hooks",
@@ -36,20 +34,20 @@ function hasPython(): boolean {
 }
 
 function setupRepo(tmp: string): void {
-  fs.mkdirSync(path.join(tmp, ".trellis", "scripts"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(tmp, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(tmp, ".omtre", "scripts"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(tmp, ".omtre", "scripts"), {
     recursive: true,
   });
   // workflow.md with a no_task breadcrumb so the body is deterministic.
   fs.writeFileSync(
-    path.join(tmp, ".trellis", "workflow.md"),
+    path.join(tmp, ".omtre", "workflow.md"),
     [
       "# Workflow",
       "",
       "## Phase Index",
       "",
       "[workflow-state:no_task]",
-      "No active task. Classify the turn before creating a Trellis task.",
+      "No active task. Classify the turn before creating an Omtre task.",
       "[/workflow-state:no_task]",
       "",
       "## Phase 1: Plan",
@@ -87,7 +85,7 @@ describeFn("Kiro hook output branch", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-kiro-hook-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-kiro-hook-"));
     setupRepo(tmp);
   });
 

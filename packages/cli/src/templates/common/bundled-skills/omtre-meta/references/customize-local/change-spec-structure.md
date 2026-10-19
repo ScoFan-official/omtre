@@ -1,23 +1,23 @@
 # Change Local Spec Structure
 
-When the user wants to change the engineering conventions AI follows, add new spec layers, or adjust monorepo package mapping, edit `.trellis/spec/` and `.trellis/config.yaml`.
+When the user wants to change the engineering conventions AI follows, add new spec layers, or adjust monorepo package mapping, edit `.omtre/spec/` and `.omtre/config.yaml`.
 
 ## Read These Files First
 
-1. `.trellis/config.yaml`
-2. `.trellis/spec/`
-3. `.trellis/workflow.md` planning artifact guidance and Phase 3.3
+1. `.omtre/config.yaml`
+2. `.omtre/spec/`
+3. `.omtre/workflow.md` planning artifact guidance and Phase 3.3
 4. Current task `implement.jsonl` / `check.jsonl`
 
 ## Common Needs
 
 | Need | Edit location |
 | --- | --- |
-| Add backend/frontend/docs/test spec layer | `.trellis/spec/<layer>/` or `.trellis/spec/<package>/<layer>/` |
-| Add shared thinking guides | `.trellis/spec/guides/` |
-| Adjust monorepo packages | `packages` in `.trellis/config.yaml` |
-| Change default package | `default_package` in `.trellis/config.yaml` |
-| Control spec scanning scope | `spec_scope` in `.trellis/config.yaml` |
+| Add backend/frontend/docs/test spec layer | `.omtre/spec/<layer>/` or `.omtre/spec/<package>/<layer>/` |
+| Add shared thinking guides | `.omtre/spec/guides/` |
+| Adjust monorepo packages | `packages` in `.omtre/config.yaml` |
+| Change default package | `default_package` in `.omtre/config.yaml` |
+| Control spec scanning scope | `spec_scope` in `.omtre/config.yaml` |
 | Make a task read a new spec | Task `implement.jsonl` / `check.jsonl` |
 
 ## Add A Spec Layer
@@ -25,7 +25,7 @@ When the user wants to change the engineering conventions AI follows, add new sp
 Single-repository example:
 
 ```text
-.trellis/spec/security/
+.omtre/spec/security/
 ├── index.md
 └── auth.md
 ```
@@ -33,7 +33,7 @@ Single-repository example:
 Monorepo example:
 
 ```text
-.trellis/spec/webapp/security/
+.omtre/spec/webapp/security/
 ├── index.md
 └── auth.md
 ```
@@ -50,13 +50,13 @@ Monorepo example:
 Adding a spec does not mean every task automatically reads it. The current task must reference it in JSONL:
 
 ```bash
-python3 ./.trellis/scripts/task.py add-context <task> implement ".trellis/spec/webapp/security/index.md" "Security conventions"
-python3 ./.trellis/scripts/task.py add-context <task> check ".trellis/spec/webapp/security/index.md" "Security review rules"
+python3 ./.omtre/scripts/task.py add-context <task> implement ".omtre/spec/webapp/security/index.md" "Security conventions"
+python3 ./.omtre/scripts/task.py add-context <task> check ".omtre/spec/webapp/security/index.md" "Security review rules"
 ```
 
 ## Change Monorepo Packages
 
-Example `.trellis/config.yaml`:
+Example `.omtre/config.yaml`:
 
 ```yaml
 packages:
@@ -70,7 +70,7 @@ default_package: webapp
 After editing, run:
 
 ```bash
-python3 ./.trellis/scripts/get_context.py --mode packages
+python3 ./.omtre/scripts/get_context.py --mode packages
 ```
 
 Use this output to confirm AI can see the correct packages and spec layers.

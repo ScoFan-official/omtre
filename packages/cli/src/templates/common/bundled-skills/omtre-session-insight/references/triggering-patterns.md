@@ -1,6 +1,6 @@
 # Triggering Patterns
 
-Verbatim user phrasings that should make an AI reach for `trellis mem`. Calibrate instinct against these — if a user message hits one of these patterns and you do not reach for `mem`, you probably missed an obvious recall.
+Verbatim user phrasings that should make an AI reach for `omtre mem`. Calibrate instinct against these — if a user message hits one of these patterns and you do not reach for `mem`, you probably missed an obvious recall.
 
 Patterns are grouped by the *intent* behind the phrasing, not the surface words. The same intent shows up in different languages and registers.
 
@@ -15,7 +15,7 @@ The user is asking "how did we (or I) solve this before". Past dialogue holds th
 - "之前是怎么搞定 X 的?"
 - "我记得以前修过类似的"
 
-Reach: `trellis mem search "<symptom keyword>" --global --limit 10`, then `context` into the hit that looks closest.
+Reach: `omtre mem search "<symptom keyword>" --global --limit 10`, then `context` into the hit that looks closest.
 
 ## Decision retrieval
 
@@ -28,7 +28,7 @@ The user is referencing a decision that lives in old dialogue, not in any commit
 - "关于 X 我们之前是怎么定的?"
 - "之前讨论过 X 的方案吗?"
 
-Reach: `trellis mem search "<decision keyword>"` to find the session, then `extract <id> --phase brainstorm` to recover the discussion.
+Reach: `omtre mem search "<decision keyword>"` to find the session, then `extract <id> --phase brainstorm` to recover the discussion.
 
 ## Cross-session continuation
 
@@ -41,7 +41,7 @@ The user resumed work after a gap and the context is implicit.
 - "我们上次做到哪了"
 - "接着昨天那个任务"
 
-Reach: `trellis mem list --task <current-task-dir>` to find the most recent sessions tied to the active task, then `extract` the last one.
+Reach: `omtre mem list --task <current-task-dir>` to find the most recent sessions tied to the active task, then `extract` the last one.
 
 ## Familiar-bug debugging
 
@@ -54,7 +54,7 @@ The current bug feels like one already seen. Past sessions probably hold the res
 - "这个 bug 是不是上次那个?"
 - "怎么又是这个 error?"
 
-Reach: `trellis mem search "<error message fragment>" --global`. Anchor on a short, distinctive token from the actual error string.
+Reach: `omtre mem search "<error message fragment>" --global`. Anchor on a short, distinctive token from the actual error string.
 
 ## Self-pattern spotting
 
@@ -67,7 +67,7 @@ The user is asking whether they keep repeating the same kind of mistake or decis
 - "我老犯这个错?"
 - "这类问题之前出现过几次?"
 
-Reach: `trellis mem search "<topic>" --global --limit 50` and scan the dates / projects in the listing. Optionally `extract` two or three for comparison.
+Reach: `omtre mem search "<topic>" --global --limit 50` and scan the dates / projects in the listing. Optionally `extract` two or three for comparison.
 
 ## Finish-work retrospective (on demand)
 
@@ -80,7 +80,7 @@ The user explicitly wants to look back at this task — not as a forced step, on
 - "记一下这次踩的坑"
 - "复盘下这个任务"
 
-Reach: identify the current task's session id (from `.trellis/.runtime/sessions/*.json` or `mem list --task <task-dir>`), then `extract <id> --phase brainstorm` and `--phase implement`. Present a summary — surface concrete file:line citations where possible. Whether to also write the summary somewhere (PRD, spec, notes file) is the user's call; offer, don't auto-write.
+Reach: identify the current task's session id (from `.omtre/.runtime/sessions/*.json` or `mem list --task <task-dir>`), then `extract <id> --phase brainstorm` and `--phase implement`. Present a summary — surface concrete file:line citations where possible. Whether to also write the summary somewhere (PRD, spec, notes file) is the user's call; offer, don't auto-write.
 
 ## Anti-patterns: do NOT reach for `mem` here
 

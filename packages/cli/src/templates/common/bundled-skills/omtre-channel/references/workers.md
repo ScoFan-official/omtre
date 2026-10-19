@@ -8,13 +8,13 @@ and translates its output back into channel events.
 ## Spawn
 
 ```bash
-trellis channel create impl-task --by dispatcher --cwd /path/to/repo
-trellis channel spawn impl-task --provider codex --as codex-impl --timeout 30m
+omtre channel create impl-task --by dispatcher --cwd /path/to/repo
+omtre channel spawn impl-task --provider codex --as codex-impl --timeout 30m
 
-echo "Implement the schema for table X per .trellis/.../prd.md" \
-  | trellis channel send impl-task --as dispatcher --to codex-impl --stdin
+echo "Implement the schema for table X per .omtre/.../prd.md" \
+  | omtre channel send impl-task --as dispatcher --to codex-impl --stdin
 
-trellis channel wait impl-task --as dispatcher --from codex-impl --kind done --timeout 30m
+omtre channel wait impl-task --as dispatcher --from codex-impl --kind done --timeout 30m
 ```
 
 `spawn` forks a `channel __supervisor` worker that emits `spawned`, streams
@@ -24,7 +24,7 @@ inbox-idle until a `send --to <worker>` (or a broadcast when
 
 Key `spawn` flags:
 
-- `--agent <name>` — load `.trellis/agents/<name>.md` (provider/model/as/system prompt defaults).
+- `--agent <name>` — load `.omtre/agents/<name>.md` (provider/model/as/system prompt defaults).
 - `--provider <claude|codex>` — overrides the agent card; validated against the adapter registry.
 - `--as <name>` — channel worker handle; defaults to the agent name.
 - `--cwd <path>` — worker working directory (also the jail root for `--file`/`--jsonl`).
@@ -33,8 +33,8 @@ Key `spawn` flags:
 - `--timeout <duration>` — auto-kill after `30s` / `2m` / `1h`.
 - `--warn-before <duration>` — supervisor_warning lead time (default `5m`; `0ms` disables).
 - `--file <path>` (repeatable, glob-supported) — inject file content into the system prompt.
-- `--jsonl <path>` (repeatable) — Trellis jsonl manifest (`{file, reason}` per line).
-- `--by <agent>` — author of the `spawned` event (defaults to `$TRELLIS_CHANNEL_AS` or `main`).
+- `--jsonl <path>` (repeatable) — OMTRE jsonl manifest (`{file, reason}` per line).
+- `--by <agent>` — author of the `spawned` event (defaults to `$OMTRE_CHANNEL_AS` or `main`).
 - `--inbox-policy <explicitOnly|broadcastAndExplicit>` — default `explicitOnly`.
 - `--idle-timeout <duration>` — OOM guard idle TTL (default `5m`; `0` disables).
 - `--max-live-workers <n>` — spawn-time live-worker budget (default `6`; `0` disables).
@@ -44,14 +44,14 @@ The success event `spawned` records `pid`, `provider`, `agent`, the injected
 
 ## Agent Cards
 
-`--agent <name>` resolves to `.trellis/agents/<name>.md`. The card name must
-match `[A-Za-z0-9._-]+`. The default Trellis install ships four cards:
+`--agent <name>` resolves to `.omtre/agents/<name>.md`. The card name must
+match `[A-Za-z0-9._-]+`. The default OMTRE install ships four cards:
 
-- `.trellis/agents/check.md` — code-quality reviewer (dual axis; see below).
-- `.trellis/agents/implement.md` — coding worker for implementation runs.
-- `.trellis/agents/research.md` — research worker; persists findings to the
+- `.omtre/agents/check.md` — code-quality reviewer (dual axis; see below).
+- `.omtre/agents/implement.md` — coding worker for implementation runs.
+- `.omtre/agents/research.md` — research worker; persists findings to the
   task's `research/` directory.
-- `.trellis/agents/orchestrator.md` — the card `.trellis/config.yaml`'s
+- `.omtre/agents/orchestrator.md` — the card `.omtre/config.yaml`'s
   `orchestrator.agent` names for unattended runs.
 
 Check-axis specialization (dispatch roster): `check.standards.md` /
@@ -79,8 +79,8 @@ below).
 Always inspect project cards before spawning a named agent:
 
 ```bash
-ls .trellis/agents
-sed -n '1,100p' .trellis/agents/check.md
+ls .omtre/agents
+sed -n '1,100p' .omtre/agents/check.md
 ```
 
 ## Context Injection
@@ -90,7 +90,7 @@ Two flags inject content into the worker's system prompt under a
 
 - `--file <path>` — repeatable, glob-supported (`*`, `**`). Each match is
   read and concatenated.
-- `--jsonl <path>` — repeatable Trellis manifest where every line is
+- `--jsonl <path>` — repeatable OMTRE manifest where every line is
   `{"file":"<path>","reason":"<why>"}`. The reason is preserved as a header
   comment above each file's content.
 
@@ -104,8 +104,8 @@ Limits enforced by the loader:
 Example spawning a check agent against a task directory:
 
 ```bash
-TASK=.trellis/tasks/05-13-example
-trellis channel spawn cr-example --agent check --provider codex --as check-cx \
+TASK=.omtre/tasks/05-13-example
+omtre channel spawn cr-example --agent check --provider codex --as check-cx \
   --file "$TASK/prd.md" \
   --file "$TASK/design.md" \
   --file "$TASK/implement.md" \
@@ -128,10 +128,10 @@ Use explicit names when multiple workers or providers participate in one
 channel:
 
 ```bash
-trellis channel spawn cr-feature --agent check --as check-claude
-trellis channel spawn cr-feature --agent check --provider codex --as check-cx
+omtre channel spawn cr-feature --agent check --as check-claude
+omtre channel spawn cr-feature --agent check --provider codex --as check-cx
 
-trellis channel wait cr-feature --as main \
+omtre channel wait cr-feature --as main \
   --from check-claude,check-cx --kind done --all --timeout 15m
 ```
 
@@ -149,7 +149,7 @@ losing its session.
 
 ```bash
 echo "Stop refactoring the parser — switch to fixing the failing test in src/foo.ts" \
-  | trellis channel interrupt impl-task --as dispatcher --to codex-impl --stdin
+  | omtre channel interrupt impl-task --as dispatcher --to codex-impl --stdin
 ```
 
 Flags:
@@ -169,7 +169,7 @@ plain tagged message instead:
 
 ```bash
 echo "Check this when you reach the next turn." \
-  | trellis channel send impl-task --as dispatcher --to codex-impl \
+  | omtre channel send impl-task --as dispatcher --to codex-impl \
       --stdin --tag question
 ```
 
@@ -182,12 +182,12 @@ writes a `killed` event when SIGKILL is needed so the event log stays
 truthful.
 
 ```bash
-trellis channel kill impl-task --as codex-impl
-trellis channel spawn impl-task --as codex-impl --provider codex \
-  --resume "$(cat ~/.trellis/channels/<bucket>/impl-task/worker.session-id)"
+omtre channel kill impl-task --as codex-impl
+omtre channel spawn impl-task --as codex-impl --provider codex \
+  --resume "$(cat ~/.omtre/channels/<bucket>/impl-task/worker.session-id)"
 
 echo "STOP — new instructions: ..." \
-  | trellis channel send impl-task --as dispatcher --to codex-impl --stdin
+  | omtre channel send impl-task --as dispatcher --to codex-impl --stdin
 ```
 
 `kill` flags:
@@ -216,9 +216,9 @@ project bucket:
 Precedence (highest first):
 
 1. CLI flags: `--idle-timeout`, `--max-live-workers` on `spawn`.
-2. Environment variables: `TRELLIS_CHANNEL_WORKER_IDLE_TIMEOUT`,
-   `TRELLIS_CHANNEL_MAX_LIVE_WORKERS`.
-3. `.trellis/config.yaml` under `channel.worker_guard`.
+2. Environment variables: `OMTRE_CHANNEL_WORKER_IDLE_TIMEOUT`,
+   `OMTRE_CHANNEL_MAX_LIVE_WORKERS`.
+3. `.omtre/config.yaml` under `channel.worker_guard`.
 4. Built-in defaults (`5m`, `6`).
 
 Cleanup notices are written to stderr at spawn time so operators can see which
@@ -228,7 +228,7 @@ the same idle TTL and budget.
 
 To audit current state, list workers via `channel list` (the `WORKERS`
 column) and inspect per-channel `pid` / `worker-pid` sidecar files under
-`~/.trellis/channels/<bucket>/<channel>/`.
+`~/.omtre/channels/<bucket>/<channel>/`.
 
 ## Worker Inbox APIs
 
@@ -273,15 +273,15 @@ A typical dispatcher loop:
 ```bash
 # 1. Wake the worker.
 echo "Run the failing test and report." \
-  | trellis channel send impl-task --as dispatcher --to codex-impl --stdin \
+  | omtre channel send impl-task --as dispatcher --to codex-impl --stdin \
       --delivery-mode requireRunningWorker
 
 # 2. Block until it finishes.
-trellis channel wait impl-task --as dispatcher \
+omtre channel wait impl-task --as dispatcher \
   --from codex-impl --kind done,error --timeout 30m
 
 # 3. Read the final answer.
-trellis channel messages impl-task --from codex-impl --last 1 --raw
+omtre channel messages impl-task --from codex-impl --last 1 --raw
 ```
 
 All event-emitting subcommands (`send`, `interrupt`, `post`, `context add` /

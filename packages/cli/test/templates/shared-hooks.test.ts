@@ -220,7 +220,7 @@ describe("shared-hooks capability table", () => {
     );
     expect(sessionStart, "session-start.py is missing from shared-hooks/").toBeDefined();
     const content = sessionStart ? sessionStart.content : "";
-    expect(content).toContain("<trellis-workflow>");
+    expect(content).toContain("<omtre-workflow>");
     expect(content).toContain("Task context order");
     expect(content).toContain("jsonl entries -> `prd.md`");
     expect(content).toContain("Lightweight task can request start review with PRD-only");

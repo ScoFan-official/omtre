@@ -1,13 +1,13 @@
 # Continue Current Task
 
-Resume work on the current task — pick up at the right phase/step in `.trellis/workflow.md`.
+Resume work on the current task — pick up at the right phase/step in `.omtre/workflow.md`.
 
 ---
 
 ## Step 1: Load Current Context
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py
 ```
 
 Confirms: current task, git state, recent commits.
@@ -15,16 +15,16 @@ Confirms: current task, git state, recent commits.
 ## Step 2: Load the Phase Index
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py --mode phase
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py --mode phase
 ```
 
 Shows the Phase Index (Plan / Execute / Finish) with routing + skill mapping.
 
 ## Step 3: Decide Where You Are
 
-`get_context.py` shows the active task's `status` field. Route by `status` + artifact presence. This command replaces the user needing to remember the Trellis flow; it does not itself approve implementation.
+`get_context.py` shows the active task's `status` field. Route by `status` + artifact presence. This command replaces the user needing to remember the OMTRE flow; it does not itself approve implementation.
 
-- `status=planning` + no `prd.md` → **1.1** (load `trellis-brainstorm`)
+- `status=planning` + no `prd.md` → **1.1** (load `omtre-brainstorm`)
 - `status=planning` + `prd.md` only → decide whether the task is lightweight or complex. Lightweight can move to **1.4** review; complex returns to **1.1** to add `design.md` + `implement.md`.
 - `status=planning` + complex artifacts complete + sub-agent jsonl not curated (empty, or only a legacy `_example` placeholder row) → **1.3**
 - `status=planning` + required artifacts complete + required jsonl curated or inline mode → **1.4** (`[B档]` ask for start review first; `[C档]` run `task.py start` directly)
@@ -38,14 +38,14 @@ Shows the Phase Index (Plan / Execute / Finish) with routing + skill mapping.
 Pick the tier matching how this session came to own the work — it runs in both autonomy modes (information step, not an approval gate):
 
 - **Same-session continuation** → skip the chain; context is already in hand.
-- **New session, domain task** (`meta.domain` in `task.json`, or `Domain: .trellis/domains/<slug>/` in `prd.md`) → run the FULL chain below, then output the five-line restatement.
+- **New session, domain task** (`meta.domain` in `task.json`, or `Domain: .omtre/domains/<slug>/` in `prd.md`) → run the FULL chain below, then output the five-line restatement.
 - **New session, domain-less task** (`Domain: none` in `prd.md`) → light chain: task artifacts (`prd.md` / `implement.md`) + journal summary; no domain reads.
-- **Cross-writer takeover** (the domain flag is someone else's, or a different machine/writer) → full chain + stale-flag three-anchor check per `.trellis/domains/DISCIPLINE.md` §2.
+- **Cross-writer takeover** (the domain flag is someone else's, or a different machine/writer) → full chain + stale-flag three-anchor check per `.omtre/domains/DISCIPLINE.md` §2.
 
 Full chain — read in order:
 
-1. `.trellis/domains/REGISTRY.md` — locate the owning domain.
-2. `.trellis/domains/<slug>/README.md` — first-line flag + `## 进度` table.
+1. `.omtre/domains/REGISTRY.md` — locate the owning domain.
+2. `.omtre/domains/<slug>/README.md` — first-line flag + `## 进度` table.
 3. `BOUNDARY.md` — registered rulings.
 4. `NN-*` docs — `状态:已定版` entries first.
 5. `worklog/` — grep the domain for `[~]`/`[!]`/`🔄`/`⛔` markers to anchor in-flight work.
@@ -56,9 +56,9 @@ Full chain — read in order:
    - latest worklog entry ID + `git merge-base --is-ancestor <hash> HEAD` verification of its referenced commit
    - next action, one line
 
-Reconciliation priority (fixed): git history > worklog entries > README `## 进度` — journal is session narrative and does not participate. `trellis mem` is optional background only — never a substitute for the chain, never a fact source.
+Reconciliation priority (fixed): git history > worklog entries > README `## 进度` — journal is session narrative and does not participate. `omtre mem` is optional background only — never a substitute for the chain, never a fact source.
 
-Phase rules (full detail in `.trellis/workflow.md`):
+Phase rules (full detail in `.omtre/workflow.md`):
 
 1. Run steps **in order** within a phase — `[required]` steps must not be skipped
 2. `[once]` steps are already done if the required output exists. `prd.md` alone can be enough only for lightweight tasks; complex tasks also need `design.md` and `implement.md`.
@@ -69,7 +69,7 @@ Phase rules (full detail in `.trellis/workflow.md`):
 Once you know which step to resume at:
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py --mode phase --step <X.X> --platform {{CLI_FLAG}}
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py --mode phase --step <X.X> --platform {{CLI_FLAG}}
 ```
 
 Follow the loaded instructions. After each `[required]` step completes, move to the next.
@@ -78,4 +78,4 @@ Follow the loaded instructions. After each `[required]` step completes, move to 
 
 ## Reference
 
-Full workflow and detailed phase steps live in `.trellis/workflow.md`. This command is only an entry point — the canonical guidance is there.
+Full workflow and detailed phase steps live in `.omtre/workflow.md`. This command is only an entry point — the canonical guidance is there.

@@ -1,10 +1,10 @@
 # Agents
 
-Trellis agent files define specialized roles. Common Trellis agents in a user project are:
+OMTRE agent files define specialized roles. Common OMTRE agents in a user project are:
 
-- `trellis-research`
-- `trellis-implement`
-- `trellis-check`
+- `omtre-research`
+- `omtre-implement`
+- `omtre-check`
 
 File locations and formats differ by platform, but responsibility boundaries should stay consistent.
 
@@ -12,9 +12,9 @@ File locations and formats differ by platform, but responsibility boundaries sho
 
 | Agent | Responsibility |
 | --- | --- |
-| `trellis-research` | Investigate the question and write findings into the current task's `research/`. |
-| `trellis-implement` | Implement against `prd.md`, optional `design.md` / `implement.md`, `implement.jsonl`, and related spec/research. |
-| `trellis-check` | Review changes, fix discovered issues, and run necessary checks. |
+| `omtre-research` | Investigate the question and write findings into the current task's `research/`. |
+| `omtre-implement` | Implement against `prd.md`, optional `design.md` / `implement.md`, `implement.jsonl`, and related spec/research. |
+| `omtre-check` | Review changes, fix discovered issues, and run necessary checks. |
 
 Agent files should not become generic chat prompts. They should define input sources, write boundaries, whether code may be changed, and how results are reported.
 
@@ -22,23 +22,23 @@ Agent files should not become generic chat prompts. They should define input sou
 
 | Platform | Agent path |
 | --- | --- |
-| Claude Code | `.claude/agents/trellis-*.md` |
-| Cursor | `.cursor/agents/trellis-*.md` |
-| OpenCode | `.opencode/agents/trellis-*.md` |
-| Codex | `.codex/agents/trellis-*.toml` |
-| Kiro | `.kiro/agents/trellis-*.json` |
-| Gemini CLI | `.gemini/agents/trellis-*.md` |
-| Qoder | `.qoder/agents/trellis-*.md` |
-| CodeBuddy | `.codebuddy/agents/trellis-*.md` |
-| Factory Droid | `.factory/droids/trellis-*.md` |
-| Pi Agent | `.pi/agents/trellis-*.md` |
-| Reasonix | `.reasonix/skills/trellis-*/SKILL.md` (subagent frontmatter) |
-| ZCode | `.zcode/agents/trellis-*.md` |
-| Kimi Code | `.kimi-code/agents/trellis-*.md` (custom sub-agents; the same prompts also ship as `.kimi-code/skills/trellis-*/SKILL.md`) |
+| Claude Code | `.claude/agents/omtre-*.md` |
+| Cursor | `.cursor/agents/omtre-*.md` |
+| OpenCode | `.opencode/agents/omtre-*.md` |
+| Codex | `.codex/agents/omtre-*.toml` |
+| Kiro | `.kiro/agents/omtre-*.json` |
+| Gemini CLI | `.gemini/agents/omtre-*.md` |
+| Qoder | `.qoder/agents/omtre-*.md` |
+| CodeBuddy | `.codebuddy/agents/omtre-*.md` |
+| Factory Droid | `.factory/droids/omtre-*.md` |
+| Pi Agent | `.pi/agents/omtre-*.md` |
+| Reasonix | `.reasonix/skills/omtre-*/SKILL.md` (subagent frontmatter) |
+| ZCode | `.zcode/agents/omtre-*.md` |
+| Kimi Code | `.kimi-code/agents/omtre-*.md` (custom sub-agents; the same prompts also ship as `.kimi-code/skills/omtre-*/SKILL.md`) |
 
 GitHub Copilot agent/prompt support is provided by a combination of directories such as `.github/agents/`, `.github/prompts/`, and `.github/skills/`; inspect the files actually generated in the user project.
 
-Main-session workflow platforms such as Kilo, Antigravity, and Devin may not have Trellis sub-agent files. They usually rely on workflows/skills to guide the main session.
+Main-session workflow platforms such as Kilo, Antigravity, and Devin may not have OMTRE sub-agent files. They usually rely on workflows/skills to guide the main session.
 
 ## Two Context Loading Modes
 
@@ -52,7 +52,7 @@ Common on platforms that support agent hooks.
 
 The agent file instructs the agent to read after startup:
 
-- `python3 ./.trellis/scripts/task.py current --source`
+- `python3 ./.omtre/scripts/task.py current --source`
 - `implement.jsonl` or `check.jsonl`
 - spec/research files referenced by JSONL
 - current task `prd.md`
@@ -65,9 +65,9 @@ This mode fits platforms whose hooks cannot reliably rewrite sub-agent prompts.
 
 | User need | Edit location |
 | --- | --- |
-| Implement agent must follow extra restrictions | The platform's `trellis-implement` agent file. |
-| Check agent must run project-specific commands | `trellis-check` agent file, and `.trellis/spec/` if needed. |
-| Research agent must output a fixed format | `trellis-research` agent file. |
+| Implement agent must follow extra restrictions | The platform's `omtre-implement` agent file. |
+| Check agent must run project-specific commands | `omtre-check` agent file, and `.omtre/spec/` if needed. |
+| Research agent must output a fixed format | `omtre-research` agent file. |
 | Agent cannot read task context | Agent prelude or `inject-subagent-context` hook. |
 | Add a project-specific agent | Platform agent directory + related workflow/command/skill entry point. |
 
@@ -80,4 +80,4 @@ This mode fits platforms whose hooks cannot reliably rewrite sub-agent prompts.
 
 ## Do Not Default To Editing Upstream Templates
 
-Local AI should default to modifying platform agent files inside the user project. Discuss upstream template source only when the user explicitly wants to contribute the change back to Trellis.
+Local AI should default to modifying platform agent files inside the user project. Discuss upstream template source only when the user explicitly wants to contribute the change back to OMTRE.

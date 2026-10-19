@@ -1,6 +1,6 @@
 # Spec Task Planning
 
-Use a single agent as the default execution model. The agent may create Trellis tasks for traceability, but the skill should not require a specific platform, CLI, or parallel worker model.
+Use a single agent as the default execution model. The agent may create OMTRE tasks for traceability, but the skill should not require a specific platform, CLI, or parallel worker model.
 
 ## Decomposition
 
@@ -14,13 +14,13 @@ Avoid artificial decomposition. A small library usually needs one focused spec p
 
 ## Task Shape
 
-When a Trellis task is useful, write a concise PRD with these sections:
+When a OMTRE task is useful, write a concise PRD with these sections:
 
 ```markdown
-# Fill <package-or-layer> Trellis Specs
+# Fill <package-or-layer> OMTRE Specs
 
 ## Goal
-Write project-specific `.trellis/spec/` guidance for <scope>.
+Write project-specific `.omtre/spec/` guidance for <scope>.
 
 ## Scope
 - Spec directory:
@@ -32,8 +32,8 @@ Write project-specific `.trellis/spec/` guidance for <scope>.
 Summarize the concrete findings from repository analysis.
 
 ## Files To Create Or Update
-- `.trellis/spec/.../index.md`
-- `.trellis/spec/.../<topic>.md`
+- `.omtre/spec/.../index.md`
+- `.omtre/spec/.../<topic>.md`
 
 ## Rules
 - Adapt the spec file set to the real codebase.

@@ -12,7 +12,7 @@ Core Design Philosophy:
 
 Trigger: PreToolUse (before Task tool call)
 
-Context Source: Trellis active task resolver points to task directory
+Context Source: Omtre active task resolver points to task directory
 - implement.jsonl - Implement agent dedicated context
 - check.jsonl     - Check agent dedicated context
 - prd.md          - Requirements document
@@ -54,7 +54,7 @@ if sys.platform.startswith("win"):
 # Path Constants (change here to rename directories)
 # =============================================================================
 
-DIR_WORKFLOW = ".trellis"
+DIR_WORKFLOW = ".omtre"
 DIR_SPEC = "spec"
 FILE_TASK_JSON = "task.json"
 
@@ -62,9 +62,9 @@ FILE_TASK_JSON = "task.json"
 # Subagent Constants (change here to rename subagent types)
 # =============================================================================
 
-AGENT_IMPLEMENT = "trellis-implement"
-AGENT_CHECK = "trellis-check"
-AGENT_RESEARCH = "trellis-research"
+AGENT_IMPLEMENT = "omtre-implement"
+AGENT_CHECK = "omtre-check"
+AGENT_RESEARCH = "omtre-research"
 
 # Agents that require a task directory
 AGENTS_REQUIRE_TASK = (AGENT_IMPLEMENT, AGENT_CHECK)
@@ -170,7 +170,7 @@ def get_current_task(
 # Context Injection Limits (issue #441)
 #
 # Notice text and behavior mirrored byte-for-byte in the Pi TS extension
-# (templates/pi/extensions/trellis/index.ts.txt). Changing wording here
+# (templates/pi/extensions/omtre/index.ts.txt). Changing wording here
 # requires changing it there too.
 # =============================================================================
 
@@ -265,9 +265,9 @@ def _read_file_bytes(base_path: str, file_path: str) -> bytes | None:
     full_path = os.path.join(base_path, file_path)
     try:
         root_real = os.path.realpath(base_path)
-        # `.trellis` may itself be a symlink into a store outside the repo
+        # `.omtre` may itself be a symlink into a store outside the repo
         # (#567); its real location is a second legitimate containment base.
-        workflow_real = os.path.realpath(os.path.join(base_path, ".trellis"))
+        workflow_real = os.path.realpath(os.path.join(base_path, DIR_WORKFLOW))
         full_real = os.path.realpath(full_path)
         if not _real_path_contained(root_real, full_real) and not (
             _real_path_contained(workflow_real, full_real)
@@ -285,7 +285,7 @@ def _read_file_bytes(base_path: str, file_path: str) -> bytes | None:
 
 
 def _truncate_notice(path: str, cap: int) -> str:
-    return f"\n[Trellis: truncated at {cap} bytes — read {path} for the full content]"
+    return f"\n[Omtre: truncated at {cap} bytes — read {path} for the full content]"
 
 
 def _is_binary_content(data: bytes) -> bool:
@@ -301,14 +301,14 @@ def _is_binary_content(data: bytes) -> bool:
 
 def _binary_notice(path: str, size: int, reason: str) -> str:
     return (
-        f"[Trellis: not inlined (binary file) — "
+        f"[Omtre: not inlined (binary file) — "
         f"{path} ({size} bytes): {reason}]"
     )
 
 
 def _index_notice(path: str, size: int, reason: str) -> str:
     return (
-        f"[Trellis: not inlined (total context limit reached) — "
+        f"[Omtre: not inlined (total context limit reached) — "
         f"{path} ({size} bytes): {reason}]"
     )
 
@@ -401,7 +401,7 @@ def read_jsonl_entries(base_path: str, jsonl_path: str) -> list[dict]:
         {"file": "path/to/dir/", "type": "directory", "reason": "..."}
         {"_example": "..."}          # legacy placeholder — skipped (no `file` field)
 
-    Rows without a ``file`` field (e.g. the placeholder line older Trellis
+    Rows without a ``file`` field (e.g. the placeholder line older Omtre
     versions wrote at ``task.py create`` time) are skipped silently. If the
     resulting entry list is empty, a stderr warning is emitted so the operator
     can debug missing context.
@@ -499,9 +499,9 @@ def get_agent_context(
         # the prompt itself so the sub-agent compensates instead of assuming
         # the spec context was complete.
         return (
-            f"[Trellis] {agent_jsonl} has no curated entries, so no spec/research "
+            f"[Omtre] {agent_jsonl} has no curated entries, so no spec/research "
             "context was injected. Before working, read the guidelines relevant "
-            "to the code you will touch under .trellis/spec/, and treat the task "
+            "to the code you will touch under .omtre/spec/, and treat the task "
             "artifacts below as the only prepared context."
         )
     return "\n\n".join(blocks)
@@ -648,7 +648,7 @@ def get_finish_context(repo_root: str, task_dir: str) -> str:
 
 def build_implement_prompt(original_prompt: str, context: str) -> str:
     """Build complete prompt for Implement"""
-    return f"""<!-- trellis-hook-injected -->
+    return f"""<!-- omtre-hook-injected -->
 # Implement Agent Task
 
 You are the Implement Agent in the Multi-Agent Pipeline.
@@ -683,7 +683,7 @@ All the information you need has been prepared for you:
 
 def build_check_prompt(original_prompt: str, context: str) -> str:
     """Build complete prompt for Check"""
-    return f"""<!-- trellis-hook-injected -->
+    return f"""<!-- omtre-hook-injected -->
 # Check Agent Task
 
 You are the Check Agent in the Multi-Agent Pipeline (code and cross-layer checker).
@@ -718,7 +718,7 @@ All check specs and dev specs you need:
 
 def build_finish_prompt(original_prompt: str, context: str) -> str:
     """Build complete prompt for Finish (final check before PR)"""
-    return f"""<!-- trellis-hook-injected -->
+    return f"""<!-- omtre-hook-injected -->
 # Finish Agent Task
 
 You are performing the final check before creating a PR.
@@ -880,7 +880,7 @@ def _hook_event_name(input_data: dict) -> str:
 
 
 def _codex_subagent_type(input_data: dict) -> str:
-    """Return a Trellis Codex agent type only for a native start event."""
+    """Return an Omtre Codex agent type only for a native start event."""
     if _hook_event_name(input_data) != "SubagentStart":
         return ""
     agent_type = _string_value(
@@ -895,13 +895,13 @@ def build_codex_subagent_context(
     context: str,
 ) -> str:
     """Build developer context for a native, already-dispatched Codex role."""
-    role = subagent_type.removeprefix("trellis-")
-    return f"""<!-- trellis-hook-injected -->
-# Trellis Native {role.title()} Subagent
+    role = subagent_type.removeprefix("omtre-")
+    return f"""<!-- omtre-hook-injected -->
+# Omtre Native {role.title()} Subagent
 
 You are the dispatched `{subagent_type}` role for this task. Perform that role
 directly; do not follow main-session dispatch or wait instructions, and do not
-spawn another Trellis subagent.
+spawn another Omtre subagent.
 
 Active task: {task_dir}
 
@@ -911,7 +911,7 @@ Active task: {task_dir}
 
 
 def _handle_codex_subagent_start(input_data: dict) -> None:
-    """Emit Codex developer context for a recognised native Trellis subagent.
+    """Emit Codex developer context for a recognised native Omtre subagent.
 
     The event supplies the parent session id. Disabling the generic
     single-session fallback is essential here: native starts must never borrow
@@ -1090,7 +1090,7 @@ def _parse_hook_input(input_data: dict) -> tuple[str, str, dict]:
 
 
 def main():
-    if os.environ.get("TRELLIS_HOOKS") == "0" or os.environ.get("TRELLIS_DISABLE_HOOKS") == "1":
+    if os.environ.get("OMTRE_HOOKS") == "0" or os.environ.get("OMTRE_DISABLE_HOOKS") == "1":
         sys.exit(0)
 
     try:
@@ -1134,15 +1134,15 @@ def main():
             sys.exit(0)
         # Contain the pointer before reading anything through it. `task.py` now
         # refuses to store a ref that leaves the repo, but a session file
-        # written before that fix can still hold one, and `trellis update`
+        # written before that fix can still hold one, and `omtre update`
         # does not rewrite session files — so a poisoned pointer outlives the
         # upgrade that closed the writer. This is the last hop before the
         # task's prd.md/design.md reach the model prompt, so it checks again.
         try:
             root_real = os.path.realpath(repo_root)
-            # `.trellis` may itself be a symlink into a store outside the
+            # `.omtre` may itself be a symlink into a store outside the
             # repo (#567); its real location is a second legitimate base.
-            workflow_real = os.path.realpath(os.path.join(repo_root, ".trellis"))
+            workflow_real = os.path.realpath(os.path.join(repo_root, DIR_WORKFLOW))
             task_dir_full = os.path.realpath(os.path.join(repo_root, task_dir))
             if not _real_path_contained(root_real, task_dir_full) and not (
                 _real_path_contained(workflow_real, task_dir_full)

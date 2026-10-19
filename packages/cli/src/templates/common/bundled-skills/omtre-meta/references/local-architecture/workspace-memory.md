@@ -1,11 +1,11 @@
 # Local Workspace Memory System
 
-`.trellis/workspace/` stores cross-session memory. Its purpose is to let AI and humans understand what happened before across different windows and different days.
+`.omtre/workspace/` stores cross-session memory. Its purpose is to let AI and humans understand what happened before across different windows and different days.
 
 ## Directory Structure
 
 ```text
-.trellis/workspace/
+.omtre/workspace/
 ├── index.md
 └── <developer>/
     ├── index.md
@@ -15,20 +15,20 @@
 
 | File | Purpose |
 | --- | --- |
-| `.trellis/.developer` | Current developer identity. |
-| `.trellis/workspace/index.md` | Global workspace overview. |
-| `.trellis/workspace/<developer>/index.md` | Session index for a developer. |
-| `.trellis/workspace/<developer>/journal-N.md` | Session journal. |
+| `.omtre/.developer` | Current developer identity. |
+| `.omtre/workspace/index.md` | Global workspace overview. |
+| `.omtre/workspace/<developer>/index.md` | Session index for a developer. |
+| `.omtre/workspace/<developer>/journal-N.md` | Session journal. |
 
 ## Developer Identity
 
 Run this the first time:
 
 ```bash
-python3 ./.trellis/scripts/init_developer.py <name>
+python3 ./.omtre/scripts/init_developer.py <name>
 ```
 
-This creates `.trellis/.developer` and the corresponding workspace directory. The AI should not change developer identity casually; if the identity is wrong, first confirm who is using the current project.
+This creates `.omtre/.developer` and the corresponding workspace directory. The AI should not change developer identity casually; if the identity is wrong, first confirm who is using the current project.
 
 ## Journal
 
@@ -37,7 +37,7 @@ This creates `.trellis/.developer` and the corresponding workspace directory. Th
 Common command for recording a session:
 
 ```bash
-python3 ./.trellis/scripts/add_session.py \
+python3 ./.omtre/scripts/add_session.py \
   --title "Session title" \
   --summary "What changed" \
   --commit "abc1234"
@@ -49,9 +49,9 @@ Planning or review work without a commit can also be recorded by using `--no-com
 
 | System | What it stores |
 | --- | --- |
-| `.trellis/tasks/` | Requirements, design, research, and state for a specific task. |
-| `.trellis/workspace/` | Work records across tasks and sessions. |
-| `.trellis/spec/` | Engineering knowledge preserved as long-term conventions. |
+| `.omtre/tasks/` | Requirements, design, research, and state for a specific task. |
+| `.omtre/workspace/` | Work records across tasks and sessions. |
+| `.omtre/spec/` | Engineering knowledge preserved as long-term conventions. |
 
 If information is only useful for the current task, put it in the task directory.  
 If information describes what happened in the current session, put it in the workspace journal.  
@@ -61,10 +61,10 @@ If information should be followed every time code is written in the future, put 
 
 | Need | Edit location |
 | --- | --- |
-| Change maximum journal lines | `max_journal_lines` in `.trellis/config.yaml`. |
-| Change session auto-commit message | `session_commit_message` in `.trellis/config.yaml`. |
-| Change session content format | `.trellis/scripts/add_session.py`. |
-| Change how workspace is displayed in context | `.trellis/scripts/common/session_context.py`. |
+| Change maximum journal lines | `max_journal_lines` in `.omtre/config.yaml`. |
+| Change session auto-commit message | `session_commit_message` in `.omtre/config.yaml`. |
+| Change session content format | `.omtre/scripts/add_session.py`. |
+| Change how workspace is displayed in context | `.omtre/scripts/common/session_context.py`. |
 
 ## AI Usage Rules
 

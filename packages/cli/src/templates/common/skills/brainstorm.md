@@ -1,4 +1,4 @@
-# Trellis Brainstorm
+# OMTRE Brainstorm
 
 ## Non-Negotiable Planning Contract
 
@@ -24,12 +24,12 @@ Use this skill during Phase 1 planning to turn the user's request into clear req
 
 ## Preconditions
 
-Use this skill only once task creation is cleared per the repo's autonomy mode (`autonomy: gated` = consent given; `hands-off` = auto-passed) and the user is ready to enter Trellis planning.
+Use this skill only once task creation is cleared per the repo's autonomy mode (`autonomy: gated` = consent given; `hands-off` = auto-passed) and the user is ready to enter OMTRE planning.
 
 If no task exists yet, create one:
 
 ```bash
-TASK_DIR=$({{PYTHON_CMD}} ./.trellis/scripts/task.py create "<short task title>" --description "<one-line summary>" --slug <slug>)
+TASK_DIR=$({{PYTHON_CMD}} ./.omtre/scripts/task.py create "<short task title>" --description "<one-line summary>" --slug <slug>)
 ```
 
 Use a concise title from the user's request. Both the title and `--description` must be non-empty — `create` rejects blanks, and a record with either one empty is refused at archive. Use a slug without a date prefix. `task.py create` adds the `MM-DD-` directory prefix automatically.
@@ -42,7 +42,7 @@ Use a concise title from the user's request. Both the title and `--description` 
 2. Inspect available evidence before asking questions:
    - code, tests, fixtures, and configs
    - README files, docs, existing specs, and domain notes
-   - related Trellis tasks, research files, and session history when present
+   - related OMTRE tasks, research files, and session history when present
 3. Separate what you found into:
    - confirmed facts
    - product intent still needed from the user
@@ -162,7 +162,7 @@ The final planning summary must show Goal, In Scope, Out of Scope, Acceptance Cr
 
 Lightweight tasks may have only `prd.md`. Complex tasks must have `prd.md`, `design.md`, and `implement.md` before `task.py start`.
 
-`implement.md` is not a replacement for `implement.jsonl`. On sub-agent-dispatch workflows, `implement.jsonl` and `check.jsonl` must each contain at least one real spec/research entry before `task.py start`; an empty manifest, or one holding only a legacy `_example` placeholder row, does not count. Inline workflows skip this JSONL gate because Phase 2 loads context through `trellis-before-dev`.
+`implement.md` is not a replacement for `implement.jsonl`. On sub-agent-dispatch workflows, `implement.jsonl` and `check.jsonl` must each contain at least one real spec/research entry before `task.py start`; an empty manifest, or one holding only a legacy `_example` placeholder row, does not count. Inline workflows skip this JSONL gate because Phase 2 loads context through `omtre-before-dev`.
 
 ## PRD Convergence Pass
 

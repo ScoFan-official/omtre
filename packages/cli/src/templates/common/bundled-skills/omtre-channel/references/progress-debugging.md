@@ -6,7 +6,7 @@ for them before grepping `events.jsonl` by hand.
 
 ## Pretty vs `--raw`
 
-`trellis channel messages <channel>` renders a compact, human-readable view:
+`omtre channel messages <channel>` renders a compact, human-readable view:
 timestamps, identities, kind, and a short body. It is meant for operators
 scanning a channel, not for diagnostics.
 
@@ -24,12 +24,12 @@ is dropped.
 
 ```bash
 # Pretty (operator view)
-trellis channel messages <channel> --kind done --last 10
-trellis channel messages <channel> --kind error --last 10
+omtre channel messages <channel> --kind done --last 10
+omtre channel messages <channel> --kind error --last 10
 
 # Raw (diagnostic view) — one JSON per line
-trellis channel messages <channel> --raw --kind progress --last 20
-trellis channel messages <channel> --raw --last 50
+omtre channel messages <channel> --raw --kind progress --last 20
+omtre channel messages <channel> --raw --last 50
 ```
 
 Rule of thumb: never diagnose a worker from a truncated progress line.
@@ -40,13 +40,13 @@ To reconstruct what a model actually streamed during a turn, concatenate
 `detail.text_delta` from progress events:
 
 ```bash
-trellis channel messages <channel> --raw --kind progress --last 80 \
+omtre channel messages <channel> --raw --kind progress --last 80 \
   | python3 -c 'import json,sys; [print((json.loads(l).get("detail") or {}).get("text_delta",""), end="") for l in sys.stdin if l.strip()]'
 ```
 
 ## Stalled Worker Diagnosis
 
-Symptom: `trellis channel list` shows the worker as running, but no new
+Symptom: `omtre channel list` shows the worker as running, but no new
 events appear in `messages` and `wait` keeps timing out.
 
 Triage order:
@@ -55,8 +55,8 @@ Triage order:
    not sure which bucket the channel lives in.
 
    ```bash
-   trellis channel list --all --all-projects
-   CHAN=~/.trellis/channels/<bucket>/<channel>
+   omtre channel list --all --all-projects
+   CHAN=~/.omtre/channels/<bucket>/<channel>
    ```
 
 2. **Confirm the supervisor and worker PIDs are alive.**
@@ -70,7 +70,7 @@ Triage order:
 
    If the supervisor PID is gone but the channel still lists the worker,
    you have a ghost entry — clean it with
-   `trellis channel kill <name> --as <worker> --force`.
+   `omtre channel kill <name> --as <worker> --force`.
 
 3. **Tail the worker log.** This is the canonical place to see provider /
    MCP / tool startup output that never makes it onto the channel.
@@ -83,7 +83,7 @@ Triage order:
    `message`/`done` is usually mid-stream or blocked on a tool call:
 
    ```bash
-   trellis channel messages <channel> --raw --last 50
+   omtre channel messages <channel> --raw --last 50
    ```
 
 Common "alive but silent" causes:
@@ -111,7 +111,7 @@ Progress events are **noisy** by design. `wait` ignores them unless you
 pass `--include-progress`. When you do want to see them, prefer:
 
 ```bash
-trellis channel messages <channel> --raw --kind progress --last 80
+omtre channel messages <channel> --raw --kind progress --last 80
 ```
 
 A stream that emits progress at a steady cadence but never closes with
@@ -131,10 +131,10 @@ inspect the worker log for the subprocess.
 Useful filters:
 
 ```bash
-trellis channel wait T --as main --from check --kind done --timeout 15m
-trellis channel wait T --as main --from check,check-cx --kind done --all --timeout 15m
-trellis channel wait T --as worker --tag interrupt --timeout 1h
-trellis channel wait T --as main --thread release-note --action status --timeout 10m
+omtre channel wait T --as main --from check --kind done --timeout 15m
+omtre channel wait T --as main --from check,check-cx --kind done --all --timeout 15m
+omtre channel wait T --as worker --tag interrupt --timeout 1h
+omtre channel wait T --as main --thread release-note --action status --timeout 10m
 ```
 
 Exit codes: `0` matched, `124` timeout, `1`/`2` errors. On `wait --all`
@@ -174,16 +174,16 @@ Use the forum-aware views instead:
 
 ```bash
 # List logical threads inside the forum channel
-trellis channel forum list <channel>
+omtre channel forum list <channel>
 
 # Inspect one thread end-to-end
-trellis channel thread show <channel> <thread>
+omtre channel thread show <channel> <thread>
 
 # Replay messages for a thread (supports --raw, --kind, --last)
-trellis channel messages <channel> --thread <thread> --raw --last 100
+omtre channel messages <channel> --thread <thread> --raw --last 100
 
 # What a specific worker still has pending
-trellis channel context <channel> --as <worker>
+omtre channel context <channel> --as <worker>
 ```
 
 Direct reads of `events.jsonl` are reserved for the case where the CLI
@@ -194,19 +194,19 @@ diffing against `<worker>.inbox-cursor` while debugging the supervisor.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `trellis: command not found` | CLI not installed globally | `npm install -g @mindfoldhq/trellis` |
+| `omtre: command not found` | CLI not installed globally | `npm install -g omtre` |
 | `wait` exits immediately | wrong filter or identity collision | use distinct `--as`, inspect raw messages |
 | zsh errors on message text | shell interpreted punctuation | use `--stdin` or `--text-file` |
 | progress line is cut off | pretty output truncation | use `messages --raw --kind progress` |
 | worker never speaks | provider startup / prompt / MCP delay | inspect `<worker>.log`, `ps`, raw events |
 | channel not found in another cwd | project bucket mismatch | `cd` to project, use `--scope global`, or `list --all-projects` |
-| ghost worker in list | supervisor died without cleanup | `trellis channel kill <name> --as <worker> --force` |
+| ghost worker in list | supervisor died without cleanup | `omtre channel kill <name> --as <worker> --force` |
 | forum thread looks scrambled | parsed `events.jsonl` directly | use `forum`, `thread`, `messages --thread` |
 
 ## Storage Layout
 
 ```text
-~/.trellis/channels/
+~/.omtre/channels/
 └── <bucket>/
     └── <channel-name>/
         ├── events.jsonl

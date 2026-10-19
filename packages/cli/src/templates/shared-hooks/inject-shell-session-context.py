@@ -32,7 +32,7 @@ if callable(_stdin_reconfigure):
         pass
 
 
-DIR_WORKFLOW = ".trellis"
+DIR_WORKFLOW = ".omtre"
 DIR_RUNTIME = ".runtime"
 DIR_SHELL_TICKETS = "shell-tickets"
 SESSION_SUBCOMMANDS = {"start", "current", "finish"}
@@ -52,7 +52,7 @@ CONTEXT_IDENTITY_KEYS = (
 # CONTEXT_IDENTITY_KEYS above.
 TOOL_INPUT_KEYS = ("tool_input", "toolInput")
 # Answering a shell-execution event with an explicit allow is what keeps
-# Cursor from re-prompting for a command Trellis itself asked for. Tool-call
+# Cursor from re-prompting for a command omtre itself asked for. Tool-call
 # hosts read a different response schema, so they get no answer at all rather
 # than a key they would have to ignore.
 SHELL_EVENT_RESPONSE = {"permission": "allow"}
@@ -65,11 +65,11 @@ def _string_value(value: Any) -> str | None:
     return None
 
 
-def _resolve_trellis_root(hook_input: dict[str, Any]) -> Path | None:
+def _resolve_omtre_root(hook_input: dict[str, Any]) -> Path | None:
     """Locate the project root, trying the payload cwd and then our own.
 
     Hosts disagree about what `cwd` means. CodeBuddy IDE 4.10.4 sends `"/"` for
-    every PreToolUse event, so trusting the payload alone finds no `.trellis`
+    every PreToolUse event, so trusting the payload alone finds no `.omtre`
     and the bridge silently does nothing — the hook is invoked, writes no
     ticket, and `task.py start` degrades. Observed with a wildcard probe:
 
@@ -90,13 +90,13 @@ def _resolve_trellis_root(hook_input: dict[str, Any]) -> Path | None:
         pass
 
     for candidate in candidates:
-        root = _find_trellis_root(candidate)
+        root = _find_omtre_root(candidate)
         if root is not None:
             return root
     return None
 
 
-def _find_trellis_root(start: Path) -> Path | None:
+def _find_omtre_root(start: Path) -> Path | None:
     current = start.resolve()
     while True:
         if (current / DIR_WORKFLOW).is_dir():
@@ -250,7 +250,7 @@ def _write_ticket(
 
 
 def main() -> int:
-    if os.environ.get("TRELLIS_HOOKS") == "0" or os.environ.get("TRELLIS_DISABLE_HOOKS") == "1":
+    if os.environ.get("OMTRE_HOOKS") == "0" or os.environ.get("OMTRE_DISABLE_HOOKS") == "1":
         return 0
 
     try:
@@ -265,7 +265,7 @@ def main() -> int:
     if not subcommands:
         return 0
 
-    root = _resolve_trellis_root(hook_input)
+    root = _resolve_omtre_root(hook_input)
     if root is None:
         return 0
 

@@ -21,11 +21,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = getOmtreTemplatePath("scripts");
 const SHARED_HOOKS = path.resolve(
   __dirname,
   "../../src/templates/shared-hooks",
@@ -47,19 +45,19 @@ function findPython(): string | null {
 const PYTHON = findPython();
 
 function setupRepo(tmp: string): void {
-  fs.mkdirSync(path.join(tmp, ".trellis", "scripts"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(tmp, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(tmp, ".omtre", "scripts"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(tmp, ".omtre", "scripts"), {
     recursive: true,
   });
   fs.writeFileSync(
-    path.join(tmp, ".trellis", "workflow.md"),
+    path.join(tmp, ".omtre", "workflow.md"),
     [
       "# Workflow",
       "",
       "## Phase Index",
       "",
       "[workflow-state:no_task]",
-      "No active task. Classify the turn before creating a Trellis task.",
+      "No active task. Classify the turn before creating an Omtre task.",
       "[/workflow-state:no_task]",
       "",
       "[workflow-state:planning]",
@@ -77,7 +75,7 @@ function writeTaskFixture(
   dirName: string,
   data: Record<string, unknown> = {},
 ): void {
-  const dir = path.join(tmp, ".trellis", "tasks", dirName);
+  const dir = path.join(tmp, ".omtre", "tasks", dirName);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(
     path.join(dir, "task.json"),
@@ -99,7 +97,7 @@ function writeTaskFixture(
 function hookEnv(tmp: string, platformVar: string): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    TRELLIS_CONTEXT_ID: "",
+    OMTRE_CONTEXT_ID: "",
   };
   // A leaked host identity would pre-empt the fixture's session key or
   // platform detection — drop the keys this test can legitimately see.
@@ -147,7 +145,7 @@ describe.skipIf(PYTHON === null)(
     let tmp: string;
 
     beforeEach(() => {
-      tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-next-itest-"));
+      tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-next-itest-"));
       setupRepo(tmp);
     });
 
@@ -211,19 +209,19 @@ describe.skipIf(PYTHON === null)(
 
     it("never adds the line to an active-task turn", () => {
       writeTaskFixture(tmp, "01-alpha");
-      fs.mkdirSync(path.join(tmp, ".trellis", ".runtime", "sessions"), {
+      fs.mkdirSync(path.join(tmp, ".omtre", ".runtime", "sessions"), {
         recursive: true,
       });
       fs.writeFileSync(
         path.join(
           tmp,
-          ".trellis",
+          ".omtre",
           ".runtime",
           "sessions",
           "claude_test-session.json",
         ),
         JSON.stringify({
-          current_task: ".trellis/tasks/01-alpha",
+          current_task: ".omtre/tasks/01-alpha",
           platform: "claude",
         }),
         "utf-8",
@@ -251,7 +249,7 @@ describe.skipIf(PYTHON === null)(
 
     it("degrades to no pointer when common/frontier.py is absent (older scripts tree)", () => {
       writeTaskFixture(tmp, "01-alpha", { title: "Alpha ticket" });
-      fs.rmSync(path.join(tmp, ".trellis", "scripts", "common", "frontier.py"));
+      fs.rmSync(path.join(tmp, ".omtre", "scripts", "common", "frontier.py"));
 
       const { stdout, status } = runHook(tmp);
 
