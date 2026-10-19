@@ -3,7 +3,7 @@
   "name": "rename-constants-and-pkg",
   "title": "改名施工 1：集中常量、包名与二进制入口收拢",
   "description": "补齐主目录、文件名、标记、前缀、斜杠命令命名空间常量并切换为 .omtre/OMTRE_*/omtre/omt，更新包名与二进制入口",
-  "status": "planning",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "cli",
@@ -11,8 +11,8 @@
   "creator": "qihaonan",
   "assignee": "qihaonan",
   "createdAt": "2026-10-19",
-  "completedAt": null,
-  "branch": null,
+  "completedAt": "2026-10-19",
+  "branch": "main",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -25,5 +25,9 @@
   "meta": {
     "ticket_type": "task",
     "triage": "ready-for-agent"
+  },
+  "verify_skipped": {
+    "reason": "Verified via pnpm build:core, pnpm typecheck, pnpm lint, and paths.test.ts (27/27)",
+    "at": "2026-10-19T05:47:41Z"
   }
 }
