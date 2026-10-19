@@ -4,8 +4,8 @@
     {
       "id": "agent-workflow",
       "type": "spec",
-      "name": "Agent Workflow (mattpocock × Trellis)",
-      "description": "Issue-tracker contract, triage roles, domain-docs conventions and the frontend-craft contract (impeccable binding + design-review gate) that let mattpocock/skills and impeccable treat .trellis/ as their state. Includes a phase-map guide; spec delivery is index-driven (the session-start hook injects the packages' index.md files).",
+      "name": "Agent Workflow (mattpocock × omtre)",
+      "description": "Issue-tracker contract, triage roles, domain-docs conventions and the frontend-craft contract (impeccable binding + design-review gate) that let mattpocock/skills and impeccable treat .omtre/ as their state. Includes a phase-map guide; spec delivery is index-driven (the session-start hook injects the packages' index.md files).",
       "path": "marketplace/specs/agent-workflow",
       "tags": ["skills", "mattpocock", "impeccable", "frontend", "issue-tracker", "triage", "agents", "specs"]
     },
@@ -34,20 +34,20 @@
       "tags": ["cloudflare", "workers", "hono", "drizzle", "turso", "react", "typescript"]
     },
     {
-      "id": "trellis-meta",
+      "id": "omtre-meta",
       "type": "skill",
-      "name": "Trellis Meta Skill",
-      "description": "Meta-skill for understanding and customizing Trellis workflows",
-      "path": "marketplace/skills/trellis-meta",
-      "tags": ["trellis", "meta", "workflow", "customization"]
+      "name": "omtre Meta Skill",
+      "description": "Meta-skill for understanding and customizing omtre workflows",
+      "path": "marketplace/skills/omtre-meta",
+      "tags": ["omtre", "meta", "workflow", "customization"]
     },
     {
-      "id": "trellis-spec-bootstarp",
+      "id": "omtre-spec-bootstarp",
       "type": "skill",
-      "name": "Trellis Spec Bootstarp",
-      "description": "Platform-neutral workflow for bootstrapping project-specific Trellis coding specs",
-      "path": "marketplace/skills/trellis-spec-bootstarp",
-      "tags": ["trellis", "spec", "bootstrap", "codebase-analysis"]
+      "name": "omtre Spec Bootstarp",
+      "description": "Platform-neutral workflow for bootstrapping project-specific omtre coding specs",
+      "path": "marketplace/skills/omtre-spec-bootstarp",
+      "tags": ["omtre", "spec", "bootstrap", "codebase-analysis"]
     },
     {
       "id": "frontend-fullchain-optimization",
@@ -60,8 +60,8 @@
     {
       "id": "native",
       "type": "workflow",
-      "name": "Native Trellis Workflow",
-      "description": "Default Trellis Plan / Execute / Finish workflow with native sub-agent and inline platform branches",
+      "name": "Native omtre Workflow",
+      "description": "Default omtre Plan / Execute / Finish workflow with native sub-agent and inline platform branches",
       "path": "workflows/native/workflow.md",
       "tags": ["workflow", "native", "default"]
     },
@@ -69,7 +69,7 @@
       "id": "tdd",
       "type": "workflow",
       "name": "TDD Workflow",
-      "description": "Trellis workflow variant that drives Phase 2 with one red / green / refactor behavior slice at a time",
+      "description": "omtre workflow variant that drives Phase 2 with one red / green / refactor behavior slice at a time",
       "path": "workflows/tdd/workflow.md",
       "tags": ["workflow", "tdd", "testing"]
     },
@@ -77,7 +77,7 @@
       "id": "channel-driven-subagent-dispatch",
       "type": "workflow",
       "name": "Channel-Driven Sub-Agent Dispatch",
-      "description": "Trellis workflow variant where the main session coordinates implement/check workers through trellis channel",
+      "description": "omtre workflow variant where the main session coordinates implement/check workers through omtre channel",
       "path": "workflows/channel-driven-subagent-dispatch/workflow.md",
       "tags": ["workflow", "channel", "sub-agent", "dogfood"]
     }

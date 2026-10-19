@@ -1,6 +1,6 @@
 ---
 name: hygiene-sweep
-description: "Read-only inventory audit inside a declared scope prefix: find dead code, duplicated logic and oversized files, write a durable findings list, never touch product code. Use when the user asks for 大扫除 / 清理 / dead code sweep / duplicate logic / hygiene audit on a module, or when a cleanup ticket needs a findings list before any edit. Approved deletions are executed in a separate cleanup ticket. The acceptance contract is .trellis/spec/agents/hygiene.md. Requires .trellis/ for the task-dir report path. Without a task it writes to .scratch/."
+description: "Read-only inventory audit inside a declared scope prefix: find dead code, duplicated logic and oversized files, write a durable findings list, never touch product code. Use when the user asks for 大扫除 / 清理 / dead code sweep / duplicate logic / hygiene audit on a module, or when a cleanup ticket needs a findings list before any edit. Approved deletions are executed in a separate cleanup ticket. The acceptance contract is .omtre/spec/agents/hygiene.md. Requires .omtre/ for the task-dir report path. Without a task it writes to .scratch/."
 ---
 
 # hygiene-sweep — read-only inventory audit
@@ -59,5 +59,5 @@ edits product code.
 - After the user rules on the list, open a cleanup child ticket
   (`blocked_by` this ticket) and execute item by item under `simplify`'s
   behavior-preserving discipline.
-- The cleanup ticket is accepted against `.trellis/spec/agents/hygiene.md`:
+- The cleanup ticket is accepted against `.omtre/spec/agents/hygiene.md`:
   the diff may only delete, reorder, rename, or equivalently refactor.

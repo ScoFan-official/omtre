@@ -1,6 +1,6 @@
 # Development Workflow
 
-User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).
+User-facing text and instruction files follow `.omtre/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).
 
 ---
 
@@ -14,86 +14,86 @@ User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (S
 
 ---
 
-## Trellis System
+## omtre System
 
 ### Developer Identity
 
 On first use, initialize your identity:
 
 ```bash
-python3 ./.trellis/scripts/init_developer.py <your-name>
+python3 ./.omtre/scripts/init_developer.py <your-name>
 ```
 
-Creates `.trellis/.developer` (gitignored) + `.trellis/workspace/<your-name>/`.
+Creates `.omtre/.developer` (gitignored) + `.omtre/workspace/<your-name>/`.
 
 ### Spec System
 
-`.trellis/spec/` holds coding guidelines organized by package and layer.
+`.omtre/spec/` holds coding guidelines organized by package and layer.
 
-- `.trellis/spec/<package>/<layer>/index.md` — entry point with **Pre-Development Checklist** + **Quality Check**. Actual guidelines live in the `.md` files it points to.
-- `.trellis/spec/guides/index.md` — cross-package thinking guides.
+- `.omtre/spec/<package>/<layer>/index.md` — entry point with **Pre-Development Checklist** + **Quality Check**. Actual guidelines live in the `.md` files it points to.
+- `.omtre/spec/guides/index.md` — cross-package thinking guides.
 
 ```bash
-python3 ./.trellis/scripts/get_context.py --mode packages   # list packages / layers
+python3 ./.omtre/scripts/get_context.py --mode packages   # list packages / layers
 ```
 
 **When to update spec**: new pattern/convention found · bug-fix prevention to codify · new technical decision.
 
 ### Task System
 
-Every task has its own directory under `.trellis/tasks/{MM-DD-name}/` holding `task.json`, `prd.md`, optional `design.md`, optional `implement.md`, optional `research/`, and context manifests (`implement.jsonl`, `check.jsonl`) for sub-agent-capable platforms.
+Every task has its own directory under `.omtre/tasks/{MM-DD-name}/` holding `task.json`, `prd.md`, optional `design.md`, optional `implement.md`, optional `research/`, and context manifests (`implement.jsonl`, `check.jsonl`) for sub-agent-capable platforms.
 
 ```bash
 # Task lifecycle
-python3 ./.trellis/scripts/task.py create "<title>" [--slug <name>] [--parent <dir>]
-python3 ./.trellis/scripts/task.py start <name>          # set active task (session-scoped when available)
-python3 ./.trellis/scripts/task.py current --source      # show active task and source
-python3 ./.trellis/scripts/task.py finish                # clear active task (triggers after_finish hooks)
-python3 ./.trellis/scripts/task.py archive <name>        # move to archive/{year-month}/
-python3 ./.trellis/scripts/task.py list [--mine] [--status <s>]
-python3 ./.trellis/scripts/task.py list-archive
+python3 ./.omtre/scripts/task.py create "<title>" [--slug <name>] [--parent <dir>]
+python3 ./.omtre/scripts/task.py start <name>          # set active task (session-scoped when available)
+python3 ./.omtre/scripts/task.py current --source      # show active task and source
+python3 ./.omtre/scripts/task.py finish                # clear active task (triggers after_finish hooks)
+python3 ./.omtre/scripts/task.py archive <name>        # move to archive/{year-month}/
+python3 ./.omtre/scripts/task.py list [--mine] [--status <s>]
+python3 ./.omtre/scripts/task.py list-archive
 
 # Code-spec context (injected into implement/check agents via JSONL).
 # `implement.jsonl` / `check.jsonl` are seeded on `task create` for sub-agent-capable
 # platforms; the AI curates real spec + research entries during planning when needed.
-python3 ./.trellis/scripts/task.py add-context <name> <action> <file> <reason>
-python3 ./.trellis/scripts/task.py list-context <name> [action]
-python3 ./.trellis/scripts/task.py validate <name>
+python3 ./.omtre/scripts/task.py add-context <name> <action> <file> <reason>
+python3 ./.omtre/scripts/task.py list-context <name> [action]
+python3 ./.omtre/scripts/task.py validate <name>
 
 # Task metadata
-python3 ./.trellis/scripts/task.py set-branch <name> <branch>
-python3 ./.trellis/scripts/task.py set-base-branch <name> <branch>    # PR target
-python3 ./.trellis/scripts/task.py set-scope <name> <scope>
+python3 ./.omtre/scripts/task.py set-branch <name> <branch>
+python3 ./.omtre/scripts/task.py set-base-branch <name> <branch>    # PR target
+python3 ./.omtre/scripts/task.py set-scope <name> <scope>
 
 # Hierarchy (parent/child)
-python3 ./.trellis/scripts/task.py add-subtask <parent> <child>
-python3 ./.trellis/scripts/task.py remove-subtask <parent> <child>
+python3 ./.omtre/scripts/task.py add-subtask <parent> <child>
+python3 ./.omtre/scripts/task.py remove-subtask <parent> <child>
 
 # PR creation
-python3 ./.trellis/scripts/task.py create-pr [name] [--dry-run]
+python3 ./.omtre/scripts/task.py create-pr [name] [--dry-run]
 ```
 
-> Run `python3 ./.trellis/scripts/task.py --help` to see the authoritative, up-to-date list.
+> Run `python3 ./.omtre/scripts/task.py --help` to see the authoritative, up-to-date list.
 
-**Current-task mechanism**: `task.py create` creates the task directory and (when session identity is available) auto-sets the per-session active-task pointer so the planning breadcrumb fires immediately. `task.py start` writes the same pointer (idempotent if already set) and flips `task.json.status` from `planning` to `in_progress`. State is stored under `.trellis/.runtime/sessions/`. If no context key is available from hook input, `TRELLIS_CONTEXT_ID`, or a platform-native session environment variable, there is no active task and `task.py start` fails with a session identity hint. `task.py finish` deletes the current session file (status unchanged). `task.py archive <task>` writes `status=completed`, moves the directory to `archive/`, and deletes any runtime session files that still point at the archived task.
+**Current-task mechanism**: `task.py create` creates the task directory and (when session identity is available) auto-sets the per-session active-task pointer so the planning breadcrumb fires immediately. `task.py start` writes the same pointer (idempotent if already set) and flips `task.json.status` from `planning` to `in_progress`. State is stored under `.omtre/.runtime/sessions/`. If no context key is available from hook input, `OMTRE_CONTEXT_ID`, or a platform-native session environment variable, there is no active task and `task.py start` fails with a session identity hint. `task.py finish` deletes the current session file (status unchanged). `task.py archive <task>` writes `status=completed`, moves the directory to `archive/`, and deletes any runtime session files that still point at the archived task.
 
 ### Workspace System
 
-Records every AI session for cross-session tracking under `.trellis/workspace/<developer>/`.
+Records every AI session for cross-session tracking under `.omtre/workspace/<developer>/`.
 
 - `journal-N.md` — session log. **Max 2000 lines per file**; a new `journal-(N+1).md` is auto-created when exceeded.
 - `index.md` — personal index (total sessions, last active).
 
 ```bash
-python3 ./.trellis/scripts/add_session.py --title "Title" --commit "hash" --summary "Summary"
+python3 ./.omtre/scripts/add_session.py --title "Title" --commit "hash" --summary "Summary"
 ```
 
 ### Context Script
 
 ```bash
-python3 ./.trellis/scripts/get_context.py                            # full session runtime
-python3 ./.trellis/scripts/get_context.py --mode packages            # available packages + spec layers
-python3 ./.trellis/scripts/get_context.py --mode phase --step <X.Y>  # detailed guide for a workflow step
+python3 ./.omtre/scripts/get_context.py                            # full session runtime
+python3 ./.omtre/scripts/get_context.py --mode packages            # available packages + spec layers
+python3 ./.omtre/scripts/get_context.py --mode phase --step <X.Y>  # detailed guide for a workflow step
 ```
 
 ---
@@ -137,10 +137,10 @@ python3 ./.trellis/scripts/get_context.py --mode phase --step <X.Y>  # detailed 
   Editing checklist:
     - When you change a [workflow-state:STATUS] block, also check the
       matching phase's `[required · once]` walkthrough steps for sync
-    - Run `trellis update` after editing to push the new bodies to
+    - Run `omtre update` after editing to push the new bodies to
       downstream user projects (block-level managed replacement)
     - Full runtime contract:
-      .trellis/spec/cli/backend/workflow-state-contract.md
+      .omtre/spec/cli/backend/workflow-state-contract.md
 -->
 
 ## Phase Index
@@ -153,8 +153,8 @@ Phase 3: Finish  → verify, update spec, commit, and wrap up
 
 ### Request Triage
 
-- Simple conversation or small task: ask only whether this turn should create a Trellis task. If the user says no, skip Trellis for this session.
-- Complex task: ask whether you may create a Trellis task and enter planning. If the user says no, do not do broad inline implementation; explain, clarify scope, or suggest a smaller split.
+- Simple conversation or small task: ask only whether this turn should create a omtre task. If the user says no, skip omtre for this session.
+- Complex task: ask whether you may create a omtre task and enter planning. If the user says no, do not do broad inline implementation; explain, clarify scope, or suggest a smaller split.
 - User approval to create a task is not approval to start implementation. Planning still happens first.
 
 ### Planning Artifacts
@@ -176,9 +176,9 @@ Create new children with `task.py create "<title>" --slug <name> --parent <paren
 <!-- Per-turn breadcrumb: shown when there is no active task (before Phase 1) -->
 
 [workflow-state:no_task]
-No active task. First classify the current turn and ask for task-creation consent before creating any Trellis task.
-Simple conversation / small task: ask only whether this turn should create a Trellis task. If the user says no, skip Trellis for this session.
-Complex task: ask the user if you can create a Trellis task and enter the planning phase. If the user says no, explain, clarify scope, or suggest a smaller split.
+No active task. First classify the current turn and ask for task-creation consent before creating any omtre task.
+Simple conversation / small task: ask only whether this turn should create a omtre task. If the user says no, skip omtre for this session.
+Complex task: ask the user if you can create a omtre task and enter the planning phase. If the user says no, explain, clarify scope, or suggest a smaller split.
 [/workflow-state:no_task]
 
 ### Phase 1: Plan
@@ -192,7 +192,7 @@ Complex task: ask the user if you can create a Trellis task and enter the planni
 <!-- Per-turn breadcrumb: shown throughout Phase 1 (status='planning') -->
 
 [workflow-state:planning]
-Load `trellis-brainstorm`; stay in planning.
+Load `omtre-brainstorm`; stay in planning.
 Lightweight: `prd.md` can be enough. Complex: finish `prd.md`, `design.md`, and `implement.md`; ask for review before `task.py start`.
 TDD planning gate: record observable behavior slices, the public interface under test, and mock boundaries before `task.py start`.
 Multi-deliverable scope: consider a parent task plus independently verifiable child tasks; dependencies must be written in child artifacts, not implied by tree position.
@@ -202,15 +202,15 @@ Sub-agent mode: curate `implement.jsonl` and `check.jsonl` as spec/research mani
 <!-- Per-turn breadcrumb: shown throughout Phase 1 when codex.dispatch_mode=inline.
      Codex-only opt-in alternate to [workflow-state:planning]. The main agent
      edits code directly in Phase 2, so jsonl curation is skipped —
-     the inline workflow loads `trellis-before-dev` instead of injecting JSONL
+     the inline workflow loads `omtre-before-dev` instead of injecting JSONL
      into a sub-agent. -->
 
 [workflow-state:planning-inline]
-Load `trellis-brainstorm`; stay in planning.
+Load `omtre-brainstorm`; stay in planning.
 Lightweight: `prd.md` can be enough. Complex: finish `prd.md`, `design.md`, and `implement.md`; ask for review before `task.py start`.
 TDD planning gate: record observable behavior slices, the public interface under test, and mock boundaries before `task.py start`.
 Multi-deliverable scope: consider a parent task plus independently verifiable child tasks; dependencies must be written in child artifacts, not implied by tree position.
-Inline mode: skip jsonl curation; Phase 2 reads artifacts/specs via `trellis-before-dev`.
+Inline mode: skip jsonl curation; Phase 2 reads artifacts/specs via `omtre-before-dev`.
 [/workflow-state:planning-inline]
 
 ### Phase 2: Execute
@@ -224,12 +224,12 @@ Inline mode: skip jsonl curation; Phase 2 reads artifacts/specs via `trellis-bef
      therefore must cover every required step from implementation through
      commit, including Phase 3.3 spec update and Phase 3.4 commit. -->
 
-Sub-agent dispatch protocol applies to all platforms and all sub-agents, including class-2 Codex/Copilot/Gemini/Qoder and `trellis-research`: every dispatch prompt starts with `Active task: <task path from task.py current>`, then the voice line — `User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).` — before role-specific instructions.
+Sub-agent dispatch protocol applies to all platforms and all sub-agents, including class-2 Codex/Copilot/Gemini/Qoder and `omtre-research`: every dispatch prompt starts with `Active task: <task path from task.py current>`, then the voice line — `User-facing text and instruction files follow `.omtre/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).` — before role-specific instructions.
 
 [workflow-state:in_progress]
-Flow: choose one behavior -> red test -> green implementation -> refactor while green -> `trellis-check` -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
-Main-session default: dispatch implement/check sub-agents. Sub-agent self-exemption: if already running as `trellis-implement`, do NOT spawn another `trellis-implement` or `trellis-check`; if already running as `trellis-check`, do NOT spawn another `trellis-check` or `trellis-implement`. Dispatch is main session only.
-Dispatch prompt starts with `Active task: <task path from task.py current>` + the voice line (`User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).`). Read context: jsonl entries -> `prd.md` -> `design.md if present` -> `implement.md if present`.
+Flow: choose one behavior -> red test -> green implementation -> refactor while green -> `omtre-check` -> `omtre-update-spec` -> commit (Phase 3.4) -> `/omt:finish-work`.
+Main-session default: dispatch implement/check sub-agents. Sub-agent self-exemption: if already running as `omtre-implement`, do NOT spawn another `omtre-implement` or `omtre-check`; if already running as `omtre-check`, do NOT spawn another `omtre-check` or `omtre-implement`. Dispatch is main session only.
+Dispatch prompt starts with `Active task: <task path from task.py current>` + the voice line (`User-facing text and instruction files follow `.omtre/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).`). Read context: jsonl entries -> `prd.md` -> `design.md if present` -> `implement.md if present`.
 [/workflow-state:in_progress]
 
 <!-- Per-turn breadcrumb: shown while status='in_progress' when
@@ -238,7 +238,7 @@ Dispatch prompt starts with `Active task: <task path from task.py current>` + th
      instead of dispatching sub-agents. -->
 
 [workflow-state:in_progress-inline]
-Flow: `trellis-before-dev` -> choose one behavior -> red test -> green implementation -> refactor while green -> `trellis-check` -> validation -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
+Flow: `omtre-before-dev` -> choose one behavior -> red test -> green implementation -> refactor while green -> `omtre-check` -> validation -> `omtre-update-spec` -> commit (Phase 3.4) -> `/omt:finish-work`.
 Do not dispatch implement/check sub-agents in inline mode.
 Read context: `prd.md` -> `design.md if present` -> `implement.md if present`, plus relevant spec/research loaded by skills.
 [/workflow-state:in_progress-inline]
@@ -260,7 +260,7 @@ Read context: `prd.md` -> `design.md if present` -> `implement.md if present`, p
      channel as the live blocks. -->
 
 [workflow-state:completed]
-Code committed. Run `/trellis:finish-work`; if dirty, return to Phase 3.4 first.
+Code committed. Run `/omt:finish-work`; if dirty, return to Phase 3.4 first.
 [/workflow-state:completed]
 
 ### Rules
@@ -277,17 +277,17 @@ When a user request matches one of these intents inside an active task, route fi
 
 [Claude Code, Cursor, OpenCode, codex-sub-agent, Kiro, Gemini, Qoder, CodeBuddy, Copilot, Droid, Pi]
 
-- Planning or unclear requirements -> `trellis-brainstorm`.
-- `in_progress` implementation/check -> dispatch `trellis-implement` / `trellis-check`.
-- Repeated debugging -> `trellis-break-loop`; spec updates -> `trellis-update-spec`.
+- Planning or unclear requirements -> `omtre-brainstorm`.
+- `in_progress` implementation/check -> dispatch `omtre-implement` / `omtre-check`.
+- Repeated debugging -> `omtre-break-loop`; spec updates -> `omtre-update-spec`.
 
 [/Claude Code, Cursor, OpenCode, codex-sub-agent, Kiro, Gemini, Qoder, CodeBuddy, Copilot, Droid, Pi]
 
 [codex-inline, Kilo, Antigravity, Devin]
 
-- Planning or unclear requirements -> `trellis-brainstorm`.
-- Before editing -> `trellis-before-dev`; after editing -> `trellis-check`.
-- Repeated debugging -> `trellis-break-loop`; spec updates -> `trellis-update-spec`.
+- Planning or unclear requirements -> `omtre-brainstorm`.
+- Before editing -> `omtre-before-dev`; after editing -> `omtre-check`.
+- Repeated debugging -> `omtre-break-loop`; spec updates -> `omtre-update-spec`.
 
 [/codex-inline, Kilo, Antigravity, Devin]
 
@@ -302,8 +302,8 @@ When a user request matches one of these intents inside an active task, route fi
 At each step, run this to fetch detailed guidance:
 
 ```bash
-python3 ./.trellis/scripts/get_context.py --mode phase --step <step>
-# e.g. python3 ./.trellis/scripts/get_context.py --mode phase --step 1.1
+python3 ./.omtre/scripts/get_context.py --mode phase --step <step>
+# e.g. python3 ./.omtre/scripts/get_context.py --mode phase --step 1.1
 ```
 
 ---
@@ -317,7 +317,7 @@ Goal: classify the request, get task-creation consent when a task is needed, and
 Create the task directory only after task-creation consent. The command sets status to `planning`, writes `task.json`, creates a default `prd.md`, and auto-targets the new task when session identity is available:
 
 ```bash
-python3 ./.trellis/scripts/task.py create "<task title>" --slug <name>
+python3 ./.omtre/scripts/task.py create "<task title>" --slug <name>
 ```
 
 `--slug` is the human-readable name only. Do **not** include the `MM-DD-` date prefix; `task.py create` adds that prefix automatically.
@@ -328,11 +328,11 @@ After this command succeeds, the per-turn breadcrumb auto-switches to `[workflow
 
 Run only `create` here — do not also run `start`. `start` flips status to `in_progress`, which switches the breadcrumb to the implementation phase before planning artifacts are reviewed. Save `start` for step 1.4.
 
-Skip when `python3 ./.trellis/scripts/task.py current --source` already points to a task.
+Skip when `python3 ./.omtre/scripts/task.py current --source` already points to a task.
 
 #### 1.1 Requirement exploration `[required · repeatable]`
 
-Load the `trellis-brainstorm` skill and explore requirements interactively with the user per the skill's guidance. For this TDD workflow, requirements exploration must produce observable behaviors before implementation starts.
+Load the `omtre-brainstorm` skill and explore requirements interactively with the user per the skill's guidance. For this TDD workflow, requirements exploration must produce observable behaviors before implementation starts.
 
 The brainstorm skill will guide you to:
 - Ask one question at a time
@@ -361,7 +361,7 @@ Research can happen at any time during requirement exploration. It isn't limited
 
 Spawn the research sub-agent:
 
-- **Agent type**: `trellis-research`
+- **Agent type**: `omtre-research`
 - **Task description**: Research <specific question>
 - **Key requirement**: Research output MUST be persisted to `{TASK_DIR}/research/`
 
@@ -369,7 +369,7 @@ Spawn the research sub-agent:
 
 [codex-inline, Kilo, Antigravity, Devin]
 
-Do the research in the main session directly and write findings into `{TASK_DIR}/research/`. (For `codex-inline` this avoids the `fork_turns="none"` isolation that prevents `trellis-research` sub-agents from resolving the active task path.)
+Do the research in the main session directly and write findings into `{TASK_DIR}/research/`. (For `codex-inline` this avoids the `fork_turns="none"` isolation that prevents `omtre-research` sub-agents from resolving the active task path.)
 
 [/codex-inline, Kilo, Antigravity, Devin]
 
@@ -394,7 +394,7 @@ Curate `implement.jsonl` and `check.jsonl` so the Phase 2 sub-agents get the rig
 
 **What to put in**:
 - **Testing specs** — unit/integration test conventions and mock strategy files relevant to this task
-- **Spec files** — `.trellis/spec/<package>/<layer>/index.md` and any specific guideline files (`error-handling.md`, `conventions.md`, etc.) relevant to this task
+- **Spec files** — `.omtre/spec/<package>/<layer>/index.md` and any specific guideline files (`error-handling.md`, `conventions.md`, etc.) relevant to this task
 - **Research files** — `{TASK_DIR}/research/*.md` that the sub-agent will need to consult
 
 **What NOT to put in**:
@@ -410,7 +410,7 @@ These manifests do not replace `implement.md`. `implement.md` is the human-reada
 **How to discover relevant specs**:
 
 ```bash
-python3 ./.trellis/scripts/get_context.py --mode packages
+python3 ./.omtre/scripts/get_context.py --mode packages
 ```
 
 Lists every package + its spec layers with paths. Pick the entries that match this task's domain.
@@ -420,8 +420,8 @@ Lists every package + its spec layers with paths. Pick the entries that match th
 Either edit the jsonl file directly in your editor, or use:
 
 ```bash
-python3 ./.trellis/scripts/task.py add-context "$TASK_DIR" implement "<path>" "<reason>"
-python3 ./.trellis/scripts/task.py add-context "$TASK_DIR" check "<path>" "<reason>"
+python3 ./.omtre/scripts/task.py add-context "$TASK_DIR" implement "<path>" "<reason>"
+python3 ./.omtre/scripts/task.py add-context "$TASK_DIR" check "<path>" "<reason>"
 ```
 
 Delete the seed `_example` line once real entries exist (optional — it's skipped automatically by consumers).
@@ -434,7 +434,7 @@ Skip this step only when both files already have real curated entries.
 
 [codex-inline, Kilo, Antigravity, Devin]
 
-Skip this step. Context is loaded directly by the `trellis-before-dev` skill in Phase 2.
+Skip this step. Context is loaded directly by the `omtre-before-dev` skill in Phase 2.
 
 [/codex-inline, Kilo, Antigravity, Devin]
 
@@ -443,14 +443,14 @@ Skip this step. Context is loaded directly by the `trellis-before-dev` skill in 
 After artifact review, flip the task status to `in_progress`:
 
 ```bash
-python3 ./.trellis/scripts/task.py start <task-dir>
+python3 ./.omtre/scripts/task.py start <task-dir>
 ```
 
 For lightweight tasks, `prd.md` can be enough. For complex tasks, `prd.md`, `design.md`, and `implement.md` must exist and be reviewed before start. On sub-agent-dispatch platforms, `implement.jsonl` and `check.jsonl` must both have real curated entries before start. Runtime consumers tolerate missing or seed-only manifests for compatibility, but that tolerance is not a planning-ready state.
 
 After this command succeeds, the breadcrumb auto-switches to `[workflow-state:in_progress]`, and the rest of Phase 2 / 3 follows.
 
-If `task.py start` errors with a session-identity message (no context key from hook input, `TRELLIS_CONTEXT_ID`, or platform-native session env), follow the hint in the error to set up session identity, then retry.
+If `task.py start` errors with a session-identity message (no context key from hook input, `OMTRE_CONTEXT_ID`, or platform-native session env), follow the hint in the error to set up session identity, then retry.
 
 #### 1.5 Completion criteria
 
@@ -500,9 +500,9 @@ Testing rules:
 
 Spawn the implement sub-agent:
 
-- **Agent type**: `trellis-implement`
+- **Agent type**: `omtre-implement`
 - **Task description**: Implement the reviewed task artifacts using one behavior slice at a time: red test through a public interface, green implementation, refactor only while green; finish by running focused tests plus project lint and type-check
-- **Dispatch prompt guard**: Tell the spawned agent it is already the `trellis-implement` sub-agent and must implement directly, not spawn another `trellis-implement` / `trellis-check`.
+- **Dispatch prompt guard**: Tell the spawned agent it is already the `omtre-implement` sub-agent and must implement directly, not spawn another `omtre-implement` / `omtre-check`.
 
 The platform hook/plugin auto-handles:
 - Reads `implement.jsonl` and injects referenced spec/research files into the agent prompt
@@ -514,9 +514,9 @@ The platform hook/plugin auto-handles:
 
 Spawn the implement sub-agent:
 
-- **Agent type**: `trellis-implement`
+- **Agent type**: `omtre-implement`
 - **Task description**: Implement the reviewed task artifacts using one behavior slice at a time: red test through a public interface, green implementation, refactor only while green; finish by running focused tests plus project lint and type-check
-- **Dispatch prompt guard**: The prompt MUST start with `Active task: <task path>`, then the voice line — `User-facing text and instruction files follow `.trellis/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).` —, then explicitly say the spawned agent is already `trellis-implement` and must implement directly without spawning another `trellis-implement` / `trellis-check`.
+- **Dispatch prompt guard**: The prompt MUST start with `Active task: <task path>`, then the voice line — `User-facing text and instruction files follow `.omtre/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).` —, then explicitly say the spawned agent is already `omtre-implement` and must implement directly without spawning another `omtre-implement` / `omtre-check`.
 
 The Codex sub-agent definition auto-handles the context load requirement:
 - Resolves the active task with `task.py current --source`, then reads `prd.md`, `design.md` if present, and `implement.md` if present
@@ -528,9 +528,9 @@ The Codex sub-agent definition auto-handles the context load requirement:
 
 Spawn the implement sub-agent:
 
-- **Agent type**: `trellis-implement`
+- **Agent type**: `omtre-implement`
 - **Task description**: Implement the reviewed task artifacts using one behavior slice at a time: red test through a public interface, green implementation, refactor only while green; finish by running focused tests plus project lint and type-check
-- **Dispatch prompt guard**: Tell the spawned agent it is already the `trellis-implement` sub-agent and must implement directly, not spawn another `trellis-implement` / `trellis-check`.
+- **Dispatch prompt guard**: Tell the spawned agent it is already the `omtre-implement` sub-agent and must implement directly, not spawn another `omtre-implement` / `omtre-check`.
 
 The platform prelude auto-handles the context load requirement:
 - Reads `implement.jsonl` and injects referenced spec/research files into the agent prompt
@@ -540,7 +540,7 @@ The platform prelude auto-handles the context load requirement:
 
 [codex-inline, Kilo, Antigravity, Devin]
 
-1. Load the `trellis-before-dev` skill to read project guidelines
+1. Load the `omtre-before-dev` skill to read project guidelines
 2. Read `{TASK_DIR}/prd.md`, then `design.md` if present, then `implement.md` if present
 3. Consult materials under `{TASK_DIR}/research/`
 4. Run the behavior-slice loop above until the accepted behavior in the task artifacts is green
@@ -554,9 +554,9 @@ The platform prelude auto-handles the context load requirement:
 
 Spawn the check sub-agent:
 
-- **Agent type**: `trellis-check`
+- **Agent type**: `omtre-check`
 - **Task description**: Review all code changes against specs and task artifacts; fix any findings directly; ensure lint and type-check pass
-- **Dispatch prompt guard**: Tell the spawned agent it is already the `trellis-check` sub-agent and must review/fix directly, not spawn another `trellis-check` / `trellis-implement`.
+- **Dispatch prompt guard**: Tell the spawned agent it is already the `omtre-check` sub-agent and must review/fix directly, not spawn another `omtre-check` / `omtre-implement`.
 
 The check agent's job:
 - Review code changes against specs
@@ -570,7 +570,7 @@ The check agent's job:
 
 [codex-inline, Kilo, Antigravity, Devin]
 
-Load the `trellis-check` skill and verify the code per its guidance:
+Load the `omtre-check` skill and verify the code per its guidance:
 - Spec compliance
 - Behavior tests pass through public interfaces
 - New tests fail for the right reason when the implementation is removed or disabled
@@ -582,7 +582,7 @@ If issues are found → fix → re-check, until green.
 
 [/codex-inline, Kilo, Antigravity, Devin]
 
-**Final pass (before Phase 3.4 commit)**: the last 2.2 of a task must run full-scope, not just on the latest implement chunk. List all affected packages with `python3 ./.trellis/scripts/get_context.py --mode packages`, then load each package's spec index Quality Check section. This catches cross-layer / multi-package issues a mid-iteration local 2.2 cannot.
+**Final pass (before Phase 3.4 commit)**: the last 2.2 of a task must run full-scope, not just on the latest implement chunk. List all affected packages with `python3 ./.omtre/scripts/get_context.py --mode packages`, then load each package's spec index Quality Check section. This catches cross-layer / multi-package issues a mid-iteration local 2.2 cannot.
 
 #### 2.3 Rollback `[on demand]`
 
@@ -598,7 +598,7 @@ Goal: ensure code quality, capture lessons, record the work.
 
 #### 3.2 Debug retrospective `[on demand]`
 
-If this task involved repeated debugging (the same issue was fixed multiple times), load the `trellis-break-loop` skill to:
+If this task involved repeated debugging (the same issue was fixed multiple times), load the `omtre-break-loop` skill to:
 - Classify the root cause
 - Explain why earlier fixes failed
 - Propose prevention
@@ -607,16 +607,16 @@ The goal is to capture debugging lessons so the same class of issue doesn't recu
 
 #### 3.3 Spec update `[required · once]`
 
-Load the `trellis-update-spec` skill and review whether this task produced new knowledge worth recording:
+Load the `omtre-update-spec` skill and review whether this task produced new knowledge worth recording:
 - Newly discovered patterns or conventions
 - Pitfalls you hit
 - New technical decisions
 
-Update the docs under `.trellis/spec/` accordingly. Even if the conclusion is "nothing to update", walk through the judgment.
+Update the docs under `.omtre/spec/` accordingly. Even if the conclusion is "nothing to update", walk through the judgment.
 
 #### 3.4 Commit changes `[required · once]`
 
-**Spec-sync preamble**: before drafting commits, ask: did this task fix a bug or surface non-obvious knowledge that should land in `.trellis/spec/` so future-you (or future-AI) doesn't repeat the mistake? If yes, return to Phase 3.3 first — spec writes belong in the same task's commit batch, not as a forgotten follow-up.
+**Spec-sync preamble**: before drafting commits, ask: did this task fix a bug or surface non-obvious knowledge that should land in `.omtre/spec/` so future-you (or future-AI) doesn't repeat the mistake? If yes, return to Phase 3.3 first — spec writes belong in the same task's commit batch, not as a forgotten follow-up.
 
 The AI drives a batched commit of this task's code changes so `/finish-work` can run cleanly afterwards. Goal: produce work commits FIRST, then bookkeeping (archive + journal) commits land after — never interleaved.
 
@@ -672,16 +672,16 @@ After the above, remind the user they can run `/finish-work` to wrap up (archive
 
 ---
 
-## Customizing Trellis (for forks)
+## Customizing omtre (for forks)
 
-This section is for developers who want to modify the Trellis workflow itself. All customization is done by editing this file; the scripts are parsers only.
+This section is for developers who want to modify the omtre workflow itself. All customization is done by editing this file; the scripts are parsers only.
 
 ### Changing what a step means
 
 Edit the corresponding step's walkthrough body in the Phase 1 / 2 / 3 sections above. Critical invariants:
-- No active task must triage first and ask for task-creation consent before creating a Trellis task.
+- No active task must triage first and ask for task-creation consent before creating a omtre task.
 - Planning must distinguish lightweight PRD-only tasks from complex tasks that require `prd.md`, `design.md`, and `implement.md` before start.
-- Every required execution path must keep the Phase 3.4 commit reminder reachable before `/trellis:finish-work`.
+- Every required execution path must keep the Phase 3.4 commit reminder reachable before `/omt:finish-work`.
 
 All tag blocks live in the `## Phase Index` section above, immediately after each phase summary:
 
@@ -696,7 +696,7 @@ All tag blocks live in the `## Phase Index` section above, immediately after eac
 
 ### Changing the per-turn prompt text
 
-Directly edit the body of the corresponding `[workflow-state:STATUS]` block. After editing, run `trellis update` (if you're a template maintainer) or restart your AI session (if you're customizing your own project) — no script changes required.
+Directly edit the body of the corresponding `[workflow-state:STATUS]` block. After editing, run `omtre update` (if you're a template maintainer) or restart your AI session (if you're customizing your own project) — no script changes required.
 
 ### Adding a custom status
 
@@ -733,5 +733,5 @@ Supported events: `after_create / after_start / after_finish / after_archive`. N
 
 For the workflow state machine's runtime contract, the locations of all status writers, pseudo-statuses (`no_task` / `stale_<source_type>`), the hook reachability matrix, and other deep details, see:
 
-- `.trellis/spec/cli/backend/workflow-state-contract.md` — runtime contract + writer table + test invariants
-- `.trellis/scripts/inject-workflow-state.py` — actual parser (reads workflow.md only, no embedded text)
+- `.omtre/spec/cli/backend/workflow-state-contract.md` — runtime contract + writer table + test invariants
+- `.omtre/scripts/inject-workflow-state.py` — actual parser (reads workflow.md only, no embedded text)

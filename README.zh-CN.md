@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.png" alt="oh-my-trellis — mattpocock × ECC × impeccable，一条 Trellis 主轴">
+  <img src="assets/hero.png" alt="omtre — mattpocock × ECC × impeccable，一条 omtre 主轴">
 </p>
 
 <p align="center">
@@ -7,23 +7,23 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ScoFan-official/oh-my-trellis/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/oh-my-trellis?style=flat&colorA=222222&colorB=CB3837" alt="Stars"></a>
+  <a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat&colorA=222222&colorB=CB3837" alt="Stars"></a>
   <img src="https://img.shields.io/badge/catalog-1%2C741%20assets-3FB950?style=flat&colorA=222222" alt="1,741 catalog assets">
   <img src="https://img.shields.io/badge/platforms-22-58A6FF?style=flat&colorA=222222" alt="22 agent platforms">
   <img src="https://img.shields.io/badge/upstreams-3-E05735?style=flat&colorA=222222" alt="3 vendored upstreams">
-  <a href="https://github.com/ScoFan-official/oh-my-trellis/commits"><img src="https://img.shields.io/github/last-commit/ScoFan-official/oh-my-trellis?style=flat&colorA=222222" alt="Last commit"></a>
+  <a href="https://github.com/ScoFan-official/omtre/commits"><img src="https://img.shields.io/github/last-commit/ScoFan-official/omtre?style=flat&colorA=222222" alt="Last commit"></a>
 </p>
 
 <p align="center">
   <a href="./README.md">English</a> · <strong>简体中文</strong> · vendored 遵循 MIT &amp; Apache-2.0 —— 见 <a href="catalog/ATTRIBUTION.md">ATTRIBUTION</a>
 </p>
 
-advisory 技能运不出设计系统——合约可以。oh-my-trellis 把
+advisory 技能运不出设计系统——合约可以。omtre 把
 [mattpocock/skills](https://github.com/mattpocock/skills)、
 [Everything Claude Code](https://github.com/davila7/claude-code-templates) 和
 [pbakaus/impeccable](https://github.com/pbakaus/impeccable) vendor 进同一个仓库，
 再把它们嘴里的抽象名词——"the issue tracker"、"PRODUCT.md"、"DESIGN.md"——
-绑进 Trellis 的 `.trellis/` 主轴，把工作流从"建议执行"变成"强制执行"。
+绑进 omtre 的 `.omtre/` 主轴，把工作流从"建议执行"变成"强制执行"。
 
 **3** 个 vendored 上游 · **1,741** 个目录资产 · **43** 个默认技能 · **22** 个平台 · **1** 层合约——对 vendored 文件零 patch。
 
@@ -33,8 +33,8 @@ advisory 技能运不出设计系统——合约可以。oh-my-trellis 把
 
 | 你想要… | 运行 |
 | --- | --- |
-| 只要 Trellis 合约规范 | `trellis init --registry gh:ScoFan-official/oh-my-trellis/marketplace --template agent-workflow --append` |
-| 推荐技能集（mp 全量 37 个 + impeccable + 本包自建 `mp-trellis-bridge` / `oh-my-update` / `trellis-domains` / `trellis-run` / `dispatch-roster` / `hygiene-sweep` / `rules-audit`） | `npx skills add ScoFan-official/oh-my-trellis --agent <platform> --copy` |
+| 只要 omtre 合约规范 | `omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append` |
+| 推荐技能集（mp 全量 37 个 + impeccable + 本包自建 `mp-omtre-bridge` / `oh-my-update` / `omtre-domains` / `omtre-run` / `dispatch-roster` / `hygiene-sweep` / `rules-audit`） | `npx skills add ScoFan-official/omtre --agent <platform> --copy` |
 | 1741 资产目录库里的任何东西 | `python scripts/install.py --platform <platform> --target <repo>` |
 
 仓库已公开，三条通道均无需认证，可自由组合。
@@ -43,31 +43,31 @@ advisory 技能运不出设计系统——合约可以。oh-my-trellis 把
 
 把下面这段贴给 Devin / Codex / ZCode / Claude / Cursor，它会自己完成全部初始化：
 
-> 在本仓库安装 Trellis 和 oh-my-trellis：① 装我们的 Trellis CLI 并初始化——`npm i -g https://github.com/ScoFan-official/oh-my-trellis/releases/download/cli-v0.6.18-ohmy.5/oh-my-trellis-0.6.18-ohmy.5.tgz`（若已全局安装 `@mindfoldhq/trellis` 需先 `npm rm -g @mindfoldhq/trellis`——本包占用 `trellis` bin），然后 `trellis init --devin`——registry 与默认 workflow 已内嵌在 fork 里；② 跑 `trellis init --template agent-workflow --append` 安装 spec 合约；③ 给你的平台装技能——优先 `npx skills add ScoFan-official/oh-my-trellis --agent <你的平台> --copy`；若你的平台不被覆盖，改用 `git clone --depth 1 https://github.com/ScoFan-official/oh-my-trellis /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <你的平台> --target . --only-core`；④ 调用 `mp-trellis-bridge` 技能完成 `AGENTS.md` 播种，然后读 `.trellis/spec/agents/issue-tracker.md`，向我汇报你对 spec、ticket、triage、实现分别会用哪些 tracker 动词。之后要更新，调用 `oh-my-update` 技能。
+> 在本仓库安装 omtre：① 装我们的 omtre CLI 并初始化——`npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.18-ohmy.5/omtre-0.6.18-ohmy.5.tgz`，然后 `omtre init --devin`——registry 与默认 workflow 已内嵌在 CLI 里；② 跑 `omtre init --template agent-workflow --append` 安装 spec 合约；③ 给你的平台装技能——优先 `npx skills add ScoFan-official/omtre --agent <你的平台> --copy`；若你的平台不被覆盖，改用 `git clone --depth 1 https://github.com/ScoFan-official/omtre /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <你的平台> --target . --only-core`；④ 调用 `mp-omtre-bridge` 技能完成 `AGENTS.md` 播种，然后读 `.omtre/spec/agents/issue-tracker.md`，向我汇报你对 spec、ticket、triage、实现分别会用哪些 tracker 动词。之后要更新，调用 `oh-my-update` 技能。
 
-非 Trellis 仓库、只要技能时用这个短版：
+非 omtre 仓库、只要技能时用这个短版：
 
-> 在本仓库安装 mattpocock 技能集：`npx skills add ScoFan-official/oh-my-trellis --agent <你的平台> --copy`；装好后浏览 https://github.com/ScoFan-official/oh-my-trellis 的 `catalog/INDEX.md`，如需更多组件用 `scripts/install.py` 按本机平台补装。
+> 在本仓库安装 mattpocock 技能集：`npx skills add ScoFan-official/omtre --agent <你的平台> --copy`；装好后浏览 https://github.com/ScoFan-official/omtre 的 `catalog/INDEX.md`，如需更多组件用 `scripts/install.py` 按本机平台补装。
 
 ---
 
-## 01 · 合约 —— Trellis spec registry
+## 01 · 合约 —— omtre spec registry
 
-技能说 "publish to the issue tracker"，指向 `.trellis/tasks/`；
-说 "更新 PRODUCT.md / DESIGN.md"，指向 `.trellis/spec/`。
-交付是清单驱动的：Trellis session-start 钩子注入各 spec 包的 `index.md`，
+技能说 "publish to the issue tracker"，指向 `.omtre/tasks/`；
+说 "更新 PRODUCT.md / DESIGN.md"，指向 `.omtre/spec/`。
+交付是清单驱动的：omtre session-start 钩子注入各 spec 包的 `index.md`，
 agent 顺清单读合约（先读 `agents/index.md`）——没有按文件路径的自动注入。
 前端闸门是机械的：前端票的 `implement.md` 缺 `## Design review` 小节，
 CLI 在 archive 时直接拒绝。
 
 ```bash
-trellis init --registry gh:ScoFan-official/oh-my-trellis/marketplace --template agent-workflow --append
+omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append
 ```
 
-安装到 `.trellis/spec/`：
+安装到 `.omtre/spec/`：
 
 ```
-.trellis/spec/
+.omtre/spec/
 ├── agents/
 │   ├── index.md
 │   ├── issue-tracker.md      # 核心合约——向 tracker 发布任何东西前先读
@@ -84,20 +84,20 @@ agent 顺清单读合约——合约本身是拉取式文档，没有解析按�
 `voice.md` 确立了沟通与文档撰写的双语语调规范（中文遵循简化技术中文 STC，
 英文遵循简化技术英文 STE）；本包所有自建技能与模板均以此改造对齐。
 `--append` 只补缺省文件，对已有 spec 树安全。
-安装后文件归项目所有（Trellis 项目所有权模型），可自行修改。
+安装后文件归项目所有（omtre 项目所有权模型），可自行修改。
 
 ## 02 · 技能集 —— skills CLI
 
 ```bash
-npx skills add ScoFan-official/oh-my-trellis --agent <platform> --copy
+npx skills add ScoFan-official/omtre --agent <platform> --copy
 ```
 
 安装 **43 个技能**——mattpocock 全集
 （engineering / productivity / misc / in-progress）+ `impeccable` 前端设计工作流
-+ 本包七大自建技能：`mp-trellis-bridge`、`oh-my-update`、`trellis-domains`、`trellis-run`、`dispatch-roster`、`hygiene-sweep` 与 `rules-audit`。
++ 本包七大自建技能：`mp-omtre-bridge`、`oh-my-update`、`omtre-domains`、`omtre-run`、`dispatch-roster`、`hygiene-sweep` 与 `rules-audit`。
 `--agent` 支持 `devin`、`codex`、`claude`、`cursor` 等 skills CLI 识别的平台。
 
-`mp-trellis-bridge` 是自举器 + 路由合约：首次加载时验证 `.trellis/`、
+`mp-omtre-bridge` 是自举器 + 路由合约：首次加载时验证 `.omtre/`、
 安装通道 1 的 spec 合约（registry 优先、内置模板兜底）、向 `AGENTS.md`
 幂等追加 `## Agent skills` 块、检查 mp 技能是否就位，并在规划技能收尾时将
 无人值守运行引导给 `dispatch-roster`。之后是 no-op。
@@ -181,10 +181,10 @@ python scripts/install.py --platform devin --target . --dry-run
 | **zcode** | `.zcode/skills` | `.zcode/agents/*.md`（无 `tools:`） | `.zcode/commands/ecc-*` | `.zcode/mcp.json` | ⚠️ 部分验证 |
 | omp / reasonix / trae / grok / kimi / snow / dsh / antigravity | 各自 `.X/skills` | `.X/agents/*.md`（约定） | `.X/commands|workflows/ecc-*` | `.X/mcp.json` | ⚠️ 约定推断 |
 
-✅ = 文件位置遵循 Trellis 官方 per-platform 文档表。
+✅ = 文件位置遵循 omtre 官方 per-platform 文档表。
 ⚠️ = 约定推断（`scripts/platforms.py` / `manifest.json` 中标
 `verified: false`）——生成的 agent/command 文件视为待复核草稿。
-`zcode` 的 agents 格式已对照 Trellis 官方 zcode 模板验证；
+`zcode` 的 agents 格式已对照 omtre 官方 zcode 模板验证；
 commands/MCP 路径为约定推断。
 
 ---
@@ -206,12 +206,12 @@ commands/MCP 路径为约定推断。
 | `ask-matt` | 路由器——"我这个情况该用哪个技能？"不确定时先问它。 |
 | `grill-with-docs` | 对齐想法：agent 按设计树连续追问你，术语落 `GLOSSARY.md`、决策落 `docs/adr/`。仓库内一律用它（优于 `grill-me`）。 |
 | `grill-me` / `grilling` | 同款追问但无文档副作用（无工作目录时用）；`grilling` 是引擎，`grill-me` 是用户入口。 |
-| `to-spec` | 把 grill 完的对话固化成 spec（Problem/Solution/User Stories/Decisions）→ Trellis 任务 + `prd.md`。 |
+| `to-spec` | 把 grill 完的对话固化成 spec（Problem/Solution/User Stories/Decisions）→ omtre 任务 + `prd.md`。 |
 | `to-tickets` | 把 spec 纵切成 tracer-bullet 工单 → 子任务 + `blocked_by` meta，写入前先确认拆法。 |
 | `implement` | 实现一张工单：预约定接缝内 TDD 红绿 → 类型检查/测试 → code-review → 提交。一张工单一个会话。 |
 | `implement-spec` | 批量编排整个 spec 的工单图（integration 分支 + 并行 worktree）。Devin 下顺序执行或手动 `run_subagent`。 |
 | `tdd` | 红-绿-重构循环，嵌在 `implement` 内部用。 |
-| `code-review` | 双轴评审（Standards + Spec）ref 以来的改动，与 `trellis-check` 互补。 |
+| `code-review` | 双轴评审（Standards + Spec）ref 以来的改动，与 `omtre-check` 互补。 |
 | `codebase-design` | 深模块词汇表（interface/depth/seam/deletion test），设计讨论用。 |
 | `improve-codebase-architecture` | 扫描浅模块 → HTML 可视化报告 → 挑一个 grill 细化。成长期代码库建议隔几天跑一次。 |
 | `diagnosing-bugs` | 硬 bug/性能回退：先建必红复现回路，再假设-插桩-修复-回归。 |
@@ -227,14 +227,14 @@ commands/MCP 路径为约定推断。
 | `wait-what` | "没看懂，重讲"——简化技术英语 + 术语表重述。 |
 | `writing-for-agents` | 撰写/编辑技能、AGENTS.md、CLAUDE.md。 |
 | `pr` / `wizard` | 写 PR body；为只能人做的事（基础设施、控制台）生成交互式 bash 向导。 |
-| `setup-matt-pocock-skills` | 面向非 Trellis 仓库的旧自举器——本包中由 `mp-trellis-bridge` 取代。 |
+| `setup-matt-pocock-skills` | 面向非 omtre 仓库的旧自举器——本包中由 `mp-omtre-bridge` 取代。 |
 | `claude-handoff`、`loop-me`、`setup-ts-deep-modules`、`writing-beats`、`writing-fragments`、`writing-shape` | in-progress 合集——可用但打磨度低。 |
 | `git-guardrails-claude-code`、`migrate-to-shoehorn`、`scaffold-exercises`、`setup-pre-commit` | misc——平台特定或小众。 |
-| `mp-trellis-bridge` | **本包自建**。把以上全部绑定到 Trellis 的合约 + 路由器：首次加载验证 `.trellis/`、写入 `AGENTS.md` 块、检查 mp 技能是否就位，并在规划技能收尾时将无人值守运行引导给 `dispatch-roster`。 |
-| `oh-my-update` | **本包自建**。确认门后的整栈更新——fork CLI、`.trellis/` 模板、已装技能、`.trellis/spec/` 合约——升到 ScoFan-official 最新 release（过滤 `cli-v*` tag）。 |
-| `trellis-domains` | **本包自建**。`.trellis/domains/` 板块层的薄壳——归口、插旗顺序判据、接手读档链、worklog/收工、对账检查清单，逐条指回仓内 `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` / `REGISTRY.md`（协议正文不住这里）。 |
-| `trellis-run` | **本包自建**。`trellis run`（frontier 无人值守循环）的薄壳——什么时候该交给循环、档位与 `delivery.auto_push_refs` 要先允许什么、run ledger 在哪（以及它为何不是对账源）、五种停线原因、`always_stop` 闸门，以及与 `dispatch-roster` 的 orchestrator 模式协同边界。 |
-| `dispatch-roster` | **本包自建**。为无人值守执行装配派工表（roster）：通过轻量握手与凭据检测（3 种状态）探测 ACP 目标（grok-build / codex / claude），敲定 4 项决策（orchestrator、角色默认目标、逐票覆盖、max_parallel），落盘至卡片 frontmatter、ticket meta 与 config.yaml，并移交 `trellis-run` 开跑。 |
+| `mp-omtre-bridge` | **本包自建**。把以上全部绑定到 omtre 的合约 + 路由器：首次加载验证 `.omtre/`、写入 `AGENTS.md` 块、检查 mp 技能是否就位，并在规划技能收尾时将无人值守运行引导给 `dispatch-roster`。 |
+| `oh-my-update` | **本包自建**。确认门后的整栈更新——omtre CLI、`.omtre/` 模板、已装技能、`.omtre/spec/` 合约——升到 ScoFan-official 最新 release（过滤 `cli-v*` tag）。 |
+| `omtre-domains` | **本包自建**。`.omtre/domains/` 板块层的薄壳——归口、插旗顺序判据、接手读档链、worklog/收工、对账检查清单，逐条指回仓内 `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` / `REGISTRY.md`（协议正文不住这里）。 |
+| `omtre-run` | **本包自建**。`omtre run`（frontier 无人值守循环）的薄壳——什么时候该交给循环、档位与 `delivery.auto_push_refs` 要先允许什么、run ledger 在哪（以及它为何不是对账源）、五种停线原因、`always_stop` 闸门，以及与 `dispatch-roster` 的 orchestrator 模式协同边界。 |
+| `dispatch-roster` | **本包自建**。为无人值守执行装配派工表（roster）：通过轻量握手与凭据检测（3 种状态）探测 ACP 目标（grok-build / codex / claude），敲定 4 项决策（orchestrator、角色默认目标、逐票覆盖、max_parallel），落盘至卡片 frontmatter、ticket meta 与 config.yaml，并移交 `omtre-run` 开跑。 |
 | `hygiene-sweep` | **本包自建**。声明范围前缀内的只读存量审计——死代码、重复逻辑、超阈值文件——先产出落盘的发现清单再谈改动。自带 `scope_check.py` 机械闸（范围白名单 + 800 行拆分阈），清扫票按 `spec/agents/hygiene.md` 验收。 |
 | `rules-audit` | **本包自建**。常驻规则文件（AGENTS.md / CLAUDE.md）对账：逐条取证、无证据的删、保留的补一句存在理由。 |
 
@@ -247,8 +247,8 @@ commands/MCP 路径为约定推断。
 及 `impeccable context` 启动器需要上游引擎——在目标项目跑
 `npx impeccable install`。没装引擎时命令走技能自带的 degraded 降级模式。
 
-在 Trellis 仓库里，`agents/frontend-craft.md` 绑定 impeccable 的产物：
-PRODUCT.md → `.trellis/spec/product.md`、DESIGN.md → `.trellis/spec/design-system.md`；
+在 omtre 仓库里，`agents/frontend-craft.md` 绑定 impeccable 的产物：
+PRODUCT.md → `.omtre/spec/product.md`、DESIGN.md → `.omtre/spec/design-system.md`；
 把 `shape → craft → audit+critique → polish` 接进各相位；并给前端任务上闸门——
 `implement.md` 没有 `## Design review` 小节就不能记 READY。
 
@@ -272,7 +272,7 @@ PRODUCT.md → `.trellis/spec/product.md`、DESIGN.md → `.trellis/spec/design-
 ## 仓库结构
 
 ```
-marketplace/            # 通道 1：Trellis spec registry（index.json + agent-workflow 含 voice.md）
+marketplace/            # 通道 1：omtre spec registry（index.json + agent-workflow 含 voice.md）
 skills/                 # 通道 2：npx-skills 安装面——5 本包自建技能 + 37 mp 技能 + impeccable
 catalog/
 ├── INDEX.md            # 生成：每个组件 + 使用场景
@@ -294,10 +294,10 @@ scripts/
 ## 更新方式
 
 使用侧：单一入口——**`/oh-my-update`** workflow（Devin）或 `oh-my-update`
-技能（`skills/oh-my-update/`）。它检查 fork CLI 在本仓库 `cli-v*` release
+技能（`skills/oh-my-update/`）。它检查 omtre CLI 在本仓库 `cli-v*` release
 下的最新版本（CLI tarball 通道与 pack `v*` release 同页共存）、刷新已装
 技能并补装 spec 合约，动手前有确认闸门。分层兜底：
-`npx skills add ScoFan-official/oh-my-trellis --agent <平台> --copy`。
+`npx skills add ScoFan-official/omtre --agent <平台> --copy`。
 
 本包维护侧（重新 vendor 上游）：
 
@@ -307,14 +307,14 @@ python scripts/sync_upstream.py           # 重新 vendor catalog/（只覆盖 c
 python scripts/build_manifest.py && python scripts/build_index.py
 ```
 
-已安装 spec 归项目所有（Trellis 模型）——上游 spec 变更需人工合并。
+已安装 spec 归项目所有（omtre 模型）——上游 spec 变更需人工合并。
 `catalog/` 是 vendor 副本，不要在原地改。
 
 ## 依赖
 
 - Python 3.8+、git
 - `npx skills`（Node.js）用于通道 2
-- Trellis 管理的仓库仅在通道 1（spec registry）需要
+- omtre 管理的仓库仅在通道 1（spec registry）需要
 - Claude 私有格式扩展（hooks/settings 等）需 Claude Code 才能原样使用
 
 ## FAQ

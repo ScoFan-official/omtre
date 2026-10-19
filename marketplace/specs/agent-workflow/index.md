@@ -1,6 +1,6 @@
 # Agent Workflow Specs
 
-Conventions that wire mattpocock engineering skills into the Trellis task system.
+Conventions that wire mattpocock engineering skills into the omtre task system.
 
 ## Files
 
@@ -9,4 +9,4 @@ Conventions that wire mattpocock engineering skills into the Trellis task system
 
 ## When these apply
 
-Any task or ticket produced by `/to-spec`, `/to-tickets`, `/triage`, `/wayfinder`, or `/implement`. The Trellis lifecycle (`task.py`) remains authoritative for status; these specs only define *where* skill artifacts land.
+Any task or ticket produced by `/to-spec`, `/to-tickets`, `/triage`, `/wayfinder`, or `/implement`. The omtre lifecycle (`task.py`) remains authoritative for status; these specs only define *where* skill artifacts land.

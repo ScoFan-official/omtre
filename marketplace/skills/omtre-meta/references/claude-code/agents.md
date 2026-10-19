@@ -1,12 +1,12 @@
 # Agents Reference
 
-Documentation for the Trellis agent system - specialized AI agents for different development phases.
+Documentation for the omtre agent system - specialized AI agents for different development phases.
 
 ---
 
 ## Overview
 
-Trellis uses **specialized agents** for different tasks. Each agent has specific capabilities, restrictions, and context injection.
+omtre uses **specialized agents** for different tasks. Each agent has specific capabilities, restrictions, and context injection.
 
 **Key Insight**: Agents work in the **current directory** - no worktree needed. Multi-Session (worktree isolation) is a separate concept.
 
@@ -70,7 +70,7 @@ model: opus
 **Workflow**:
 
 ```
-1. Read .trellis/.current-task → find task directory
+1. Read .omtre/.current-task → find task directory
 2. Read task.json → get next_action array
 3. For each phase:
    - implement → Task(subagent_type="implement")
@@ -285,12 +285,12 @@ Task(subagent_type="implement") called
             ▼
 inject-subagent-context.py runs
             │
-            ├── Read .trellis/.current-task
+            ├── Read .omtre/.current-task
             │
             ├── Find task directory
             │
             ├── Load implement.jsonl
-            │   {"file": ".trellis/spec/backend/index.md", "reason": "..."}
+            │   {"file": ".omtre/spec/backend/index.md", "reason": "..."}
             │   {"file": "src/services/auth.ts", "reason": "..."}
             │
             ├── Read each file content
@@ -298,7 +298,7 @@ inject-subagent-context.py runs
             └── Build new prompt:
                 # Implement Agent Task
                 ## Your Context
-                === .trellis/spec/backend/index.md ===
+                === .omtre/spec/backend/index.md ===
                 [content]
                 === src/services/auth.ts ===
                 [content]
@@ -339,7 +339,7 @@ Orchestrator (you or dispatch)
     └── Human commits
 ```
 
-### Task Workflow (from /trellis:start)
+### Task Workflow (from /omt:start)
 
 ```
 1. User describes task
@@ -413,7 +413,7 @@ In task directories, create `my-agent.jsonl`:
 
 ```jsonl
 {
-  "file": ".trellis/spec/my-spec.md",
+  "file": ".omtre/spec/my-spec.md",
   "reason": "My agent spec"
 }
 ```

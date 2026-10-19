@@ -1,13 +1,13 @@
-# Trellis Local Skill Template
+# omtre Local Skill Template
 
-Copy this template to create a project-specific `trellis-local` skill.
+Copy this template to create a project-specific `omtre-local` skill.
 
 ---
 
 ## How to Use
 
-1. Create directory: `mkdir -p .claude/skills/trellis-local`
-2. Copy the template below to `.claude/skills/trellis-local/SKILL.md`
+1. Create directory: `mkdir -p .claude/skills/omtre-local`
+2. Copy the template below to `.claude/skills/omtre-local/SKILL.md`
 3. Replace `[PROJECT_NAME]` with your project name
 4. Update version info
 
@@ -17,25 +17,25 @@ Copy this template to create a project-specific `trellis-local` skill.
 
 ````markdown
 ---
-name: trellis-local
+name: omtre-local
 description: |
-  Project-specific Trellis customizations for [PROJECT_NAME].
-  This skill documents all modifications made to the vanilla Trellis system.
-  Inherits from trellis-meta for base architecture documentation.
-  Use this skill to understand what's been customized in this project's Trellis setup.
+  Project-specific omtre customizations for [PROJECT_NAME].
+  This skill documents all modifications made to the vanilla omtre system.
+  Inherits from omtre-meta for base architecture documentation.
+  Use this skill to understand what's been customized in this project's omtre setup.
 ---
 
-# Trellis Local - [PROJECT_NAME]
+# omtre Local - [PROJECT_NAME]
 
 ## Overview
 
-This skill documents all customizations made to Trellis in this project. For vanilla Trellis documentation, see the `trellis-meta` skill.
+This skill documents all customizations made to omtre in this project. For vanilla omtre documentation, see the `omtre-meta` skill.
 
 ## Base Information
 
 | Field            | Value      |
 | ---------------- | ---------- |
-| Trellis Version  | X.X.X      |
+| omtre Version  | X.X.X      |
 | Date Initialized | YYYY-MM-DD |
 | Last Updated     | YYYY-MM-DD |
 
@@ -58,8 +58,8 @@ Quick reference of what's been modified:
 ### Added Commands
 
 <!-- Template for new command:
-#### /trellis:command-name [ALL]
-- **File**: `.claude/commands/trellis/command-name.md`
+#### /omt:command-name [ALL]
+- **File**: `.claude/commands/omt/command-name.md`
 - **Platform**: [ALL] or [CC] (Claude Code only)
 - **Purpose**: [what it does]
 - **Added**: YYYY-MM-DD
@@ -71,8 +71,8 @@ Quick reference of what's been modified:
 ### Modified Commands
 
 <!-- Template for modified command:
-#### /trellis:command-name
-- **File**: `.claude/commands/trellis/command-name.md`
+#### /omt:command-name
+- **File**: `.claude/commands/omt/command-name.md`
 - **Change**: [what was changed]
 - **Date**: YYYY-MM-DD
 - **Reason**: [why it was changed]
@@ -151,7 +151,7 @@ Quick reference of what's been modified:
 
 <!-- Template for new spec category:
 #### Category Name
-- **Path**: `.trellis/spec/category-name/`
+- **Path**: `.omtre/spec/category-name/`
 - **Files**: [list of files]
 - **Purpose**: [what standards it covers]
 - **Added**: YYYY-MM-DD
@@ -163,7 +163,7 @@ Quick reference of what's been modified:
 
 <!-- Template for modified spec:
 #### spec-name.md
-- **Path**: `.trellis/spec/category/spec-name.md`
+- **Path**: `.omtre/spec/category/spec-name.md`
 - **Change**: [what was changed]
 - **Date**: YYYY-MM-DD
 - **Reason**: [why it was changed]
@@ -215,8 +215,8 @@ Record all changes chronologically.
 
 ### YYYY-MM-DD - Initial Setup
 
-- Initialized trellis-local skill
-- Base Trellis version: X.X.X
+- Initialized omtre-local skill
+- Base omtre version: X.X.X
 
 <!-- Template for changelog entry:
 ### YYYY-MM-DD - Change Title
@@ -229,10 +229,10 @@ Record all changes chronologically.
 
 ## Migration Notes
 
-Document any special steps needed when upgrading Trellis.
+Document any special steps needed when upgrading omtre.
 
 <!-- Template:
-### Upgrade to Trellis X.Y.Z
+### Upgrade to omtre X.Y.Z
 - [ ] Check if custom hooks conflict with new version
 - [ ] Merge new agent definitions
 - [ ] Update JSONL templates
@@ -267,29 +267,29 @@ To auto-create the skill, run:
 
 ```bash
 #!/bin/bash
-# create-trellis-local.sh
+# create-omtre-local.sh
 
 PROJECT_NAME="${1:-$(basename $(pwd))}"
-SKILL_DIR=".claude/skills/trellis-local"
+SKILL_DIR=".claude/skills/omtre-local"
 
 mkdir -p "$SKILL_DIR"
 
 cat > "$SKILL_DIR/SKILL.md" << 'EOF'
 ---
-name: trellis-local
+name: omtre-local
 description: |
-  Project-specific Trellis customizations for PROJECT_NAME_PLACEHOLDER.
-  This skill documents all modifications made to the vanilla Trellis system.
-  Inherits from trellis-meta for base architecture documentation.
+  Project-specific omtre customizations for PROJECT_NAME_PLACEHOLDER.
+  This skill documents all modifications made to the vanilla omtre system.
+  Inherits from omtre-meta for base architecture documentation.
 ---
 
-# Trellis Local - PROJECT_NAME_PLACEHOLDER
+# omtre Local - PROJECT_NAME_PLACEHOLDER
 
 ## Base Information
 
 | Field | Value |
 |-------|-------|
-| Trellis Version | $(cat package.json 2>/dev/null | grep version | head -1 | cut -d'"' -f4 || echo "unknown") |
+| omtre Version | $(cat package.json 2>/dev/null | grep version | head -1 | cut -d'"' -f4 || echo "unknown") |
 | Date Initialized | $(date +%Y-%m-%d) |
 | Last Updated | $(date +%Y-%m-%d) |
 
@@ -300,7 +300,7 @@ description: |
 ## Changelog
 
 ### $(date +%Y-%m-%d) - Initial Setup
-- Initialized trellis-local skill
+- Initialized omtre-local skill
 EOF
 
 sed -i '' "s/PROJECT_NAME_PLACEHOLDER/$PROJECT_NAME/g" "$SKILL_DIR/SKILL.md"

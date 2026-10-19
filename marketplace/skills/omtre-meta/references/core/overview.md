@@ -8,12 +8,12 @@ These systems work on **all 11 platforms** (Claude Code, Cursor, OpenCode, iFlow
 
 | System    | Purpose                         | Files                             |
 | --------- | ------------------------------- | --------------------------------- |
-| Workspace | Session tracking, journals      | `.trellis/workspace/`             |
-| Tasks     | Work items, subtasks, hooks     | `.trellis/tasks/`                 |
-| Specs     | Coding guidelines (per-package) | `.trellis/spec/`                  |
-| Config    | Packages, hooks, skip rules     | `.trellis/config.yaml`            |
+| Workspace | Session tracking, journals      | `.omtre/workspace/`             |
+| Tasks     | Work items, subtasks, hooks     | `.omtre/tasks/`                 |
+| Specs     | Coding guidelines (per-package) | `.omtre/spec/`                  |
+| Config    | Packages, hooks, skip rules     | `.omtre/config.yaml`            |
 | Commands  | Slash command prompts           | `.claude/commands/`               |
-| Scripts   | Automation utilities            | `.trellis/scripts/` (core subset) |
+| Scripts   | Automation utilities            | `.omtre/scripts/` (core subset) |
 
 ---
 
@@ -29,7 +29,7 @@ All core systems are **file-based**:
 ┌─────────────────────────────────────────────────────────────┐
 │                    CORE SYSTEMS (File-Based)                 │
 │                                                              │
-│  .trellis/                                                   │
+│  .omtre/                                                   │
 │  ├── workspace/     → Journals, session history              │
 │  ├── tasks/         → Task directories, PRDs, subtasks       │
 │  ├── spec/          → Coding guidelines (monorepo support)   │
@@ -65,9 +65,9 @@ Core systems work with optional SessionStart hook and TOML agents. See `meta/pla
 
 Read files manually at session start:
 
-1. Read `.trellis/workflow.md`
-2. Read relevant specs from `.trellis/spec/`
-3. Check `.trellis/.current-task` for active work
+1. Read `.omtre/workflow.md`
+2. Read relevant specs from `.omtre/spec/`
+3. Check `.omtre/.current-task` for active work
 4. Read JSONL files for context
 
 ---
@@ -76,7 +76,7 @@ Read files manually at session start:
 
 | Document       | Content                                        |
 | -------------- | ---------------------------------------------- |
-| `files.md`     | All files in `.trellis/` with purposes         |
+| `files.md`     | All files in `.omtre/` with purposes         |
 | `workspace.md` | Workspace system, journals, developer identity |
 | `tasks.md`     | Task system, subtasks, lifecycle hooks, JSONL   |
 | `specs.md`     | Spec system, monorepo layout, guidelines       |

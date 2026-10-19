@@ -1,15 +1,15 @@
 ---
-name: trellis-run
-description: "Operator shell for `trellis run`, the unattended frontier loop runner — decides when a batch of tickets should be handed to the runner instead of worked interactively, what the tier and whitelist must already allow, where the run ledger lives, and what a stop line means for the board. Also the launch/monitor/takeover shell for an orchestrator-driven multi-agent run (the dispatch-roster skill's job ends once the roster is on disk). Load before running `trellis run`, when a run halts (cycle / fail threshold / push refused / always-stop / deferred delivery), before starting or taking over an orchestrator, or when asked what the runner will and will not do on its own. Requires .trellis/."
+name: omtre-run
+description: "Operator shell for `omtre run`, the unattended frontier loop runner — decides when a batch of tickets should be handed to the runner instead of worked interactively, what the tier and whitelist must already allow, where the run ledger lives, and what a stop line means for the board. Also the launch/monitor/takeover shell for an orchestrator-driven multi-agent run (the dispatch-roster skill's job ends once the roster is on disk). Load before running `omtre run`, when a run halts (cycle / fail threshold / push refused / always-stop / deferred delivery), before starting or taking over an orchestrator, or when asked what the runner will and will not do on its own. Requires .omtre/."
 ---
 
-# trellis-run — loop runner operator shell
+# omtre-run — loop runner operator shell
 
 Thin shell: it routes to the repo-internal authority texts and carries
 checklist-level judgment only. The gate model of record lives in the consuming
-repo (`.trellis/domains/<board>/02-*.md` or wherever the delivery-tier document
-sits) plus `.trellis/domains/DISCIPLINE.md` §4. The implementation is the
-`oh-my-trellis` CLI (`trellis run`) and `task.py delivery-gate`. If this file and
+repo (`.omtre/domains/<board>/02-*.md` or wherever the delivery-tier document
+sits) plus `.omtre/domains/DISCIPLINE.md` §4. The implementation is the
+`omtre` CLI (`omtre run`) and `task.py delivery-gate`. If this file and
 those disagree, they win — correct this file.
 
 **The runner's own stop conditions are mechanical, and so is the whitelist:
@@ -32,31 +32,31 @@ ref, merge a PR, tag, release, deploy, or run a production migration.
 
 ## Before the first run in a repo
 
-- [ ] Tier: `autonomy: supervised-delivery` in `.trellis/config.yaml`, otherwise
+- [ ] Tier: `autonomy: supervised-delivery` in `.omtre/config.yaml`, otherwise
       the runner never pushes and every ticket stops as `delivery_deferred`
       (verified work left standing on its branch, unarchived — that is the
       correct outcome, not an error).
 - [ ] Whitelist: `delivery.auto_push_refs` (block-list YAML, an empty or
       malformed list means no push). Ask the repo instead of guessing:
-      `python ./.trellis/scripts/task.py delivery-gate <ref> --json`.
+      `python ./.omtre/scripts/task.py delivery-gate <ref> --json`.
 - [ ] Per ticket: `set-branch` + `set-base-branch` (no branch metadata = the
       ticket fails, the runner will not invent a ref) and a non-empty
       verification contract (`add-verify`) — without one nothing can be
       delivered unattended, because there is no evidence.
-- [ ] Dry-run first: `trellis run --dry-run` prints the chosen ticket, its
+- [ ] Dry-run first: `omtre run --dry-run` prints the chosen ticket, its
       branch, the tier and the exact action plan, and writes nothing at all
       (not even a ledger file).
 
 ## Running
 
 ```bash
-trellis run --until-empty --board <slug> --provider <claude|codex> \
+omtre run --until-empty --board <slug> --provider <claude|codex> \
             [--max-tickets N] [--max-failures N] [--timeout 20m] [--dry-run]
 ```
 
 - [ ] Defaults are the board's: 5 ticket attempts per run, stop after 3
       consecutive failures on the same ticket.
-- [ ] Each ticket gets its own worktree under `.trellis/.runtime/worktrees/` and
+- [ ] Each ticket gets its own worktree under `.omtre/.runtime/worktrees/` and
       exactly one headless worker. All ticket state changes (claim, verify,
       archive) land as commits **on the ticket branch**, so the repo you start
       from stays clean on the delivery path — with one deliberate exception: when
@@ -77,7 +77,7 @@ trellis run --until-empty --board <slug> --provider <claude|codex> \
       5 minutes) gives up on a worker that emits no events at all. A busy worker is
       never judged idle. `max_live_workers` does not apply: the loop works one
       ticket at a time.
-- [ ] The run ledger is `.trellis/.runtime/runs/run-<UTC>.jsonl` (gitignored).
+- [ ] The run ledger is `.omtre/.runtime/runs/run-<UTC>.jsonl` (gitignored).
       One line per action: ticket, worker, commit OID, verify command + exit,
       stop reason. It is a runtime trace, **never** a reconciliation source —
       truth stays git history > worklog > `## 进度`. Summarize it into the
@@ -119,7 +119,7 @@ operational checklist, not the spec.
       probe → four decisions → summary → write cards / ticket `meta.worker` /
       `meta.model` / `meta.effort` / `config.yaml` `worker_default` +
       `orchestrator:` section. It asks“开跑吗？”(default no) and stops there.
-- [ ] `trellis-run` owns “怎么跑” from that line onward: start the
+- [ ] `omtre-run` owns “怎么跑” from that line onward: start the
       orchestrator, monitor the round, run the takeover protocol. This skill
       never rewrites the roster. Dispatch-roster never starts the runtime.
       If the `orchestrator:` config section is missing, the handoff back is
@@ -127,10 +127,10 @@ operational checklist, not the spec.
 
 ### Standard opening — starting an orchestrator
 
-- [ ] Read `.trellis/config.yaml` `orchestrator:` → card name (`agent`), model
+- [ ] Read `.omtre/config.yaml` `orchestrator:` → card name (`agent`), model
       override, `max_parallel` (absent = 1). No section → stop. The roster was
       never written.
-- [ ] Static layer first: `python ./.trellis/scripts/task.py validate <task>`
+- [ ] Static layer first: `python ./.omtre/scripts/task.py validate <task>`
       per candidate ticket — missing cards, `provider: acp` without a
       registered `acp_target` (and no `acp_command` override), and bad
       `worker_default`/`orchestrator.agent` references are all hard errors.
@@ -139,8 +139,8 @@ operational checklist, not the spec.
       same light probe dispatch-roster uses (`initialize` + `session/new`
       against the registry row). Needs pre-login or not installed → report
       and stop. Never fall back to a different agent.
-- [ ] Spawn per the card: `trellis channel create <name>` then
-      `trellis channel spawn <name> --agent <orchestrator.agent>` (add
+- [ ] Spawn per the card: `omtre channel create <name>` then
+      `omtre channel spawn <name> --agent <orchestrator.agent>` (add
       `--model <orchestrator.model>` when configured), with the contract doc
       passed via `--file` — or the supervising session claims the
       orchestrator role inline. Session-level claim is the exclusivity.
@@ -153,8 +153,8 @@ operational checklist, not the spec.
 ### Monitoring and takeover
 
 - [ ] Monitoring = reading what landed on disk, not inventing a push channel:
-      tail `.trellis/.runtime/runs/run-*.jsonl` (`attempt_started` /
-      `attempt_finished` / `ticket_result`) and each `trellis run --ticket`
+      tail `.omtre/.runtime/runs/run-*.jsonl` (`attempt_started` /
+      `attempt_finished` / `ticket_result`) and each `omtre run --ticket`
       child's last stdout line (the `TicketResult` JSON). Exit code alone is
       not the verdict — `delivery_deferred` exits 0.
 - [ ] Orchestrator died or the session changed → run the takeover chain:

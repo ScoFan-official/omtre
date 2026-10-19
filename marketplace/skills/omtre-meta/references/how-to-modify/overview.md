@@ -1,6 +1,6 @@
 # How-To Modification Guide
 
-Common Trellis customization scenarios and what files need to be modified.
+Common omtre customization scenarios and what files need to be modified.
 
 ---
 
@@ -8,15 +8,15 @@ Common Trellis customization scenarios and what files need to be modified.
 
 | Task                                              | Files to Modify                      | Platform |
 | ------------------------------------------------- | ------------------------------------ | -------- |
-| [Add slash command](#add-slash-command)           | commands/, trellis-local             | All      |
-| [Add agent](#add-agent)                           | agents/, hook, jsonl, trellis-local  | CC       |
-| [Modify hook](#modify-hook)                       | hooks/, settings.json, trellis-local | CC       |
-| [Add spec category](#add-spec-category)           | spec/, jsonl, trellis-local          | All      |
+| [Add slash command](#add-slash-command)           | commands/, omtre-local             | All      |
+| [Add agent](#add-agent)                           | agents/, hook, jsonl, omtre-local  | CC       |
+| [Modify hook](#modify-hook)                       | hooks/, settings.json, omtre-local | CC       |
+| [Add spec category](#add-spec-category)           | spec/, jsonl, omtre-local          | All      |
 | [Change verify commands](#change-verify-commands) | worktree.yaml                        | CC       |
-| [Add workflow phase](#add-workflow-phase)         | task.json, dispatch, trellis-local   | CC       |
+| [Add workflow phase](#add-workflow-phase)         | task.json, dispatch, omtre-local   | CC       |
 | [Add post_create step](#add-post_create-step)     | worktree.yaml                        | CC       |
-| [Modify session start](#modify-session-start)     | session-start.py, trellis-local      | CC       |
-| [Add core script](#add-core-script)               | scripts/, trellis-local              | All      |
+| [Modify session start](#modify-session-start)     | session-start.py, omtre-local      | CC       |
+| [Add core script](#add-core-script)               | scripts/, omtre-local              | All      |
 | [Change task types](#change-task-types)           | task.py, jsonl templates             | All      |
 
 **Platform**: `All` = All 11 platforms | `CC` = Claude Code + iFlow (hook-capable)
@@ -27,21 +27,21 @@ Common Trellis customization scenarios and what files need to be modified.
 
 ### Add Slash Command
 
-**Scenario**: Add a new `/trellis:my-command` command.
+**Scenario**: Add a new `/omt:my-command` command.
 
 **Files to modify**:
 
 ```
-.claude/commands/trellis/my-command.md    # Create: Command prompt
+.claude/commands/omt/my-command.md    # Create: Command prompt
 .cursor/commands/my-command.md            # Create: Mirror for Cursor (optional)
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 **Steps**:
 
 1. Create command file with YAML frontmatter
 2. Mirror to Cursor if needed
-3. Document in trellis-local
+3. Document in omtre-local
 
 → See `add-command.md` for details.
 
@@ -56,8 +56,8 @@ Common Trellis customization scenarios and what files need to be modified.
 ```
 .claude/agents/my-agent.md                          # Create: Agent definition
 .claude/hooks/inject-subagent-context.py            # Modify: Add agent handling
-.trellis/tasks/{template}/my-agent.jsonl            # Create: Context template
-.trellis-local/SKILL.md                             # Update: Document the change
+.omtre/tasks/{template}/my-agent.jsonl            # Create: Context template
+.omtre-local/SKILL.md                             # Update: Document the change
 ```
 
 **Optional**:
@@ -80,7 +80,7 @@ task.json template                                  # Modify: Add to next_action
 ```
 .claude/hooks/{hook-name}.py              # Modify: Hook logic
 .claude/settings.json                     # Modify: If changing matcher/timeout
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `modify-hook.md` for details.
@@ -94,10 +94,10 @@ task.json template                                  # Modify: Add to next_action
 **Files to modify**:
 
 ```
-.trellis/spec/mobile/index.md             # Create: Category index
-.trellis/spec/mobile/*.md                 # Create: Spec files
-.trellis/tasks/{template}/*.jsonl         # Update: Reference new specs
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre/spec/mobile/index.md             # Create: Category index
+.omtre/spec/mobile/*.md                 # Create: Spec files
+.omtre/tasks/{template}/*.jsonl         # Update: Reference new specs
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `add-spec.md` for details.
@@ -111,7 +111,7 @@ task.json template                                  # Modify: Add to next_action
 **Files to modify**:
 
 ```
-.trellis/worktree.yaml                    # Modify: verify section
+.omtre/worktree.yaml                    # Modify: verify section
 ```
 
 **Example**:
@@ -138,7 +138,7 @@ task.json (in task directories)           # Modify: next_action array
 .claude/agents/dispatch.md                # Modify: Handle new phase
 .claude/agents/{new-phase}.md             # Create: If new agent needed
 .claude/hooks/inject-subagent-context.py  # Modify: If new agent
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `add-phase.md` for details.
@@ -152,7 +152,7 @@ task.json (in task directories)           # Modify: next_action array
 **Files to modify**:
 
 ```
-.trellis/worktree.yaml                    # Modify: post_create section
+.omtre/worktree.yaml                    # Modify: post_create section
 ```
 
 **Example**:
@@ -173,7 +173,7 @@ post_create:
 
 ```
 .claude/hooks/session-start.py            # Modify: Injection logic
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `modify-session-start.md` for details.
@@ -187,9 +187,9 @@ post_create:
 **Files to modify**:
 
 ```
-.trellis/scripts/my-script.py             # Create: Script
-.trellis/scripts/common/*.py              # Create/Modify: If shared utilities
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre/scripts/my-script.py             # Create: Script
+.omtre/scripts/common/*.py              # Create/Modify: If shared utilities
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `add-script.md` for details.
@@ -203,9 +203,9 @@ post_create:
 **Files to modify**:
 
 ```
-.trellis/scripts/task.py                  # Modify: init-context logic
-.trellis/tasks/{template}/*.jsonl         # Create: New JSONL templates
-.trellis-local/SKILL.md                   # Update: Document the change
+.omtre/scripts/task.py                  # Modify: init-context logic
+.omtre/tasks/{template}/*.jsonl         # Create: New JSONL templates
+.omtre-local/SKILL.md                   # Update: Document the change
 ```
 
 → See `change-task-types.md` for details.

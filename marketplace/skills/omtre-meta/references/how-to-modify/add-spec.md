@@ -10,24 +10,24 @@ Add a new spec category like `mobile/`.
 
 | File                            | Action | Required |
 | ------------------------------- | ------ | -------- |
-| `.trellis/spec/mobile/index.md` | Create | Yes      |
-| `.trellis/spec/mobile/*.md`     | Create | Yes      |
+| `.omtre/spec/mobile/index.md` | Create | Yes      |
+| `.omtre/spec/mobile/*.md`     | Create | Yes      |
 | Task JSONL templates            | Update | Yes      |
-| `trellis-local/SKILL.md`        | Update | Yes      |
+| `omtre-local/SKILL.md`        | Update | Yes      |
 
 ---
 
 ## Step 1: Create Category Directory
 
 ```bash
-mkdir -p .trellis/spec/mobile
+mkdir -p .omtre/spec/mobile
 ```
 
 ---
 
 ## Step 2: Create Index File
 
-Create `.trellis/spec/mobile/index.md`:
+Create `.omtre/spec/mobile/index.md`:
 
 ```markdown
 # Mobile Specifications
@@ -114,7 +114,7 @@ def init_mobile_context(task_dir):
     jsonl_path = os.path.join(task_dir, "implement.jsonl")
     with open(jsonl_path, "a") as f:
         f.write(json.dumps({
-            "file": ".trellis/spec/mobile/index.md",
+            "file": ".omtre/spec/mobile/index.md",
             "reason": "Mobile guidelines"
         }) + "\n")
 ````
@@ -124,15 +124,15 @@ def init_mobile_context(task_dir):
 Edit existing JSONL files:
 
 ```jsonl
-{"file": ".trellis/spec/mobile/index.md", "reason": "Mobile guidelines"}
-{"file": ".trellis/spec/mobile/architecture.md", "reason": "Architecture patterns"}
+{"file": ".omtre/spec/mobile/index.md", "reason": "Mobile guidelines"}
+{"file": ".omtre/spec/mobile/architecture.md", "reason": "Architecture patterns"}
 ```
 
 ---
 
-## Step 5: Document in trellis-local
+## Step 5: Document in omtre-local
 
-Update `.claude/skills/trellis-local/SKILL.md`:
+Update `.claude/skills/omtre-local/SKILL.md`:
 
 ```markdown
 ## Specs Customized
@@ -141,7 +141,7 @@ Update `.claude/skills/trellis-local/SKILL.md`:
 
 #### mobile/
 
-- **Path**: `.trellis/spec/mobile/`
+- **Path**: `.omtre/spec/mobile/`
 - **Purpose**: Mobile development guidelines
 - **Added**: 2026-01-31
 - **Files**:
@@ -208,5 +208,5 @@ See [State Management](./state-management.md) for more details.
 - [ ] Index file created with overview
 - [ ] Spec files created with proper format
 - [ ] JSONL templates updated
-- [ ] Documented in trellis-local
+- [ ] Documented in omtre-local
 - [ ] Cross-references verified

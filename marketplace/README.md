@@ -1,4 +1,4 @@
-# Trellis Marketplace
+# omtre Marketplace
 
 Downloadable templates for Claude Code users.
 
@@ -9,7 +9,7 @@ marketplace/
 ├── skills/      # Claude Skills (.claude/skills/)
 ├── commands/    # Slash Commands (.claude/commands/)
 ├── agents/      # Sub-agent definitions (.claude/agents/)
-└── specs/       # Spec templates (.trellis/spec/)
+└── specs/       # Spec templates (.omtre/spec/)
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ marketplace/
 ### Install via npx skills
 
 ```bash
-npx skills add mindfold-ai/Trellis/marketplace
+npx skills add ScoFan-official/omtre/marketplace
 ```
 
 ### Manual Installation

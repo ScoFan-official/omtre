@@ -12,8 +12,8 @@ Add a new agent type like `my-agent`.
 | ------------------------------------------ | ------ | --------------------- |
 | `.claude/agents/my-agent.md`               | Create | Yes                   |
 | `.claude/hooks/inject-subagent-context.py` | Modify | Yes                   |
-| `.trellis/tasks/{template}/my-agent.jsonl` | Create | Yes                   |
-| `trellis-local/SKILL.md`                   | Update | Yes                   |
+| `.omtre/tasks/{template}/my-agent.jsonl` | Create | Yes                   |
+| `omtre-local/SKILL.md`                   | Update | Yes                   |
 | `.claude/agents/dispatch.md`               | Modify | If adding to pipeline |
 
 ---
@@ -126,7 +126,7 @@ def init_my_agent_context(task_dir, dev_type):
     with open(jsonl_path, "w") as f:
         # Add relevant specs
         f.write(json.dumps({
-            "file": ".trellis/spec/guides/index.md",
+            "file": ".omtre/spec/guides/index.md",
             "reason": "Thinking guides"
         }) + "\n")
 ```
@@ -134,8 +134,8 @@ def init_my_agent_context(task_dir, dev_type):
 **Option B**: Manually create template:
 
 ```jsonl
-{"file": ".trellis/spec/guides/index.md", "reason": "Thinking guides"}
-{"file": ".trellis/tasks/{task}/prd.md", "reason": "Requirements"}
+{"file": ".omtre/spec/guides/index.md", "reason": "Thinking guides"}
+{"file": ".omtre/tasks/{task}/prd.md", "reason": "Requirements"}
 ```
 
 ---
@@ -173,9 +173,9 @@ Add handling for the new phase:
 
 ---
 
-## Step 5: Document in trellis-local
+## Step 5: Document in omtre-local
 
-Update `.claude/skills/trellis-local/SKILL.md`:
+Update `.claude/skills/omtre-local/SKILL.md`:
 
 ```markdown
 ## Agents
@@ -220,5 +220,5 @@ Update `.claude/skills/trellis-local/SKILL.md`:
 - [ ] Hook updated with main switch case
 - [ ] JSONL template created
 - [ ] Added to pipeline (if needed)
-- [ ] Documented in trellis-local
+- [ ] Documented in omtre-local
 - [ ] Tested the agent

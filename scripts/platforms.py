@@ -2,8 +2,7 @@
 
 Single source of truth shared by build_manifest.py and install.py.
 
-Source: docs.trytrellis.app/beta — custom-skills, custom-agents, custom-commands,
-plus real generated files from mindfold-ai/Trellis templates.
+Source: upstream mindfold-ai/Trellis templates (custom-skills, custom-agents, custom-commands).
 
 - agents=None: platform has no sub-agent primitive (work runs inline).
 - commands="skill": platform has no command primitive; commands ship as
@@ -50,7 +49,7 @@ PLATFORMS = {
     "antigravity": dict(skills=".agent/skills",       agents=None,                              commands=(".agent/workflows", CMD_WORKFLOW), mcp=(".agent/mcp.json", MCP_JSON),        verified=False),
     "devin":       dict(skills=".devin/skills",       agents=None,                              commands=(".devin/workflows", CMD_WORKFLOW), mcp=(".devin/mcp.json", MCP_JSON),         verified=True,  notes="No sub-agent primitive; commands = .devin/workflows/{ns}-{name}.md. MCP config per Devin CLI docs."),
     "reasonix":    dict(skills=".reasonix/skills",    agents=(".reasonix/agents", MD),          commands=(".reasonix/commands", CMD_MD_FLAT), mcp=(".reasonix/mcp.json", MCP_JSON),    verified=False),
-    "zcode":       dict(skills=".zcode/skills",       agents=(".zcode/agents", MD_ZCODE),       commands=(".zcode/commands", CMD_MD_FLAT),   mcp=(".zcode/mcp.json", MCP_JSON),        verified=False, notes="agents format verified against Trellis zcode template; commands/MCP guessed by convention."),
+    "zcode":       dict(skills=".zcode/skills",       agents=(".zcode/agents", MD_ZCODE),       commands=(".zcode/commands", CMD_MD_FLAT),   mcp=(".zcode/mcp.json", MCP_JSON),        verified=False, notes="agents format verified against upstream mindfold-ai/Trellis zcode template; commands/MCP guessed by convention."),
     "trae":        dict(skills=".trae/skills",        agents=(".trae/agents", MD),              commands=(".trae/commands", CMD_MD_FLAT),    mcp=(".trae/mcp.json", MCP_JSON),         verified=False),
     "grok":        dict(skills=".grok/skills",        agents=(".grok/agents", MD),              commands=(".grok/commands", CMD_MD_FLAT),    mcp=(".grok/mcp.json", MCP_JSON),         verified=False),
     "kimi":        dict(skills=".kimi-code/skills",   agents=(".kimi-code/agents", MD),         commands=(".kimi-code/commands", CMD_MD_FLAT), mcp=(".kimi-code/mcp.json", MCP_JSON),  verified=False),

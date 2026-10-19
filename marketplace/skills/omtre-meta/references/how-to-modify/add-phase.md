@@ -14,7 +14,7 @@ Add a new phase to the task workflow pipeline.
 | `.claude/agents/dispatch.md`    | Modify | Yes          |
 | `.claude/agents/{new-agent}.md` | Create | If new agent |
 | `inject-subagent-context.py`    | Modify | If new agent |
-| `trellis-local/SKILL.md`        | Update | Yes          |
+| `omtre-local/SKILL.md`        | Update | Yes          |
 
 ---
 
@@ -166,7 +166,7 @@ default_next_action = [
 
 ---
 
-## Step 6: Document in trellis-local
+## Step 6: Document in omtre-local
 
 ```markdown
 ## Workflow Changes
@@ -233,5 +233,5 @@ default_next_action = [
 - [ ] Agent created (if new)
 - [ ] Hook updated (if new agent)
 - [ ] Task templates updated
-- [ ] Documented in trellis-local
+- [ ] Documented in omtre-local
 - [ ] Tested workflow

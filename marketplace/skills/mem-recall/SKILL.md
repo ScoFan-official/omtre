@@ -1,24 +1,24 @@
 ---
 name: mem-recall
-description: Search and recall past AI conversations across Claude Code, Codex, Devin CLI, Grok, OpenCode, Pi and ZCode via the `trellis mem` CLI. Use whenever the user asks to remember, find, or look up anything discussed in previous AI sessions — across platforms, projects, or time. Triggers on phrases like "我之前跟 Claude/Codex 讨论过 X", "上次怎么处理 Y", "翻一下历史对话", "我们当时怎么决定 X 的", "为什么我们选了 X 而不是 Y", "find what I said about Z", "what did I discuss last week", "the rationale for choosing X", "find the brainstorm where we picked Z over alternatives". Use even when the user doesn't say "history" or "recall" — any reference to past AI-conversation content should trigger this skill. The tool reads sessions directly from each platform's local storage; nothing is uploaded.
+description: Search and recall past AI conversations across Claude Code, Codex, Devin CLI, Grok, OpenCode, Pi and ZCode via the `omtre mem` CLI. Use whenever the user asks to remember, find, or look up anything discussed in previous AI sessions — across platforms, projects, or time. Triggers on phrases like "我之前跟 Claude/Codex 讨论过 X", "上次怎么处理 Y", "翻一下历史对话", "我们当时怎么决定 X 的", "为什么我们选了 X 而不是 Y", "find what I said about Z", "what did I discuss last week", "the rationale for choosing X", "find the brainstorm where we picked Z over alternatives". Use even when the user doesn't say "history" or "recall" — any reference to past AI-conversation content should trigger this skill. The tool reads sessions directly from each platform's local storage; nothing is uploaded.
 ---
 
 # Mem Recall
 
-Cross-platform conversation memory for Claude Code, Codex CLI, Devin CLI, Grok, OpenCode, Pi and ZCode. The `trellis mem` command reads each platform's local session storage, cleans the dialogue (strips system prompts, tool noise, hook injections, compact summaries handled correctly), and exposes a focused 5-command CLI for recall workflows. Devin CLI is `--platform devin` reading `~/.local/share/devin/cli/sessions.db` — not `trellis init --devin` (Desktop/Cascade) and not Factory Droid.
+Cross-platform conversation memory for Claude Code, Codex CLI, Devin CLI, Grok, OpenCode, Pi and ZCode. The `omtre mem` command reads each platform's local session storage, cleans the dialogue (strips system prompts, tool noise, hook injections, compact summaries handled correctly), and exposes a focused 5-command CLI for recall workflows. Devin CLI is `--platform devin` reading `~/.local/share/devin/cli/sessions.db` — not `omtre init --devin` (Desktop/Cascade) and not Factory Droid.
 
 ## Prerequisite
 
-Trellis CLI **0.6.17 or later** installed globally:
+omtre CLI **0.6.17 or later** installed globally:
 
 ```bash
-npm install -g @mindfoldhq/trellis@latest
-trellis --version
+npm install -g omtre@latest
+omtre --version
 ```
 
-`trellis mem` ships bundled with the CLI; no extra setup. 0.6.17 adds
+`omtre mem` ships bundled with the CLI; no extra setup. 0.6.17 adds
 Cognition Devin CLI (`--platform devin`, `~/.local/share/devin/cli/sessions.db`).
-This is not `trellis init --devin` (Desktop/Cascade) and not Factory Droid.
+This is not `omtre init --devin` (Desktop/Cascade) and not Factory Droid.
 0.6.14 added Grok and kept pre-compaction turns; 0.6.16 restored OpenCode.
 
 OpenCode was restored in 0.6.16 via the zero-dependency SQLite reader.
@@ -31,7 +31,7 @@ Use proactively whenever the user asks any of:
 - "我之前跟 Codex/Claude 讨论过 X，你了解下"
 - "上次我们怎么解决 Y 的？"
 - "翻一下历史看看"
-- "我之前在 trellis 项目里聊过哪些 plugin 设计？"
+- "我之前在 omtre 项目里聊过哪些 plugin 设计？"
 - "find sessions about memory architecture"
 - "what did I tell another AI about this last week"
 
@@ -51,40 +51,40 @@ Don't second-guess. The user's intent of "use my past conversations as context" 
 Recall is a two-step drill-down, not a single query. Step 1 narrows to a session; step 2 pulls the actual content.
 
 ```
-Step 1 (discover):  trellis mem search "<topic>" [--cwd <project>] [--since <date>]
-Step 2 (drill):     trellis mem context <session-id> --grep <topic> --turns 3 --around 1
+Step 1 (discover):  omtre mem search "<topic>" [--cwd <project>] [--since <date>]
+Step 2 (drill):     omtre mem context <session-id> --grep <topic> --turns 3 --around 1
 ```
 
-If the user is vague about which project, run `trellis mem projects` first to surface recently-active project cwds, then pick the most plausible one.
+If the user is vague about which project, run `omtre mem projects` first to surface recently-active project cwds, then pick the most plausible one.
 
 ## Commands
 
-### `trellis mem projects` — list active project cwds
+### `omtre mem projects` — list active project cwds
 
 Use first when the user references "the project" without saying which one. Shows distinct cwds across all platforms, ranked by last-active timestamp, with per-platform session counts. This is the AI-routing entry point.
 
 ```bash
-trellis mem projects --since 2026-04-20 --limit 10
+omtre mem projects --since 2026-04-20 --limit 10
 ```
 
 Output:
 ```
 2026-05-04 03:42  sessions= 1 (claude:1)  ~/workspace/nb_project/mem-poc
-2026-05-04 01:00  sessions=114 (claude:51 codex:63)  ~/workspace/.../Trellis
+2026-05-04 01:00  sessions=114 (claude:51 codex:63)  ~/workspace/.../omtre
 ...
 ```
 
-### `trellis mem search <keyword>` — find candidate sessions
+### `omtre mem search <keyword>` — find candidate sessions
 
 Multi-token AND search across cleaned dialogue. Returns ranked sessions with a chunk excerpt per match. Defaults to the current working directory; use `--global` to search across all projects.
 
 ```bash
-trellis mem search "trellis memory" --cwd ~/workspace/.../Trellis --since 2026-04-13
+omtre mem search "omtre memory" --cwd ~/workspace/.../omtre --since 2026-04-13
 ```
 
 Output per session:
 ```
-[claude  ] 2026-04-20 11:39  4cda3c7f-8f9  ~/.../Trellis  score=6.027  hits=169 (u=27,a=142)  turns=37
+[claude  ] 2026-04-20 11:39  4cda3c7f-8f9  ~/.../omtre  score=6.027  hits=169 (u=27,a=142)  turns=37
     [user] 是我们的用户想要搞类似记忆系统的东西…
     [assistant] ## Memory plugin 调研结论…
 ```
@@ -93,32 +93,32 @@ Output per session:
 
 **Excerpts are paragraph-aligned chunks**, not char windows. They respect markdown / code-block boundaries, and prefer chunks that visibly contain ALL query tokens. When the query has multiple tokens far apart in a long turn, the chunk falls back to anchoring on the **rarest** token (more discriminating).
 
-### `trellis mem context <session-id>` — drill into a session
+### `omtre mem context <session-id>` — drill into a session
 
 After `search` picks a candidate, use this to retrieve specific hit turns plus surrounding context. Token-budgeted for direct AI consumption.
 
 ```bash
-trellis mem context 4cda3c7f --grep memory --turns 3 --around 1
+omtre mem context 4cda3c7f --grep memory --turns 3 --around 1
 # top-3 hit turns + 1 turn before/after each, ≤6000 chars total
 
-trellis mem context 4cda3c7f --turns 5 --around 0
+omtre mem context 4cda3c7f --turns 5 --around 0
 # no grep: returns the first 5 turns (lets you see how the session opens)
 ```
 
 Default budget 6000 chars (~1500 tokens); per-turn cap is half that. Use `--max-chars N` to adjust.
 
-### `trellis mem extract <session-id>` — dump cleaned dialogue
+### `omtre mem extract <session-id>` — dump cleaned dialogue
 
 Full conversation dump after platform-specific cleaning. Use for long-form inspection, not for budget-constrained recall.
 
 ```bash
-trellis mem extract 4cda3c7f --grep memory   # filter to turns matching keyword
-trellis mem extract 4cda3c7f --json          # structured output
+omtre mem extract 4cda3c7f --grep memory   # filter to turns matching keyword
+omtre mem extract 4cda3c7f --json          # structured output
 ```
 
-### `trellis mem extract --phase brainstorm` — slice the discussion portion
+### `omtre mem extract --phase brainstorm` — slice the discussion portion
 
-A Trellis session often opens with brainstorming (the user thinking aloud, the
+An omtre session often opens with brainstorming (the user thinking aloud, the
 AI proposing options, alternatives being rejected, decisions being made),
 followed by implementation work once the user runs `task.py start`. The
 `--phase` flag slices the cleaned dialogue along that boundary so you can
@@ -142,20 +142,20 @@ the same session. Multi-task sessions produce multiple windows.
 
 ```bash
 # Single session, brainstorm only
-trellis mem extract 4cda3c7f --phase brainstorm
+omtre mem extract 4cda3c7f --phase brainstorm
 
 # Multi-task session — output is split with separators:
 #   --- task: my-feature ---
 #   ## Human ...
 #   --- task: another-task ---
 #   ## Human ...
-trellis mem extract 4cda3c7f --phase brainstorm
+omtre mem extract 4cda3c7f --phase brainstorm
 
 # Filter inside the brainstorm window only (--phase runs first, then --grep)
-trellis mem extract 4cda3c7f --phase brainstorm --grep "trade-off"
+omtre mem extract 4cda3c7f --phase brainstorm --grep "trade-off"
 
 # Structured output: get window metadata for downstream scripts / AI
-trellis mem extract 4cda3c7f --phase brainstorm --json
+omtre mem extract 4cda3c7f --phase brainstorm --json
 # JSON adds:
 #   "phase": "brainstorm"
 #   "windows": [{ "label": "my-feature", "startTurn": 1, "endTurn": 14 }, ...]
@@ -163,7 +163,7 @@ trellis mem extract 4cda3c7f --phase brainstorm --json
 #   "turns":   [...]   // flat concatenation, legacy-compatible
 
 # The inverse: just the implementation work
-trellis mem extract 4cda3c7f --phase implement
+omtre mem extract 4cda3c7f --phase implement
 ```
 
 **Platform support**:
@@ -182,12 +182,12 @@ trellis mem extract 4cda3c7f --phase implement
 - `start` found but no preceding `create` (task created in an earlier session) → brainstorm window is `[0, start)`.
 - Neither found → full dialogue + stderr warning.
 
-### `trellis mem list` — enumerate sessions
+### `omtre mem list` — enumerate sessions
 
 Mostly for browsing/debugging. Project-scoped by default; `--global` to widen.
 
 ```bash
-trellis mem list --since 2026-04-27
+omtre mem list --since 2026-04-27
 ```
 
 OpenCode child sessions show `↳ child of <parent-id>` annotation.
@@ -211,7 +211,7 @@ OpenCode child sessions show `↳ child of <parent-id>` annotation.
 --help, -h                             show help
 ```
 
-Run `trellis mem help` for the canonical flag reference.
+Run `omtre mem help` for the canonical flag reference.
 
 ## Where data comes from (per platform)
 
@@ -221,7 +221,7 @@ The tool reads these locations directly. No daemon, no index, no upload.
 |---|---|---|
 | **Claude Code** | `~/.claude/projects/<sanitized-cwd>/*.jsonl` | One JSONL per session; cwd path encoded in dirname (`/` and `_` → `-`) |
 | **Codex** | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | One JSONL per session; cwd in `session_meta` payload of first event |
-| **Devin CLI** | `~/.local/share/devin/cli/sessions.db` | Cognition Devin CLI (WAL SQLite). `--platform devin`. Not `trellis init --devin` (Desktop/Cascade) and not Factory Droid |
+| **Devin CLI** | `~/.local/share/devin/cli/sessions.db` | Cognition Devin CLI (WAL SQLite). `--platform devin`. Not `omtre init --devin` (Desktop/Cascade) and not Factory Droid |
 | **Grok** | `~/.grok/sessions/<url-encoded-cwd>/<session-id>/chat_history.jsonl` | cwd is URL-encoded in the directory name; `session_search.sqlite` is only an index and is not read |
 | **Pi** | Default `~/.pi/agent/sessions/`; env overrides; global `~/.pi/agent/settings.json`; scoped project `.pi/settings.json` | One JSONL per session; relative `sessionDir` values resolve from the settings file directory. Project-local settings are discovered for the current cwd or `--cwd`, not by an unrestricted `--global` scan. Only the active `id`/`parentId` branch is extracted. |
 | **OpenCode** | `~/.local/share/opencode/opencode.db` | SQLite `session`/`message`/`part` tables (0.6.16+) |
@@ -249,23 +249,23 @@ This means search hits are reliable signals of "the actual conversation discusse
 
 `--include-children` only meaningfully changes behavior for OpenCode searches — other platforms have no native `parent_id` to merge on.
 
-## Worked example: "what did I discuss about memory in Trellis last week?"
+## Worked example: "what did I discuss about memory in omtre last week?"
 
 ```bash
 # 1. Confirm the project name (skip if user already named it explicitly)
-trellis mem projects --since 2026-04-27
-# → finds "~/workspace/.../Trellis" with 114 sessions
+omtre mem projects --since 2026-04-27
+# → finds "~/workspace/.../omtre" with 114 sessions
 
 # 2. Find candidate sessions
-trellis mem search "memory" \
-  --cwd ~/workspace/.../Trellis \
+omtre mem search "memory" \
+  --cwd ~/workspace/.../omtre \
   --since 2026-04-27
 
-# → top: codex 019dcc75 (score 2.43, Codex memory subagent + Trellis hook)
+# → top: codex 019dcc75 (score 2.43, Codex memory subagent + omtre hook)
 #   then: claude 12d26622 (user interview about "项目记忆 4 形态")
 
 # 3. Drill into the most relevant
-trellis mem context 12d26622 --grep memory --turns 3 --around 1
+omtre mem context 12d26622 --grep memory --turns 3 --around 1
 # → returns the actual interview question block listing 4 memory archetypes
 
 # 4. Now answer the user with concrete content recovered from past sessions

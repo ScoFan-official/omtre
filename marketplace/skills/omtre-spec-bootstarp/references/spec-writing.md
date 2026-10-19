@@ -1,6 +1,6 @@
 # Spec Writing
 
-Trellis specs are coding guidance for future agents. They should explain how to work in this repository, not how a generic project might be organized.
+omtre specs are coding guidance for future agents. They should explain how to work in this repository, not how a generic project might be organized.
 
 ## Write From Evidence
 
@@ -64,7 +64,7 @@ Avoid passing raw `process.argv` or unvalidated config objects into shared helpe
 Before finishing:
 
 ```bash
-grep -R "To be filled\\|TODO: fill\\|placeholder" .trellis/spec
+grep -R "To be filled\\|TODO: fill\\|placeholder" .omtre/spec
 ```
 
 Also check links, index files, and whether any spec still describes a template rather than this repository.

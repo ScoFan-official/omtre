@@ -118,9 +118,9 @@ def filter_assets(assets, source, types, components, only_core):
     return assets
 
 def discover_mp_bridge():
-    return [dict(id="pack:mp-trellis-bridge", type="skill", source="pack",
-                 category="bridge", name="mp-trellis-bridge",
-                 path=ROOT / "skills" / "mp-trellis-bridge")]
+    return [dict(id="pack:mp-omtre-bridge", type="skill", source="pack",
+                 category="bridge", name="mp-omtre-bridge",
+                 path=ROOT / "skills" / "mp-omtre-bridge")]
 
 # ---------- converters ----------
 

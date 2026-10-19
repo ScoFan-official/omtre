@@ -1,6 +1,6 @@
 # Core Scripts
 
-Platform-independent Python scripts for Trellis automation.
+Platform-independent Python scripts for omtre automation.
 
 ---
 
@@ -9,7 +9,7 @@ Platform-independent Python scripts for Trellis automation.
 These scripts work on all platforms — they only read/write files and don't require Claude Code's hook system.
 
 ```
-.trellis/scripts/
+.omtre/scripts/
 ├── common/                  # Shared utilities (19 modules)
 │   ├── __init__.py
 │   ├── paths.py             # Path constants
@@ -52,15 +52,15 @@ These scripts work on all platforms — they only read/write files and don't req
 Initialize developer identity.
 
 ```bash
-python3 .trellis/scripts/init_developer.py <name>
+python3 .omtre/scripts/init_developer.py <name>
 ```
 
 **Creates:**
 
-- `.trellis/.developer`
-- `.trellis/workspace/<name>/`
-- `.trellis/workspace/<name>/index.md`
-- `.trellis/workspace/<name>/journal-1.md`
+- `.omtre/.developer`
+- `.omtre/workspace/<name>/`
+- `.omtre/workspace/<name>/index.md`
+- `.omtre/workspace/<name>/journal-1.md`
 
 ---
 
@@ -69,7 +69,7 @@ python3 .trellis/scripts/init_developer.py <name>
 Get current developer name.
 
 ```bash
-python3 .trellis/scripts/get_developer.py
+python3 .omtre/scripts/get_developer.py
 # Output: taosu
 ```
 
@@ -87,10 +87,10 @@ python3 .trellis/scripts/get_developer.py
 Get session context for AI consumption.
 
 ```bash
-python3 .trellis/scripts/get_context.py              # Default mode (text)
-python3 .trellis/scripts/get_context.py --json        # JSON output
-python3 .trellis/scripts/get_context.py --mode record    # For record-session
-python3 .trellis/scripts/get_context.py --mode packages  # Package info only
+python3 .omtre/scripts/get_context.py              # Default mode (text)
+python3 .omtre/scripts/get_context.py --json        # JSON output
+python3 .omtre/scripts/get_context.py --mode record    # For record-session
+python3 .omtre/scripts/get_context.py --mode packages  # Package info only
 ```
 
 **Modes:**
@@ -117,7 +117,7 @@ python3 .trellis/scripts/get_context.py --mode packages  # Package info only
 Record session entry to journal.
 
 ```bash
-python3 .trellis/scripts/add_session.py \
+python3 .omtre/scripts/add_session.py \
   --title "Session Title" \
   --commit "hash1,hash2" \
   --summary "Brief summary"
@@ -137,7 +137,7 @@ python3 .trellis/scripts/add_session.py \
 1. Appends to current journal
 2. Updates index markers
 3. Rotates journal if >max_journal_lines
-4. Auto-commits `.trellis/workspace` changes (unless `--no-commit`)
+4. Auto-commits `.omtre/workspace` changes (unless `--no-commit`)
 
 ---
 
@@ -146,7 +146,7 @@ python3 .trellis/scripts/add_session.py \
 Create a bootstrap task for first-time setup.
 
 ```bash
-python3 .trellis/scripts/create_bootstrap.py
+python3 .omtre/scripts/create_bootstrap.py
 ```
 
 Creates a task that guides filling in project-specific spec guidelines.
@@ -162,7 +162,7 @@ Task management CLI with 16 subcommands.
 #### Create Task
 
 ```bash
-python3 .trellis/scripts/task.py create "Task name" --slug task-slug
+python3 .omtre/scripts/task.py create "Task name" --slug task-slug
 ```
 
 **Options:**
@@ -177,22 +177,22 @@ python3 .trellis/scripts/task.py create "Task name" --slug task-slug
 #### List Tasks
 
 ```bash
-python3 .trellis/scripts/task.py list
-python3 .trellis/scripts/task.py list --mine          # My tasks only
-python3 .trellis/scripts/task.py list --status active  # Filter by status
+python3 .omtre/scripts/task.py list
+python3 .omtre/scripts/task.py list --mine          # My tasks only
+python3 .omtre/scripts/task.py list --status active  # Filter by status
 ```
 
 #### Start / Finish Task
 
 ```bash
-python3 .trellis/scripts/task.py start <task-dir>   # Set .current-task
-python3 .trellis/scripts/task.py finish              # Clear .current-task
+python3 .omtre/scripts/task.py start <task-dir>   # Set .current-task
+python3 .omtre/scripts/task.py finish              # Clear .current-task
 ```
 
 #### Initialize Context
 
 ```bash
-python3 .trellis/scripts/task.py init-context <task-dir> <dev-type>
+python3 .omtre/scripts/task.py init-context <task-dir> <dev-type>
 ```
 
 **Dev types:** `frontend`, `backend`, `fullstack`, `test`, `docs`
@@ -202,9 +202,9 @@ Creates JSONL files with appropriate spec references. After initialization, outp
 #### Manage Context
 
 ```bash
-python3 .trellis/scripts/task.py add-context <task-dir> <agent> <path> <reason>
-python3 .trellis/scripts/task.py list-context <task-dir>
-python3 .trellis/scripts/task.py validate <task-dir>
+python3 .omtre/scripts/task.py add-context <task-dir> <agent> <path> <reason>
+python3 .omtre/scripts/task.py list-context <task-dir>
+python3 .omtre/scripts/task.py validate <task-dir>
 ```
 
 **Agent types for add-context:** `implement`, `check`, `debug`
@@ -212,26 +212,26 @@ python3 .trellis/scripts/task.py validate <task-dir>
 #### Branch Management
 
 ```bash
-python3 .trellis/scripts/task.py set-branch <task-dir> <branch-name>
-python3 .trellis/scripts/task.py set-base-branch <task-dir> <base-branch>
-python3 .trellis/scripts/task.py set-scope <task-dir> <scope>
+python3 .omtre/scripts/task.py set-branch <task-dir> <branch-name>
+python3 .omtre/scripts/task.py set-base-branch <task-dir> <base-branch>
+python3 .omtre/scripts/task.py set-scope <task-dir> <scope>
 ```
 
 #### Subtask Management
 
 ```bash
-python3 .trellis/scripts/task.py create "Subtask" --parent <parent-dir>
-python3 .trellis/scripts/task.py add-subtask <parent-dir> <child-dir>
-python3 .trellis/scripts/task.py remove-subtask <parent-dir> <child-dir>
+python3 .omtre/scripts/task.py create "Subtask" --parent <parent-dir>
+python3 .omtre/scripts/task.py add-subtask <parent-dir> <child-dir>
+python3 .omtre/scripts/task.py remove-subtask <parent-dir> <child-dir>
 ```
 
 #### Archive and PR
 
 ```bash
-python3 .trellis/scripts/task.py archive <task-dir>         # Auto-commits
-python3 .trellis/scripts/task.py archive <task-dir> --no-commit
-python3 .trellis/scripts/task.py list-archive [YYYY-MM]
-python3 .trellis/scripts/task.py create-pr <task-dir>       # Delegates to multi_agent/create_pr.py
+python3 .omtre/scripts/task.py archive <task-dir>         # Auto-commits
+python3 .omtre/scripts/task.py archive <task-dir> --no-commit
+python3 .omtre/scripts/task.py list-archive [YYYY-MM]
+python3 .omtre/scripts/task.py create-pr <task-dir>       # Delegates to multi_agent/create_pr.py
 ```
 
 ---
@@ -244,9 +244,9 @@ Syncs task lifecycle events to Linear via `linearis` CLI.
 
 ```bash
 # Called automatically by task lifecycle hooks in config.yaml
-python3 .trellis/scripts/hooks/linear_sync.py create
-python3 .trellis/scripts/hooks/linear_sync.py start
-python3 .trellis/scripts/hooks/linear_sync.py archive
+python3 .omtre/scripts/hooks/linear_sync.py create
+python3 .omtre/scripts/hooks/linear_sync.py start
+python3 .omtre/scripts/hooks/linear_sync.py archive
 ```
 
 **Environment variable:** `TASK_JSON_PATH` — path to the task's `task.json`.
@@ -269,10 +269,10 @@ from common.types import TaskData, TaskInfo, AgentRecord
 
 ```python
 from common.paths import (
-    TRELLIS_DIR,      # .trellis/
-    WORKSPACE_DIR,    # .trellis/workspace/
-    TASKS_DIR,        # .trellis/tasks/
-    SPEC_DIR,         # .trellis/spec/
+    OMTRE_DIR,      # .omtre/
+    WORKSPACE_DIR,    # .omtre/workspace/
+    TASKS_DIR,        # .omtre/tasks/
+    SPEC_DIR,         # .omtre/spec/
 )
 ```
 
@@ -358,36 +358,36 @@ from common.cli_adapter import get_cli_adapter  # Get platform-specific adapter
 
 ```bash
 cd /path/to/project
-python3 .trellis/scripts/init_developer.py john-doe
+python3 .omtre/scripts/init_developer.py john-doe
 ```
 
 ### Create and Start Task
 
 ```bash
 # Create task
-python3 .trellis/scripts/task.py create "Add user login" --slug add-login
+python3 .omtre/scripts/task.py create "Add user login" --slug add-login
 
 # Initialize context for fullstack work
-python3 .trellis/scripts/task.py init-context \
-  .trellis/tasks/03-24-add-login fullstack
+python3 .omtre/scripts/task.py init-context \
+  .omtre/tasks/03-24-add-login fullstack
 
 # Start task
-python3 .trellis/scripts/task.py start \
-  .trellis/tasks/03-24-add-login
+python3 .omtre/scripts/task.py start \
+  .omtre/tasks/03-24-add-login
 ```
 
 ### Create Subtask
 
 ```bash
 # Create a child task under an existing parent
-python3 .trellis/scripts/task.py create "Login API endpoint" \
-  --slug login-api --parent .trellis/tasks/03-24-add-login
+python3 .omtre/scripts/task.py create "Login API endpoint" \
+  --slug login-api --parent .omtre/tasks/03-24-add-login
 ```
 
 ### Record Session
 
 ```bash
-python3 .trellis/scripts/add_session.py \
+python3 .omtre/scripts/add_session.py \
   --title "Implement login form" \
   --commit "abc1234" \
   --summary "Added login form, pending API integration"
@@ -396,6 +396,6 @@ python3 .trellis/scripts/add_session.py \
 ### Archive Completed Task
 
 ```bash
-python3 .trellis/scripts/task.py archive \
-  .trellis/tasks/03-24-add-login
+python3 .omtre/scripts/task.py archive \
+  .omtre/tasks/03-24-add-login
 ```

@@ -12,7 +12,7 @@ Change hook behavior for context injection or validation.
 | ------------------------- | ------ | --------------------------- |
 | `.claude/hooks/{hook}.py` | Modify | Yes                         |
 | `.claude/settings.json`   | Modify | If changing matcher/timeout |
-| `trellis-local/SKILL.md`  | Update | Yes                         |
+| `omtre-local/SKILL.md`  | Update | Yes                         |
 
 ---
 
@@ -78,7 +78,7 @@ def get_additional_context():
     context = []
 
     # Add custom file
-    custom_path = os.path.join(repo_root, ".trellis/custom.md")
+    custom_path = os.path.join(repo_root, ".omtre/custom.md")
     if os.path.exists(custom_path):
         with open(custom_path) as f:
             context.append(f"## Custom Context\n{f.read()}")
@@ -168,9 +168,9 @@ Edit `.claude/settings.json`:
 
 ---
 
-## Step 4: Document in trellis-local
+## Step 4: Document in omtre-local
 
-Update `.claude/skills/trellis-local/SKILL.md`:
+Update `.claude/skills/omtre-local/SKILL.md`:
 
 ```markdown
 ## Hooks Changed
@@ -228,8 +228,8 @@ echo '{"subagent_type":"check","output":"test"}' | \
 ```python
 # session-start.py
 files_to_inject = [
-    ".trellis/workflow.md",
-    ".trellis/custom-context.md",  # Add this
+    ".omtre/workflow.md",
+    ".omtre/custom-context.md",  # Add this
 ]
 ```
 
@@ -267,4 +267,4 @@ if not ok:
 - [ ] Settings updated (if needed)
 - [ ] Manual test passed
 - [ ] Integration test passed
-- [ ] Documented in trellis-local
+- [ ] Documented in omtre-local

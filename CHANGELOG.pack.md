@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the oh-my-trellis pack are documented here.
+All notable changes to the omtre pack are documented here.
 
 Versioning: semver `X.Y.Z` — **major** = contract/layout breaking changes
 (spec registry shape, asset IDs, platform tables), **minor** = new

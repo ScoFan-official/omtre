@@ -6,7 +6,7 @@ Claude Code / iFlow hooks for automatic context injection and quality enforcemen
 
 ## Overview
 
-There are two types of hooks in Trellis:
+There are two types of hooks in omtre:
 
 1. **Platform hooks** (Claude Code / iFlow) — Intercept AI lifecycle events via `settings.json`
 2. **Task lifecycle hooks** (all platforms) — Shell commands triggered by task.py operations via `config.yaml`
@@ -137,9 +137,9 @@ Inject initial context when a Claude Code session starts, clears, or compacts.
 
 **Injects:**
 
-- Developer identity from `.trellis/.developer`
+- Developer identity from `.omtre/.developer`
 - Git status and recent commits
-- Current task info (if `.trellis/.current-task` exists)
+- Current task info (if `.omtre/.current-task` exists)
 - `workflow.md` content
 - All dynamically discovered `spec/*/index.md` files (supports monorepo layout)
 - Spec guideline indexes
@@ -176,7 +176,7 @@ Inject relevant specs when a subagent is invoked.
 **Flow:**
 
 1. Read `subagent_type` from tool input
-2. Find current task from `.trellis/.current-task`
+2. Find current task from `.omtre/.current-task`
 3. Load `{subagent_type}.jsonl` from task directory
 4. Read each file listed in JSONL
 5. Build augmented prompt with context
@@ -196,9 +196,9 @@ Inject relevant specs when a subagent is invoked.
 ### JSONL Format
 
 ```jsonl
-{"file": ".trellis/spec/cli/backend/index.md", "reason": "Backend guidelines"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "Backend guidelines"}
 {"file": "src/services/auth.ts", "reason": "Existing pattern"}
-{"file": ".trellis/tasks/03-24-add-login/prd.md", "reason": "Requirements"}
+{"file": ".omtre/tasks/03-24-add-login/prd.md", "reason": "Requirements"}
 ```
 
 ---
@@ -235,13 +235,13 @@ Run shell commands after task lifecycle events. Works on all platforms (file-bas
 ```yaml
 hooks:
   after_create:
-    - python3 .trellis/scripts/hooks/linear_sync.py create
+    - python3 .omtre/scripts/hooks/linear_sync.py create
   after_start:
-    - python3 .trellis/scripts/hooks/linear_sync.py start
+    - python3 .omtre/scripts/hooks/linear_sync.py start
   after_finish:
-    - python3 .trellis/scripts/hooks/linear_sync.py finish
+    - python3 .omtre/scripts/hooks/linear_sync.py finish
   after_archive:
-    - python3 .trellis/scripts/hooks/linear_sync.py archive
+    - python3 .omtre/scripts/hooks/linear_sync.py archive
 ```
 
 ### Events
@@ -271,7 +271,7 @@ Codex has its own optional SessionStart hook at `.codex/hooks/session-start.py` 
 
 **Requires**: `codex_hooks = true` in `~/.codex/config.toml`
 
-**Injects**: Same Trellis context as the Claude Code hook (workflow, guidelines, task status).
+**Injects**: Same omtre context as the Claude Code hook (workflow, guidelines, task status).
 
 ---
 
@@ -283,7 +283,7 @@ Codex has its own optional SessionStart hook at `.codex/hooks/session-start.py` 
 ├── inject-subagent-context.py          # PreToolUse:Agent/Task handler
 └── ralph-loop.py                       # SubagentStop:check handler
 
-.trellis/scripts/hooks/                 # Task lifecycle hooks (all platforms)
+.omtre/scripts/hooks/                 # Task lifecycle hooks (all platforms)
 └── linear_sync.py                      # Linear issue sync
 
 .codex/hooks/                           # Codex platform hooks (optional)

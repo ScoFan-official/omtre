@@ -1,9 +1,9 @@
 ---
-name: trellis-domains
-description: "Operator shell for the Trellis domain layer (.trellis/domains/). Load when routing a task to a domain (归口), taking or releasing a board's construction flag (插旗/拔旗), hitting another writer's flag (撞旗) or judging a stale one (腐旗), running the session-takeover read chain + five-line restatement (接手), writing worklog entries or closing out work (收工), or reconciling board state (对账). Requires .trellis/."
+name: omtre-domains
+description: "Operator shell for the omtre domain layer (.omtre/domains/). Load when routing a task to a domain (归口), taking or releasing a board's construction flag (插旗/拔旗), hitting another writer's flag (撞旗) or judging a stale one (腐旗), running the session-takeover read chain + five-line restatement (接手), writing worklog entries or closing out work (收工), or reconciling board state (对账). Requires .omtre/."
 ---
 
-# trellis-domains — domain layer operator shell
+# omtre-domains — domain layer operator shell
 
 Thin shell: this file routes you to the repo-internal authority documents and
 carries checklist-level indexes only. **The protocol text of record lives in
@@ -15,14 +15,14 @@ Authority map (paths are relative to the consuming repo root):
 
 | Topic | Authority |
 |---|---|
-| 归口 routing · flag protocol · takeover · autonomy modes · always-stop | `.trellis/domains/DISCIPLINE.md` (§1 归口路由 / §2 施工旗协议 / §3 接手协议 / §4 自主档位 + 永远拦人 / §5 文件纪律 / §6 违规速查) |
-| worklog file rules · entry fields · 收工一单制 · 对账清单 | `.trellis/domains/WORKLOG-PROTOCOL.md` |
-| board index · registration rules · skeleton template | `.trellis/domains/REGISTRY.md` · `.trellis/domains/_scaffold/` |
-| per-board state | `.trellis/domains/<slug>/README.md` (first line = flag slot; `## 进度` table) · `BOUNDARY.md` · `NN-*` docs · `worklog/` · `review/` |
+| 归口 routing · flag protocol · takeover · autonomy modes · always-stop | `.omtre/domains/DISCIPLINE.md` (§1 归口路由 / §2 施工旗协议 / §3 接手协议 / §4 自主档位 + 永远拦人 / §5 文件纪律 / §6 违规速查) |
+| worklog file rules · entry fields · 收工一单制 · 对账清单 | `.omtre/domains/WORKLOG-PROTOCOL.md` |
+| board index · registration rules · skeleton template | `.omtre/domains/REGISTRY.md` · `.omtre/domains/_scaffold/` |
+| per-board state | `.omtre/domains/<slug>/README.md` (first line = flag slot; `## 进度` table) · `BOUNDARY.md` · `NN-*` docs · `worklog/` · `review/` |
 
 If `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` are absent, the domain layer is not
-installed in this repo — run `trellis update` (or tell the user to) before
-operating on `.trellis/domains/`; do not improvise protocol.
+installed in this repo — run `omtre update` (or tell the user to) before
+operating on `.omtre/domains/`; do not improvise protocol.
 
 Ground rule (everything else defers to it): truth is committed git history —
 an uncommitted flag, progress tick or log entry does not exist
@@ -41,13 +41,13 @@ an uncommitted flag, progress tick or log entry does not exist
 
 ## 归口 — routing a task to a domain (DISCIPLINE.md §1)
 
-- [ ] Scan `.trellis/domains/REGISTRY.md` before product-code work; when a
+- [ ] Scan `.omtre/domains/REGISTRY.md` before product-code work; when a
       registry line is ambiguous, read the candidate boards'
       `README.md` / `BOUNDARY.md` before deciding.
 - [ ] Owning board exists → record `meta.domain = "<slug>"` in `task.json` and
-      a `Domain: .trellis/domains/<slug>/` line atop `prd.md`.
+      a `Domain: .omtre/domains/<slug>/` line atop `prd.md`.
 - [ ] No board fits → create one first: copy `_scaffold/` to
-      `.trellis/domains/<slug>/` and add its REGISTRY line — **same commit** —
+      `.omtre/domains/<slug>/` and add its REGISTRY line — **same commit** —
       then create the task.
 - [ ] Truly domain-less (whitelist in §1) → leave `meta.domain` empty; a
       `Domain: none（<reason>）` line atop `prd.md` is still mandatory.
@@ -57,7 +57,7 @@ an uncommitted flag, progress tick or log entry does not exist
 ## 旗 — taking / releasing a board flag (DISCIPLINE.md §2)
 
 - [ ] Read the flag slot: the first line of
-      `.trellis/domains/<slug>/README.md` (`head -1`).
+      `.omtre/domains/<slug>/README.md` (`head -1`).
 - [ ] No flag (or a stale flag resolved per the next checklist) → plant yours
       in the format defined by §2 (also spelled out in the
       `_scaffold/README.md` comment), and land it as the segment's **first**
@@ -100,7 +100,7 @@ an uncommitted flag, progress tick or log entry does not exist
       domain ownership · flag status + disposition · latest worklog entry ID
       + ancestor check on its cited commit · next action. Any line missing =
       takeover incomplete — do not start work.
-- [ ] `trellis mem` is optional background — never a substitute for the
+- [ ] `omtre mem` is optional background — never a substitute for the
       chain, never a fact source.
 
 ## worklog & 收工 (WORKLOG-PROTOCOL.md §1–§4)

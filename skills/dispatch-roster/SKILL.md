@@ -1,27 +1,27 @@
 ---
 name: dispatch-roster
-description: "Staffs the dispatch roster (派工表) for an unattended multi-agent run: probes every ACP target in the registry (grok-build / codex / claude) with a light initialize+session/new handshake and a credential check, asks the four roster decisions (orchestrator, role defaults for implement/check/research, per-ticket overrides, max_parallel), shows a summary for explicit confirmation, then writes the roster to agent-card frontmatter, ticket meta and .trellis/config.yaml. Load when the user says 无人值守 / 放手跑 / hands-off 跑 / unattended, when a planning skill lands tickets meant for agent execution (wayfinder map, grill-with-docs spec, to-tickets split, trellis-brainstorm close-out), or whenever asked who should run what. This skill ends when the roster is on disk — launching, monitoring and takeover belong to trellis-run. Requires .trellis/."
+description: "Staffs the dispatch roster (派工表) for an unattended multi-agent run: probes every ACP target in the registry (grok-build / codex / claude) with a light initialize+session/new handshake and a credential check, asks the four roster decisions (orchestrator, role defaults for implement/check/research, per-ticket overrides, max_parallel), shows a summary for explicit confirmation, then writes the roster to agent-card frontmatter, ticket meta and .omtre/config.yaml. Load when the user says 无人值守 / 放手跑 / hands-off 跑 / unattended, when a planning skill lands tickets meant for agent execution (wayfinder map, grill-with-docs spec, to-tickets split, omtre-brainstorm close-out), or whenever asked who should run what. This skill ends when the roster is on disk — launching, monitoring and takeover belong to omtre-run. Requires .omtre/."
 ---
 
 # dispatch-roster — 派工表装配
 
 Thin pipeline: **probe → four decisions → summary → confirm → write → ask开跑**.
 The roster contract of record is the multi-agent orchestration design (§3) plus
-what `python ./.trellis/scripts/task.py validate <task>` enforces statically —
+what `python ./.omtre/scripts/task.py validate <task>` enforces statically —
 if this file and the validator disagree, the validator wins.
 
-## Boundary with `trellis-run` — no overlap, no gap
+## Boundary with `omtre-run` — no overlap, no gap
 
 - [ ] `dispatch-roster` owns “派给谁” and ends the moment the roster is **on
       disk**: card frontmatter (`provider: acp` / `acp_target` / `model` /
       `effort`), ticket `meta.worker` / `meta.model` / `meta.effort`, and
       `config.yaml` `worker_default:` + the `orchestrator:` section.
-- [ ] `trellis-run` owns “怎么跑” from that line onward: spawning the
+- [ ] `omtre-run` owns “怎么跑” from that line onward: spawning the
       orchestrator, monitoring the round, takeover. This skill never spawns an
-      orchestrator or worker, never runs `trellis run`, and never edits a card
+      orchestrator or worker, never runs `omtre run`, and never edits a card
       body — frontmatter only.
 - [ ] If the user answers yes at the final“开跑吗”question, the handoff is to
-      the `trellis-run` skill's *Standard opening* section — not to anything
+      the `omtre-run` skill's *Standard opening* section — not to anything
       improvised here.
 
 ## When to load
@@ -30,7 +30,7 @@ if this file and the validator disagree, the validator wins.
       → load this skill directly.
 - [ ] Planning close-outs that produced agent-bound tickets: `wayfinder` map
       written, `grill-with-docs` spec converged, `to-tickets` split landed,
-      `trellis-brainstorm` final summary approved → the closing question“要
+      `omtre-brainstorm` final summary approved → the closing question“要
       无人值守跑吗？”lands here on yes.
 - [ ] Any request to (re)staff the roster: change orchestrator, swap a role's
       target, add a per-ticket override, change `max_parallel`.
@@ -130,7 +130,7 @@ Render the full roster before writing anything. Wait for an explicit yes:
   research       research      → codex   (model: gpt-5.5)
   worker_default → implement
   max_parallel   1
-  票级覆盖       .trellis/tasks/10-12-foo → meta.worker=implement.grok
+  票级覆盖       .omtre/tasks/10-12-foo → meta.worker=implement.grok
                  ✗ grok-build 未安装的行不会出现；⚠ 行标出需预登录目标
 ```
 
@@ -142,7 +142,7 @@ user's yes.
 
 Write in this order. Every shape is one `task.py validate` can confirm:
 
-- [ ] **Role cards** (`.trellis/agents/<role>.md` frontmatter, bodies
+- [ ] **Role cards** (`.omtre/agents/<role>.md` frontmatter, bodies
       untouched): set `provider: acp`, `acp_target: <grok-build|codex|claude>`,
       `model: <model-id from the probe>`, `effort: <level>` — replacing the
       existing `provider:` value and the commented ACP block. Splitting
@@ -150,15 +150,15 @@ Write in this order. Every shape is one `task.py validate` can confirm:
       adjust only frontmatter `name`/`description`/ACP fields.
 - [ ] **Orchestrator card**: same treatment for `acp_target`. Its model lives
       in config (`orchestrator.model`), its `effort` on the card.
-- [ ] **Tickets**: `python ./.trellis/scripts/task.py set-meta <task-dir>
+- [ ] **Tickets**: `python ./.omtre/scripts/task.py set-meta <task-dir>
       worker <card>`; optionally `model`/`effort` the same way. Non-empty
       strings only.
-- [ ] **`.trellis/config.yaml`**: in the "Dispatch roster" section, set
+- [ ] **`.omtre/config.yaml`**: in the "Dispatch roster" section, set
       `worker_default: <card>` and the `orchestrator:` block
       (`agent:` card name, `model:` id, `max_parallel:` positive int) —
       uncomment the shipped template or write the same shape. Keep the
       surrounding comments.
-- [ ] **Confirm**: `python ./.trellis/scripts/task.py validate <task>` for
+- [ ] **Confirm**: `python ./.omtre/scripts/task.py validate <task>` for
       every rostered ticket — expect zero roster problems. A problem means
       the write was wrong. Fix the write, never the validator's message.
 
@@ -176,14 +176,14 @@ After the write and validation, end with exactly one question:
 
 > 派工表已落盘。现在交给 orchestrator 开跑吗？（默认否 — 答“跑”才启动）
 
-- Explicit yes (跑 / yes / 开跑) → load `trellis-run` and follow its
+- Explicit yes (跑 / yes / 开跑) → load `omtre-run` and follow its
   *Standard opening* — never start the run from inside this skill.
 - Anything else (silence included) → stop. Report what was written: cards
   touched, ticket meta set, config lines, validation result.
 
 ## Never
 
-- Spawn an orchestrator/worker or run `trellis run` — that is `trellis-run`'s
+- Spawn an orchestrator/worker or run `omtre run` — that is `omtre-run`'s
   side of the line.
 - Roster a `not_installed` target, or a needs-login target without flagging
   the login command.

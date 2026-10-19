@@ -1,6 +1,6 @@
 # worktree.yaml Configuration Reference
 
-Complete guide to `.trellis/worktree.yaml` configuration.
+Complete guide to `.omtre/worktree.yaml` configuration.
 
 ---
 
@@ -9,12 +9,12 @@ Complete guide to `.trellis/worktree.yaml` configuration.
 `worktree.yaml` configures **both** Multi-Session (worktree isolation) **and** some Multi-Agent behaviors (like Ralph Loop).
 
 ```yaml
-# .trellis/worktree.yaml
+# .omtre/worktree.yaml
 
 # Multi-Session only
 worktree_dir: ../worktrees # Default value
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
 post_create:
   - npm install
@@ -25,7 +25,7 @@ verify:
   - pnpm typecheck
 ```
 
-**Note**: Trellis uses a custom YAML parser (not PyYAML). Supports basic key-value pairs and arrays; complex nested structures may not work.
+**Note**: omtre uses a custom YAML parser (not PyYAML). Supports basic key-value pairs and arrays; complex nested structures may not work.
 
 ---
 
@@ -59,7 +59,7 @@ worktree_dir: ../worktrees
 # These files are not in git, need manual copy
 # Default: [] (empty array)
 copy:
-  - .trellis/.developer # Developer identity
+  - .omtre/.developer # Developer identity
   - .env # Environment variables
   - .env.local # Local overrides
   # - .npmrc                  # npm config
@@ -120,7 +120,7 @@ verify:
 
 **Workflow**:
 
-1. Set `.trellis/.current-task`
+1. Set `.omtre/.current-task`
 2. Call `Task(subagent_type="implement")`
 3. Call `Task(subagent_type="check")`
 4. When Check Agent completes, Ralph Loop runs `verify` commands
@@ -218,7 +218,7 @@ post_create:
 
 ```yaml
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
   - .env.local
   - .npmrc # npm private registry config
@@ -250,7 +250,7 @@ If `worktree.yaml` doesn't exist:
 ### Multi-Agent only (current directory)
 
 ```yaml
-# .trellis/worktree.yaml
+# .omtre/worktree.yaml
 verify:
   - pnpm lint
   - pnpm typecheck
@@ -259,10 +259,10 @@ verify:
 ### Multi-Session only (worktree)
 
 ```yaml
-# .trellis/worktree.yaml
+# .omtre/worktree.yaml
 worktree_dir: ../worktrees
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
 post_create:
   - npm install
 verify:
@@ -280,7 +280,7 @@ verify:
 worktree_dir: ../worktrees
 
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
   - .env.local
 
@@ -299,7 +299,7 @@ verify:
 worktree_dir: ../worktrees
 
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
   - venv/ # or recreate venv
 
@@ -319,7 +319,7 @@ verify:
 worktree_dir: ../worktrees
 
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
 
 post_create:
@@ -338,7 +338,7 @@ verify:
 worktree_dir: ../worktrees
 
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
   - .npmrc
 
@@ -394,7 +394,7 @@ verify:
 
 ## YAML Parser Notes
 
-Trellis uses a custom YAML parser (not PyYAML) with these limitations:
+omtre uses a custom YAML parser (not PyYAML) with these limitations:
 
 ### Supported Syntax
 
@@ -404,7 +404,7 @@ worktree_dir: ../worktrees
 
 # Arrays (2-space indent, starts with -)
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
 
 # Quoted values
@@ -435,7 +435,7 @@ description: |
 ### View current config
 
 ```bash
-cat .trellis/worktree.yaml
+cat .omtre/worktree.yaml
 ```
 
 ### Test verify commands
@@ -445,7 +445,7 @@ cat .trellis/worktree.yaml
 pnpm lint && pnpm typecheck
 
 # Or view Ralph Loop state
-cat .trellis/.ralph-state.json
+cat .omtre/.ralph-state.json
 ```
 
 ### View worktree status
@@ -458,11 +458,11 @@ git worktree list
 
 ```bash
 # View state file
-cat .trellis/.ralph-state.json
+cat .omtre/.ralph-state.json
 
 # Example output
 # {
-#   "task": ".trellis/tasks/01-31-add-login",
+#   "task": ".omtre/tasks/01-31-add-login",
 #   "iteration": 2,
 #   "started_at": "2026-01-31T10:30:00"
 # }

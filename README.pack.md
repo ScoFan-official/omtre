@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.png" alt="oh-my-trellis — mattpocock × ECC × impeccable on one Trellis spine">
+  <img src="assets/hero.png" alt="omtre — mattpocock × ECC × impeccable on one omtre spine">
 </p>
 
 <p align="center">
@@ -7,23 +7,23 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ScoFan-official/oh-my-trellis/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/oh-my-trellis?style=flat&colorA=222222&colorB=CB3837" alt="Stars"></a>
+  <a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat&colorA=222222&colorB=CB3837" alt="Stars"></a>
   <img src="https://img.shields.io/badge/catalog-1%2C741%20assets-3FB950?style=flat&colorA=222222" alt="1,741 catalog assets">
   <img src="https://img.shields.io/badge/platforms-22-58A6FF?style=flat&colorA=222222" alt="22 agent platforms">
   <img src="https://img.shields.io/badge/upstreams-3-E05735?style=flat&colorA=222222" alt="3 vendored upstreams">
-  <a href="https://github.com/ScoFan-official/oh-my-trellis/commits"><img src="https://img.shields.io/github/last-commit/ScoFan-official/oh-my-trellis?style=flat&colorA=222222" alt="Last commit"></a>
+  <a href="https://github.com/ScoFan-official/omtre/commits"><img src="https://img.shields.io/github/last-commit/ScoFan-official/omtre?style=flat&colorA=222222" alt="Last commit"></a>
 </p>
 
 <p align="center">
   <strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a> · vendored under MIT &amp; Apache-2.0 — see <a href="catalog/ATTRIBUTION.md">ATTRIBUTION</a>
 </p>
 
-Advisory skills don't ship design systems — contracts do. oh-my-trellis vendors
+Advisory skills don't ship design systems — contracts do. omtre vendors
 [mattpocock/skills](https://github.com/mattpocock/skills),
 [Everything Claude Code](https://github.com/davila7/claude-code-templates) and
 [pbakaus/impeccable](https://github.com/pbakaus/impeccable) into one repo, then
 binds their loose nouns — "the issue tracker", "PRODUCT.md", "DESIGN.md" — to
-Trellis's `.trellis/` spine so the workflow is enforced, not suggested.
+omtre's `.omtre/` spine so the workflow is enforced, not suggested.
 
 **3** vendored upstreams · **1,741** catalog assets · **43** default skills · **22** platforms · **1** contract layer — zero patches to vendored files.
 
@@ -33,8 +33,8 @@ Trellis's `.trellis/` spine so the workflow is enforced, not suggested.
 
 | You want… | Run |
 | --- | --- |
-| The Trellis contract specs only | `trellis init --registry gh:ScoFan-official/oh-my-trellis/marketplace --template agent-workflow --append` |
-| The recommended skill set (all 37 mp skills + impeccable + the pack's own `mp-trellis-bridge` / `oh-my-update` / `trellis-domains` / `trellis-run` / `dispatch-roster` / `hygiene-sweep` / `rules-audit`) | `npx skills add ScoFan-official/oh-my-trellis --agent <platform> --copy` |
+| The omtre contract specs only | `omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append` |
+| The recommended skill set (all 37 mp skills + impeccable + the pack's own `mp-omtre-bridge` / `oh-my-update` / `omtre-domains` / `omtre-run` / `dispatch-roster` / `hygiene-sweep` / `rules-audit`) | `npx skills add ScoFan-official/omtre --agent <platform> --copy` |
 | Anything else from the 1,741-asset catalog | `python scripts/install.py --platform <platform> --target <repo>` |
 
 Repo is public — all three channels work without auth. Mix and match freely.
@@ -43,32 +43,32 @@ Repo is public — all three channels work without auth. Mix and match freely.
 
 Hand this to Devin / Codex / ZCode / Claude / Cursor and it will set everything up itself:
 
-> Set up Trellis and oh-my-trellis in this repo: ① install our Trellis CLI and init — `npm i -g https://github.com/ScoFan-official/oh-my-trellis/releases/download/cli-v0.6.18-ohmy.5/oh-my-trellis-0.6.18-ohmy.5.tgz` (if `@mindfoldhq/trellis` is already installed globally, `npm rm -g @mindfoldhq/trellis` first — our package owns the `trellis` bin), then `trellis init --devin` — registry and workflow defaults are baked into the fork; ② run `trellis init --template agent-workflow --append` to install the spec contracts; ③ install the skills for YOUR platform — prefer `npx skills add ScoFan-official/oh-my-trellis --agent <your-platform> --copy`; if your platform isn't covered, run `git clone --depth 1 https://github.com/ScoFan-official/oh-my-trellis /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <your-platform> --target . --only-core` instead; ④ invoke the `mp-trellis-bridge` skill so it finishes seeding `AGENTS.md`, then read `.trellis/spec/agents/issue-tracker.md` and report back which tracker verbs you'll use for specs, tickets, triage and implementation. To update later, invoke the `oh-my-update` skill.
+> Set up omtre in this repo: ① install our omtre CLI and init — `npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.18-ohmy.5/omtre-0.6.18-ohmy.5.tgz`, then `omtre init --devin` — registry and workflow defaults are baked into the CLI; ② run `omtre init --template agent-workflow --append` to install the spec contracts; ③ install the skills for YOUR platform — prefer `npx skills add ScoFan-official/omtre --agent <your-platform> --copy`; if your platform isn't covered, run `git clone --depth 1 https://github.com/ScoFan-official/omtre /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <your-platform> --target . --only-core` instead; ④ invoke the `mp-omtre-bridge` skill so it finishes seeding `AGENTS.md`, then read `.omtre/spec/agents/issue-tracker.md` and report back which tracker verbs you'll use for specs, tickets, triage and implementation. To update later, invoke the `oh-my-update` skill.
 
-For non-Trellis repos, skip to skills only:
+For non-omtre repos, skip to skills only:
 
-> Install the mattpocock skill set here: `npx skills add ScoFan-official/oh-my-trellis --agent <your-platform> --copy`, then browse `catalog/INDEX.md` in https://github.com/ScoFan-official/oh-my-trellis and install extra components for this platform with `scripts/install.py` if needed.
+> Install the mattpocock skill set here: `npx skills add ScoFan-official/omtre --agent <your-platform> --copy`, then browse `catalog/INDEX.md` in https://github.com/ScoFan-official/omtre and install extra components for this platform with `scripts/install.py` if needed.
 
 ---
 
-## 01 · The contract — Trellis spec registry
+## 01 · The contract — omtre spec registry
 
-Skills that say *"publish to the issue tracker"* get pointed at `.trellis/tasks/`.
-Skills that say *"update PRODUCT.md / DESIGN.md"* get pointed at `.trellis/spec/`.
-Delivery is index-driven: Trellis's session-start hook injects the spec
+Skills that say *"publish to the issue tracker"* get pointed at `.omtre/tasks/`.
+Skills that say *"update PRODUCT.md / DESIGN.md"* get pointed at `.omtre/spec/`.
+Delivery is index-driven: omtre's session-start hook injects the spec
 packages' `index.md` files, and the agent reads each contract the index lists —
 `agents/index.md` first. The frontend gate is mechanical: the CLI refuses to
 archive a frontend task whose `implement.md` carries no `## Design review`
 section.
 
 ```bash
-trellis init --registry gh:ScoFan-official/oh-my-trellis/marketplace --template agent-workflow --append
+omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append
 ```
 
-Installs into `.trellis/spec/`:
+Installs into `.omtre/spec/`:
 
 ```
-.trellis/spec/
+.omtre/spec/
 ├── agents/
 │   ├── index.md
 │   ├── issue-tracker.md      # THE contract — read before publishing to the tracker
@@ -87,23 +87,23 @@ bilingual tone standard (Simplified Technical Chinese / STC across C1–C10/D1�
 and Simplified Technical English / STE per ASD-STE100); all pack-owned skills and
 templates are retrofitted to this standard.
 `--append` adds missing files only — safe on existing spec trees.
-After install, the files are yours to edit (Trellis's project-ownership model).
+After install, the files are yours to edit (omtre's project-ownership model).
 
 ## 02 · The skill set — skills CLI
 
 ```bash
-npx skills add ScoFan-official/oh-my-trellis --agent <platform> --copy
+npx skills add ScoFan-official/omtre --agent <platform> --copy
 ```
 
 Installs **43 skills** — mattpocock's full collection
 (engineering, productivity, misc, in-progress) plus `impeccable`, the frontend
 design workflow, plus the pack's seven first-party skills:
-`mp-trellis-bridge`, `oh-my-update`, `trellis-domains`, `trellis-run`,
+`mp-omtre-bridge`, `oh-my-update`, `omtre-domains`, `omtre-run`,
 `dispatch-roster`, `hygiene-sweep`, and `rules-audit`. `--agent` accepts `devin`, `codex`,
 `claude`, `cursor` and the other platforms the skills CLI knows.
 
-`mp-trellis-bridge` is a bootstrapper + routing contract: on first load it
-verifies `.trellis/`, installs the channel-1 spec contracts (registry first,
+`mp-omtre-bridge` is a bootstrapper + routing contract: on first load it
+verifies `.omtre/`, installs the channel-1 spec contracts (registry first,
 bundled templates as fallback), appends an `## Agent skills` block to
 `AGENTS.md`, checks the mp skills are present, and gates the close-out question
 toward `dispatch-roster` when planning finishes with tickets. No-op afterwards.
@@ -188,10 +188,10 @@ Flags: `--platform` (required), `--target` (repo root, default `.`),
 | **zcode** | `.zcode/skills` | `.zcode/agents/*.md` (no `tools:`) | `.zcode/commands/ecc-*` | `.zcode/mcp.json` | ⚠️ partial |
 | omp / reasonix / trae / grok / kimi / snow / dsh / antigravity | `.X/skills` (resp.) | `.X/agents/*.md` (conv.) | `.X/commands|workflows/ecc-*` | `.X/mcp.json` | ⚠️ convention |
 
-✅ = file locations follow Trellis's documented per-platform tables.
+✅ = file locations follow omtre's documented per-platform tables.
 ⚠️ = convention-based guesses (`verified: false` in `scripts/platforms.py` /
 `manifest.json`); treat generated agent/command files as drafts to review.
-`zcode` agents are verified against the real Trellis zcode template; its
+`zcode` agents are verified against the real omtre zcode template; its
 commands/MCP paths are conventional.
 
 ---
@@ -213,12 +213,12 @@ implement → retro*, with two intake ramps and standalone utilities.
 | `ask-matt` | Router — "which skill fits my situation?" Ask first when unsure. |
 | `grill-with-docs` | Align on an idea: agent interviews you through a design tree, lands terms in `GLOSSARY.md` + decisions in `docs/adr/`. Always use in-repo (over `grill-me`). |
 | `grill-me` / `grilling` | Same interview, no doc side-effects (no working dir). `grilling` is the engine; `grill-me` the user-invoked entry. |
-| `to-spec` | Freeze a grilled conversation into a spec (Problem/Solution/User Stories/Decisions) → Trellis task + `prd.md`. |
+| `to-spec` | Freeze a grilled conversation into a spec (Problem/Solution/User Stories/Decisions) → omtre task + `prd.md`. |
 | `to-tickets` | Slice a spec into tracer-bullet tickets → child tasks + `blocked_by` meta. Confirm the split before it writes. |
 | `implement` | Build one ticket: TDD red-green inside pre-agreed seams → typecheck/tests → code-review → commit. One ticket per session. |
 | `implement-spec` | Batch-orchestrate a whole spec's ticket graph (integration branch + parallel worktrees). On Devin, run sequentially or via `run_subagent`. |
 | `tdd` | Red-green-refactor loop, embedded inside `implement`. |
-| `code-review` | Two-axis review (Standards + Spec) of changes since a ref. Complements `trellis-check`. |
+| `code-review` | Two-axis review (Standards + Spec) of changes since a ref. Complements `omtre-check`. |
 | `codebase-design` | Deep-module vocabulary (interface/depth/seam/deletion test) for design discussions. |
 | `improve-codebase-architecture` | Scan for shallow modules → visual HTML report → grill through a pick. Run every few days on growing code. |
 | `diagnosing-bugs` | Hard bugs/regressions: failing reproduction first, then hypothesize-instrument-fix-regress. |
@@ -234,14 +234,14 @@ implement → retro*, with two intake ramps and standalone utilities.
 | `wait-what` | "Re-explain that" — simplified technical English + glossary terms. |
 | `writing-for-agents` | Authoring/editing skills, AGENTS.md, CLAUDE.md. |
 | `pr` / `wizard` | PR body; interactive bash wizard for human-only steps (infra, dashboards). |
-| `setup-matt-pocock-skills` | Legacy bootstrapper for plain (non-Trellis) repos — superseded here by `mp-trellis-bridge`. |
+| `setup-matt-pocock-skills` | Legacy bootstrapper for plain (non-omtre) repos — superseded here by `mp-omtre-bridge`. |
 | `claude-handoff`, `loop-me`, `setup-ts-deep-modules`, `writing-beats`, `writing-fragments`, `writing-shape` | in-progress collection — usable but less polished. |
 | `git-guardrails-claude-code`, `migrate-to-shoehorn`, `scaffold-exercises`, `setup-pre-commit` | misc — platform-specific or niche. |
-| `mp-trellis-bridge` | **Ours.** The contract + router binding all of the above to Trellis. Verifies `.trellis/`, writes `AGENTS.md` block, checks mp skills, and hands off to `dispatch-roster` when planning finishes. |
-| `oh-my-update` | **Ours.** Gate-checked update of the whole stack — fork CLI, `.trellis/` templates, installed skills, `.trellis/spec/` — to the latest ScoFan-official releases (filters `cli-v*` tags). |
-| `trellis-domains` | **Ours.** Thin shell over the `.trellis/domains/` layer — 归口 routing, board flag order criterion, takeover read-chain, worklog/收工 and 对账 checklists that point at the repo's `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` / `REGISTRY.md` (the protocol text never lives here). |
-| `trellis-run` | **Ours.** Thin shell over `trellis run`, the unattended frontier loop — when the loop is the right tool, what the tier + `delivery.auto_push_refs` must already allow, where the run ledger lives (and why it is never a reconciliation source), five stop reasons, `always_stop` guard, and the orchestrator boundary with `dispatch-roster`. |
-| `dispatch-roster` | **Ours.** Staffs the dispatch roster (派工表) for unattended runs: probes ACP targets (grok-build / codex / claude) via lightweight handshake + credential checks (3 states), settles four decisions (orchestrator, role defaults, ticket overrides, max_parallel), writes to disk, and hands off to `trellis-run`. |
+| `mp-omtre-bridge` | **Ours.** The contract + router binding all of the above to omtre. Verifies `.omtre/`, writes `AGENTS.md` block, checks mp skills, and hands off to `dispatch-roster` when planning finishes. |
+| `oh-my-update` | **Ours.** Gate-checked update of the whole stack — omtre CLI, `.omtre/` templates, installed skills, `.omtre/spec/` — to the latest ScoFan-official releases (filters `cli-v*` tags). |
+| `omtre-domains` | **Ours.** Thin shell over the `.omtre/domains/` layer — 归口 routing, board flag order criterion, takeover read-chain, worklog/收工 and 对账 checklists that point at the repo's `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` / `REGISTRY.md` (the protocol text never lives here). |
+| `omtre-run` | **Ours.** Thin shell over `omtre run`, the unattended frontier loop — when the loop is the right tool, what the tier + `delivery.auto_push_refs` must already allow, where the run ledger lives (and why it is never a reconciliation source), five stop reasons, `always_stop` guard, and the orchestrator boundary with `dispatch-roster`. |
+| `dispatch-roster` | **Ours.** Staffs the dispatch roster (派工表) for unattended runs: probes ACP targets (grok-build / codex / claude) via lightweight handshake + credential checks (3 states), settles four decisions (orchestrator, role defaults, ticket overrides, max_parallel), writes to disk, and hands off to `omtre-run`. |
 | `hygiene-sweep` | **Ours.** Read-only inventory audit inside a declared scope prefix — dead code, duplicated logic, oversized files — writing a durable findings list before any edit. Bundles `scope_check.py`, the mechanical gate (scope prefix + 800-line split-plan rule) that cleanup tickets run against `spec/agents/hygiene.md`. |
 | `rules-audit` | **Ours.** Reconciles always-loaded rule files (AGENTS.md / CLAUDE.md) against reality: per-rule evidence check, prune the evidence-free, annotate the kept with why they exist. |
 
@@ -255,8 +255,8 @@ works on every platform; the 61 deterministic detector rules, `live`, `generate`
 engine — `npx impeccable install` in the target project. Without it, commands
 fall back to the skill's built-in degraded mode.
 
-In Trellis repos, `agents/frontend-craft.md` binds impeccable's artifacts:
-PRODUCT.md → `.trellis/spec/product.md`, DESIGN.md → `.trellis/spec/design-system.md`;
+In omtre repos, `agents/frontend-craft.md` binds impeccable's artifacts:
+PRODUCT.md → `.omtre/spec/product.md`, DESIGN.md → `.omtre/spec/design-system.md`;
 wires `shape → craft → audit+critique → polish` into the phases; and gates
 frontend tasks — no `## Design review` section in `implement.md`, no READY.
 
@@ -280,7 +280,7 @@ Every component's when-to-use: [`catalog/INDEX.md`](catalog/INDEX.md).
 ## Repo layout
 
 ```
-marketplace/            # channel 1: Trellis spec registry (index.json + agent-workflow w/ voice.md)
+marketplace/            # channel 1: omtre spec registry (index.json + agent-workflow w/ voice.md)
 skills/                 # channel 2: npx-skills surface — 5 pack-owned skills + 37 mp skills + impeccable
 catalog/
 ├── INDEX.md            # generated: every component + when-to-use
@@ -302,11 +302,11 @@ scripts/
 ## Updating
 
 Consumers: single entry point — the **`/oh-my-update`** workflow (Devin) or
-the `oh-my-update` skill (`skills/oh-my-update/`). It checks the fork CLI
+the `oh-my-update` skill (`skills/oh-my-update/`). It checks the omtre CLI
 against this repo's `cli-v*` releases (the CLI tarball channel lives here
 alongside pack `v*` releases), refreshes installed skills and
 appends spec contracts, with a confirm gate. Layer-specific fallback:
-`npx skills add ScoFan-official/oh-my-trellis --agent <platform> --copy`.
+`npx skills add ScoFan-official/omtre --agent <platform> --copy`.
 
 Pack maintainers (re-vendoring upstreams):
 
@@ -316,14 +316,14 @@ python scripts/sync_upstream.py           # re-vendor catalog/ (overwrites catal
 python scripts/build_manifest.py && python scripts/build_index.py
 ```
 
-Installed spec files are project-owned (Trellis model) — merge upstream spec
+Installed spec files are project-owned (omtre model) — merge upstream spec
 changes intentionally. `catalog/` is vendored; never patch it in place.
 
 ## Requirements
 
 - Python 3.8+, git
 - `npx skills` (Node.js) for channel 2
-- A Trellis-managed repo only for channel 1 (the spec registry)
+- An omtre-managed repo only for channel 1 (the spec registry)
 - Claude-format extras (hooks/settings/etc.) require Claude Code to use as-is
 
 ## FAQ

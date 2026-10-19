@@ -1,12 +1,12 @@
 # Configuration Reference
 
-Complete reference for `.trellis/config.yaml`.
+Complete reference for `.omtre/config.yaml`.
 
 ---
 
 ## Overview
 
-`config.yaml` is the project-level configuration file for Trellis. All values have sensible hardcoded defaults — if the file is missing or a key is absent, the default is used.
+`config.yaml` is the project-level configuration file for omtre. All values have sensible hardcoded defaults — if the file is missing or a key is absent, the default is used.
 
 **Read by**: `common/config.py`
 
@@ -36,7 +36,7 @@ default_package: <package-name>
 
 # --- Update ---
 update:
-  skip:                            # Files/dirs to permanently exclude from `trellis update`
+  skip:                            # Files/dirs to permanently exclude from `omtre update`
     - <path>
 
 # --- Task Lifecycle Hooks ---
@@ -92,17 +92,17 @@ default_package: cli
 
 **`git: true`**: Marks packages with their own independent git repo. Session context shows branch, working directory status, and recent commits for these packages.
 
-**Effect on spec system**: When packages are configured, specs live at `.trellis/spec/<package>/<layer>/` instead of `.trellis/spec/<layer>/`.
+**Effect on spec system**: When packages are configured, specs live at `.omtre/spec/<package>/<layer>/` instead of `.omtre/spec/<layer>/`.
 
 ### Update Skip
 
-Permanently exclude files or directories from `trellis update`:
+Permanently exclude files or directories from `omtre update`:
 
 ```yaml
 update:
   skip:
-    - .trellis/spec/custom/
-    - .claude/commands/trellis/my-command.md
+    - .omtre/spec/custom/
+    - .claude/commands/omt/my-command.md
 ```
 
 ### Task Lifecycle Hooks
@@ -112,11 +112,11 @@ Shell commands executed after task lifecycle events. Task info is passed via the
 ```yaml
 hooks:
   after_create:
-    - python3 .trellis/scripts/hooks/linear_sync.py create
+    - python3 .omtre/scripts/hooks/linear_sync.py create
   after_start:
-    - python3 .trellis/scripts/hooks/linear_sync.py start
+    - python3 .omtre/scripts/hooks/linear_sync.py start
   after_archive:
-    - python3 .trellis/scripts/hooks/linear_sync.py archive
+    - python3 .omtre/scripts/hooks/linear_sync.py archive
 ```
 
 **Events**:
@@ -170,15 +170,15 @@ default_package: cli
 
 update:
   skip:
-    - .trellis/spec/custom-internal/
+    - .omtre/spec/custom-internal/
 
 hooks:
   after_create:
-    - python3 .trellis/scripts/hooks/linear_sync.py create
+    - python3 .omtre/scripts/hooks/linear_sync.py create
   after_start:
-    - python3 .trellis/scripts/hooks/linear_sync.py start
+    - python3 .omtre/scripts/hooks/linear_sync.py start
   after_archive:
-    - python3 .trellis/scripts/hooks/linear_sync.py archive
+    - python3 .omtre/scripts/hooks/linear_sync.py archive
 
 session:
   spec_scope: active_task

@@ -26,7 +26,7 @@ import subprocess
 import sys
 
 SKIP_DIRS = {
-    ".git", ".trellis", ".devin", ".claude", ".cursor", ".codex",
+    ".git", ".omtre", ".devin", ".claude", ".cursor", ".codex",
     "node_modules", "dist", "build", ".next", "out",
     "__pycache__", ".venv", "venv", ".idea", ".vscode",
 }

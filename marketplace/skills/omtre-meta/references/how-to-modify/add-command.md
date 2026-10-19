@@ -1,6 +1,6 @@
 # How To: Add Slash Command
 
-Add a new `/trellis:my-command` command.
+Add a new `/omt:my-command` command.
 
 **Platform**: All (11 platforms — each has its own command format)
 
@@ -10,15 +10,15 @@ Add a new `/trellis:my-command` command.
 
 | File                                     | Action | Required |
 | ---------------------------------------- | ------ | -------- |
-| `.claude/commands/trellis/my-command.md` | Create | Yes      |
+| `.claude/commands/omt/my-command.md` | Create | Yes      |
 | `.cursor/commands/my-command.md`         | Create | Optional |
-| `trellis-local/SKILL.md`                 | Update | Yes      |
+| `omtre-local/SKILL.md`                 | Update | Yes      |
 
 ---
 
 ## Step 1: Create Command File
 
-Create `.claude/commands/trellis/my-command.md`:
+Create `.claude/commands/omt/my-command.md`:
 
 ```markdown
 ---
@@ -57,35 +57,35 @@ What the command produces.
 
 ## Step 2: Mirror to Other Platforms (Optional)
 
-Commands are automatically mirrored to configured platforms by `trellis init` and `trellis update`. Each platform uses its own format:
+Commands are automatically mirrored to configured platforms by `omtre init` and `omtre update`. Each platform uses its own format:
 
 | Platform    | Path                                            | Format   |
 | ----------- | ----------------------------------------------- | -------- |
-| Cursor      | `.cursor/commands/trellis-my-command.md`        | Markdown |
-| OpenCode    | `.opencode/agents/trellis-my-command.md`        | Markdown |
-| iFlow       | `.iflow/commands/trellis/my-command.md`         | Markdown |
+| Cursor      | `.cursor/commands/omtre-my-command.md`        | Markdown |
+| OpenCode    | `.opencode/agents/omtre-my-command.md`        | Markdown |
+| iFlow       | `.iflow/commands/omt/my-command.md`         | Markdown |
 | Codex       | `.codex/skills/my-command/SKILL.md`             | Skill    |
 | Kilo        | `.kilocode/workflows/my-command.md`             | Workflow |
 | Kiro        | `.kiro/skills/my-command/SKILL.md`              | Skill    |
-| Gemini CLI  | `.gemini/commands/trellis/my-command.toml`      | TOML     |
+| Gemini CLI  | `.gemini/commands/omt/my-command.toml`      | TOML     |
 | Antigravity | `.agent/workflows/my-command.md`                | Workflow |
 | Qoder       | `.qoder/skills/my-command/SKILL.md`             | Skill    |
-| CodeBuddy   | `.codebuddy/commands/trellis/my-command.md`     | Markdown |
+| CodeBuddy   | `.codebuddy/commands/omt/my-command.md`     | Markdown |
 
 ---
 
-## Step 3: Document in trellis-local
+## Step 3: Document in omtre-local
 
-Update `.claude/skills/trellis-local/SKILL.md`:
+Update `.claude/skills/omtre-local/SKILL.md`:
 
 ```markdown
 ## Commands
 
 ### Added Commands
 
-#### /trellis:my-command
+#### /omt:my-command
 
-- **File**: `.claude/commands/trellis/my-command.md`
+- **File**: `.claude/commands/omt/my-command.md`
 - **Platform**: [ALL]
 - **Purpose**: What it does
 - **Added**: 2026-01-31
@@ -140,7 +140,7 @@ User should specify which file to review.
 
 ## Testing
 
-1. Run the command: `/trellis:my-command`
+1. Run the command: `/omt:my-command`
 2. Verify behavior matches description
 3. Test edge cases
 
@@ -150,5 +150,5 @@ User should specify which file to review.
 
 - [ ] Command file created with proper frontmatter
 - [ ] Mirrored to Cursor (if needed)
-- [ ] Documented in trellis-local
+- [ ] Documented in omtre-local
 - [ ] Tested the command

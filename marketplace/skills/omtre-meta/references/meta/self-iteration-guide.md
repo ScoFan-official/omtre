@@ -1,16 +1,16 @@
-# Trellis Self-Iteration Guide
+# omtre Self-Iteration Guide
 
-How to maintain skill documentation when customizing Trellis.
+How to maintain skill documentation when customizing omtre.
 
 ---
 
 ## Core Principle
 
-**Every Trellis modification MUST be documented in the appropriate skill.**
+**Every omtre modification MUST be documented in the appropriate skill.**
 
 ```
-Modification to Trellis → Update trellis-local (project skill)
-Update to Trellis itself → Update trellis-meta (meta skill)
+Modification to omtre → Update omtre-local (project skill)
+Update to omtre itself → Update omtre-meta (meta skill)
 ```
 
 ---
@@ -18,21 +18,21 @@ Update to Trellis itself → Update trellis-meta (meta skill)
 ## Decision Tree
 
 ```
-Is this a modification to Trellis?
+Is this a modification to omtre?
 │
 ├── YES: What kind?
 │   │
 │   ├── Project-specific customization
-│   │   └── Update .claude/skills/trellis-local/SKILL.md
+│   │   └── Update .claude/skills/omtre-local/SKILL.md
 │   │
-│   ├── Bug fix to core Trellis
-│   │   └── Update ~/.claude/skills/trellis-meta/
+│   ├── Bug fix to core omtre
+│   │   └── Update ~/.claude/skills/omtre-meta/
 │   │       (or project copy if reviewing first)
 │   │
-│   └── New feature to core Trellis
-│       └── Update trellis-meta after release
+│   └── New feature to core omtre
+│       └── Update omtre-meta after release
 │
-└── NO: Just using Trellis
+└── NO: Just using omtre
     └── No skill update needed
 ```
 
@@ -44,20 +44,20 @@ Is this a modification to Trellis?
 
 ```bash
 # Check if project skill exists
-ls .claude/skills/trellis-local/SKILL.md
+ls .claude/skills/omtre-local/SKILL.md
 
 # If not, create it from template
-mkdir -p .claude/skills/trellis-local
-# Copy template from trellis-meta/references/trellis-local-template.md
+mkdir -p .claude/skills/omtre-local
+# Copy template from omtre-meta/references/omtre-local-template.md
 ```
 
-### Step 2: Make the Trellis Modification
+### Step 2: Make the omtre Modification
 
 Do your work: add command, modify hook, etc.
 
 ### Step 3: Document in Project Skill
 
-Open `.claude/skills/trellis-local/SKILL.md` and:
+Open `.claude/skills/omtre-local/SKILL.md` and:
 
 1. **Find the right section** (Commands/Agents/Hooks/Specs/Workflow)
 2. **Add entry using template**
@@ -80,9 +80,9 @@ Ask yourself:
 ### New Command
 
 ```markdown
-#### /trellis:my-command
+#### /omt:my-command
 
-- **File**: `.claude/commands/trellis/my-command.md`
+- **File**: `.claude/commands/omt/my-command.md`
 - **Purpose**: Brief description of what it does
 - **Added**: 2026-01-31
 - **Reason**: Why this command was needed
@@ -90,7 +90,7 @@ Ask yourself:
 **Usage**:
 ```
 
-/trellis:my-command [args]
+/omt:my-command [args]
 
 ```
 
@@ -156,7 +156,7 @@ def get_my_agent_context(repo_root, task_dir):
 
 ```markdown
 #### security/
-- **Path**: `.trellis/spec/security/`
+- **Path**: `.omtre/spec/security/`
 - **Purpose**: Security guidelines for the project
 - **Files**:
   - `index.md` - Category overview
@@ -167,7 +167,7 @@ def get_my_agent_context(repo_root, task_dir):
 
 **JSONL Integration**:
 ```jsonl
-{"file": ".trellis/spec/security/index.md", "reason": "Security guidelines"}
+{"file": ".omtre/spec/security/index.md", "reason": "Security guidelines"}
 ````
 
 ````
@@ -178,7 +178,7 @@ def get_my_agent_context(repo_root, task_dir):
 #### Custom Phase Order
 - **What**: Changed default task phases to include research phase
 - **Files Affected**:
-  - `.trellis/scripts/task.py` (init-context function)
+  - `.omtre/scripts/task.py` (init-context function)
   - Default task.json template
 - **Date**: 2026-01-31
 - **Reason**: All tasks in this project need research first
@@ -212,50 +212,50 @@ def get_my_agent_context(repo_root, task_dir):
 - Reason: Complex verification commands were timing out
 
 ### 2026-01-29 - Initial Setup
-- Initialized trellis-local skill
-- Base Trellis version: 0.3.0
+- Initialized omtre-local skill
+- Base omtre version: 0.3.0
 ````
 
 ---
 
 ## Multi-Project Scenario
 
-When working with multiple Trellis projects:
+When working with multiple omtre projects:
 
 ```
 ~/projects/
 ├── project-a/
-│   └── .claude/skills/trellis-local/   # Project A customizations
+│   └── .claude/skills/omtre-local/   # Project A customizations
 ├── project-b/
-│   └── .claude/skills/trellis-local/   # Project B customizations
+│   └── .claude/skills/omtre-local/   # Project B customizations
 └── project-c/
-    └── .claude/skills/trellis-local/   # Project C customizations
+    └── .claude/skills/omtre-local/   # Project C customizations
 
 ~/.claude/skills/
-└── trellis-meta/                        # Shared meta-skill (vanilla Trellis)
+└── omtre-meta/                        # Shared meta-skill (vanilla omtre)
 ```
 
-**Each project has its own `trellis-local`** documenting that project's specific customizations.
+**Each project has its own `omtre-local`** documenting that project's specific customizations.
 
-**The meta-skill is shared** and documents vanilla Trellis.
+**The meta-skill is shared** and documents vanilla omtre.
 
 ---
 
 ## Upgrade Workflow
 
-When upgrading Trellis to a new version:
+When upgrading omtre to a new version:
 
 ### 1. Review New Version Changes
 
 ```bash
 # Compare new meta-skill with current
-diff -r ~/.claude/skills/trellis-meta/references/ \
-        ./new-trellis-meta/references/
+diff -r ~/.claude/skills/omtre-meta/references/ \
+        ./new-omtre-meta/references/
 ```
 
 ### 2. Check for Conflicts
 
-Review each customization in `trellis-local`:
+Review each customization in `omtre-local`:
 
 - Does new version include this feature natively?
 - Does new version break this customization?
@@ -265,18 +265,18 @@ Review each customization in `trellis-local`:
 
 ```bash
 # Backup current meta-skill
-cp -r ~/.claude/skills/trellis-meta ~/.claude/skills/trellis-meta.backup
+cp -r ~/.claude/skills/omtre-meta ~/.claude/skills/omtre-meta.backup
 
 # Update meta-skill
-cp -r ./new-trellis-meta/* ~/.claude/skills/trellis-meta/
+cp -r ./new-omtre-meta/* ~/.claude/skills/omtre-meta/
 ```
 
 ### 4. Update Project Skills
 
-Add migration note to `trellis-local`:
+Add migration note to `omtre-local`:
 
 ```markdown
-### 2026-02-01 - Upgraded to Trellis 0.4.0
+### 2026-02-01 - Upgraded to omtre 0.4.0
 
 - Updated meta-skill to 0.4.0
 - Kept custom `security-agent` (not in vanilla)
@@ -288,18 +288,18 @@ Add migration note to `trellis-local`:
 
 ## AI Instructions
 
-When an AI modifies Trellis, it MUST:
+When an AI modifies omtre, it MUST:
 
-1. **Check** if `trellis-local` exists in the project
+1. **Check** if `omtre-local` exists in the project
 2. **Create** it from template if missing
 3. **Document** the change immediately after making it
 4. **Update** the changelog with date and description
 5. **Verify** the documentation is complete
 
-**Never** modify `trellis-meta` for project-specific changes.
+**Never** modify `omtre-meta` for project-specific changes.
 
 **Always** tell the user what was documented.
 
 Example AI response:
 
-> "I've added the `/trellis:deploy` command and documented it in `.claude/skills/trellis-local/SKILL.md` under the Commands section."
+> "I've added the `/omt:deploy` command and documented it in `.claude/skills/omtre-local/SKILL.md` under the Commands section."

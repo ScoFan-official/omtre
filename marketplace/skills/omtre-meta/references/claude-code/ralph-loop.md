@@ -70,13 +70,13 @@ verify:
 
 ## State File
 
-### `.trellis/.ralph-state.json`
+### `.omtre/.ralph-state.json`
 
 Tracks loop state across iterations.
 
 ```json
 {
-  "task": ".trellis/tasks/01-31-add-login",
+  "task": ".omtre/tasks/01-31-add-login",
   "iteration": 2,
   "started_at": "2026-01-31T10:30:00"
 }
@@ -176,7 +176,7 @@ Expected markers:
 ### Check State
 
 ```bash
-cat .trellis/.ralph-state.json
+cat .omtre/.ralph-state.json
 ```
 
 ### Manual Verify
@@ -189,7 +189,7 @@ pnpm lint && pnpm typecheck && pnpm test
 ### Reset State
 
 ```bash
-rm .trellis/.ralph-state.json
+rm .omtre/.ralph-state.json
 ```
 
 ### View Hook Output

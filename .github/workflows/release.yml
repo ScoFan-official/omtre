@@ -1,6 +1,6 @@
 name: release
 
-# Canonical CLI artifacts publish from ScoFan-official/oh-my-trellis via its
+# Canonical CLI artifacts publish from ScoFan-official/omtre via its
 # `cli-v*` tag pipeline (cli-release.yml there). This workflow stays
 # dispatch-only for internal tarball testing; fork tags are NOT pushed to
 # trigger releases here.
@@ -23,7 +23,7 @@ jobs:
           node-version: "20"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter oh-my-trellis build
+      - run: pnpm --filter omtre build
       - name: Pack CLI
         id: pack
         working-directory: packages/cli
@@ -37,7 +37,7 @@ jobs:
           name: ${{ steps.pack.outputs.tgz }}
           path: ${{ steps.pack.outputs.tgz }}
       # Legacy tag-triggered publishing is deprecated (canonical surface =
-      # oh-my-trellis `cli-v*` releases). Kept only for the unlikely case the
+      # omtre `cli-v*` releases). Kept only for the unlikely case the
       # tag trigger is re-enabled — dispatch runs never reach it.
       - name: Create release with asset
         if: startsWith(github.ref, 'refs/tags/')

@@ -7,7 +7,7 @@ Track development progress across sessions with per-developer isolation.
 ## Directory Structure
 
 ```
-.trellis/workspace/
+.omtre/workspace/
 ├── index.md                    # Global overview
 └── {developer}/                # Per-developer directory
     ├── index.md                # Personal index with @@@auto markers
@@ -20,7 +20,7 @@ Track development progress across sessions with per-developer isolation.
 
 ## Developer Identity
 
-### `.trellis/.developer`
+### `.omtre/.developer`
 
 Stores current developer name. Created by `init_developer.py`.
 
@@ -31,15 +31,15 @@ taosu
 ### Initialize Developer
 
 ```bash
-python3 .trellis/scripts/init_developer.py <name>
+python3 .omtre/scripts/init_developer.py <name>
 ```
 
 Creates:
 
-- `.trellis/.developer` - Identity file
-- `.trellis/workspace/<name>/` - Personal workspace
-- `.trellis/workspace/<name>/index.md` - Personal index
-- `.trellis/workspace/<name>/journal-1.md` - First journal
+- `.omtre/.developer` - Identity file
+- `.omtre/workspace/<name>/` - Personal workspace
+- `.omtre/workspace/<name>/index.md` - Personal index
+- `.omtre/workspace/<name>/journal-1.md` - First journal
 
 ---
 
@@ -94,7 +94,7 @@ Tracks all sessions and provides quick reference.
 
 ## Active Work
 
-- Current task: `.trellis/tasks/01-31-add-login-taosu`
+- Current task: `.omtre/tasks/01-31-add-login-taosu`
 - Branch: feature/add-login
 
 ## Recent Sessions

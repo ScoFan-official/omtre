@@ -1,14 +1,14 @@
-"""Trellis after_archive hook: sweep .scratch/inbox entries promoted to the archived task.
+"""omtre after_archive hook: sweep .scratch/inbox entries promoted to the archived task.
 
-Reads TASK_JSON_PATH (set by Trellis lifecycle hooks). Finds inbox files whose
+Reads TASK_JSON_PATH (set by omtre lifecycle hooks). Finds inbox files whose
 `Status: promoted -> <task>` marker points at the archived task and moves them
 to `.scratch/inbox/done/` so the inbox only ever shows live intake.
 
-Wire in .trellis/config.yaml:
+Wire in .omtre/config.yaml:
 
     hooks:
       after_archive:
-        - "python ./tools/oh-my-trellis/hooks/after_archive_inbox_sweep.py"
+        - "python ./skills/mp-omtre-bridge/hooks/after_archive_inbox_sweep.py"
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ def main() -> int:
 
     repo_root = path.parent
     for _ in range(4):
-        if (repo_root / ".trellis").is_dir():
+        if (repo_root / ".omtre").is_dir():
             break
         repo_root = repo_root.parent
     else:

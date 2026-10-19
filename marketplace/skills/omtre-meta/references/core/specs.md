@@ -9,7 +9,7 @@ Maintain coding standards that guide AI development. Supports single-repo and mo
 ### Single Repo
 
 ```
-.trellis/spec/
+.omtre/spec/
 ├── frontend/                   # Frontend guidelines
 │   ├── index.md                # Overview and quick reference
 │   ├── component-guidelines.md
@@ -32,7 +32,7 @@ Maintain coding standards that guide AI development. Supports single-repo and mo
 When `packages:` is defined in `config.yaml`, specs are organized per-package:
 
 ```
-.trellis/spec/
+.omtre/spec/
 ├── cli/                        # Package: cli
 │   ├── backend/
 │   │   ├── index.md
@@ -51,7 +51,7 @@ When `packages:` is defined in `config.yaml`, specs are organized per-package:
     └── *.md
 ```
 
-**Discovery**: `python3 .trellis/scripts/get_context.py --mode packages` lists all packages, paths, types, and spec layers.
+**Discovery**: `python3 .omtre/scripts/get_context.py --mode packages` lists all packages, paths, types, and spec layers.
 
 ---
 
@@ -120,7 +120,7 @@ After writing code:
 
 The session-start hook dynamically discovers spec directories instead of hardcoding `frontend/backend/guides`:
 
-1. Iterates all subdirectories under `.trellis/spec/`
+1. Iterates all subdirectories under `.omtre/spec/`
 2. For monorepo: iterates `spec/<package>/<layer>/`
 3. Reads `index.md` from each discovered layer
 4. Injects all found indexes into session context
@@ -145,8 +145,8 @@ session:
 Reference specs in task context:
 
 ```jsonl
-{"file": ".trellis/spec/cli/backend/index.md", "reason": "Backend overview"}
-{"file": ".trellis/spec/cli/backend/error-handling.md", "reason": "Error patterns"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "Backend overview"}
+{"file": ".omtre/spec/cli/backend/error-handling.md", "reason": "Error patterns"}
 ```
 
 ### Manual Reading (Non-Hook Platforms)
@@ -154,7 +154,7 @@ Reference specs in task context:
 Read specs at session start:
 
 ```
-1. Read .trellis/spec/{package}/{layer}/index.md
+1. Read .omtre/spec/{package}/{layer}/index.md
 2. Follow the Pre-Development Checklist
 3. Read specific guidelines as needed
 ```
@@ -165,13 +165,13 @@ Read specs at session start:
 
 ### 1. Choose Location
 
-- Single repo: `.trellis/spec/<layer>/`
-- Monorepo: `.trellis/spec/<package>/<layer>/`
+- Single repo: `.omtre/spec/<layer>/`
+- Monorepo: `.omtre/spec/<package>/<layer>/`
 
 ### 2. Create Spec File
 
 ```bash
-touch .trellis/spec/cli/backend/new-pattern.md
+touch .omtre/spec/cli/backend/new-pattern.md
 ```
 
 ### 3. Follow Format

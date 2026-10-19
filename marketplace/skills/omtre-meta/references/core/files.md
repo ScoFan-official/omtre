@@ -1,18 +1,18 @@
-# Trellis File Reference
+# omtre File Reference
 
-Complete reference of all files in the `.trellis/` directory.
+Complete reference of all files in the `.omtre/` directory.
 
 ---
 
 ## Directory Structure
 
 ```
-.trellis/
+.omtre/
 ├── .developer              # Developer identity (gitignored)
 ├── .current-task           # Active task pointer (gitignored)
 ├── .ralph-state.json       # Ralph Loop state (gitignored)
 ├── .template-hashes.json   # Template version tracking
-├── .version                # Installed Trellis version
+├── .version                # Installed omtre version
 ├── .gitignore              # Git ignore rules
 ├── workflow.md             # Main workflow documentation
 ├── config.yaml             # Project-level configuration (packages, hooks, etc.)
@@ -56,7 +56,7 @@ taosu
 **Format**: Plain text, relative path to task directory.
 
 ```
-.trellis/tasks/01-31-add-login-taosu
+.omtre/tasks/01-31-add-login-taosu
 ```
 
 **Gitignored**: Yes - each developer works on different tasks.
@@ -78,7 +78,7 @@ taosu
 
 ```json
 {
-  "task": ".trellis/tasks/01-31-add-login",
+  "task": ".omtre/tasks/01-31-add-login",
   "iteration": 2,
   "started_at": "2026-01-31T10:30:00"
 }
@@ -98,15 +98,15 @@ taosu
 
 ### `.template-hashes.json`
 
-**Purpose**: Track template file versions for `trellis update`.
+**Purpose**: Track template file versions for `omtre update`.
 
-**Created by**: `trellis init` or `trellis update`
+**Created by**: `omtre init` or `omtre update`
 
 **Format**: JSON object mapping file paths to SHA-256 hashes.
 
 ```json
 {
-  ".trellis/workflow.md": "028891d1fe839a266...",
+  ".omtre/workflow.md": "028891d1fe839a266...",
   ".claude/hooks/session-start.py": "0a9899e80f6bfe15...",
   ".claude/commands/start.md": "d1276dcbff880299..."
 }
@@ -114,7 +114,7 @@ taosu
 
 **Used by**:
 
-- `trellis update` - Detect which files have been modified
+- `omtre update` - Detect which files have been modified
 - Determines if files can be auto-updated or need conflict resolution
 
 **Behavior**:
@@ -126,9 +126,9 @@ taosu
 
 ### `.version`
 
-**Purpose**: Track installed Trellis CLI version.
+**Purpose**: Track installed omtre CLI version.
 
-**Created by**: `trellis init` or `trellis update`
+**Created by**: `omtre init` or `omtre update`
 
 **Format**: Plain text, semver version string.
 
@@ -138,7 +138,7 @@ taosu
 
 **Used by**:
 
-- `trellis update` - Determine if update is needed
+- `omtre update` - Determine if update is needed
 - Version mismatch detection
 
 ---
@@ -184,7 +184,7 @@ taosu
 
 **Purpose**: Main workflow documentation for developers and AI.
 
-**Created by**: `trellis init`
+**Created by**: `omtre init`
 
 **Content sections**:
 
@@ -204,9 +204,9 @@ taosu
 
 ### `config.yaml`
 
-**Purpose**: Project-level Trellis configuration.
+**Purpose**: Project-level omtre configuration.
 
-**Created by**: `trellis init`
+**Created by**: `omtre init`
 
 **Format**: YAML
 
@@ -229,16 +229,16 @@ default_package: cli
 # Update exclusions
 update:
   skip:
-    - .trellis/spec/custom/
+    - .omtre/spec/custom/
 
 # Task lifecycle hooks
 hooks:
   after_create:
-    - python3 .trellis/scripts/hooks/linear_sync.py create
+    - python3 .omtre/scripts/hooks/linear_sync.py create
   after_start:
-    - python3 .trellis/scripts/hooks/linear_sync.py start
+    - python3 .omtre/scripts/hooks/linear_sync.py start
   after_archive:
-    - python3 .trellis/scripts/hooks/linear_sync.py archive
+    - python3 .omtre/scripts/hooks/linear_sync.py archive
 
 # Session context scope
 session:
@@ -257,14 +257,14 @@ session:
 
 **Purpose**: Configure Multi-Session and Ralph Loop.
 
-**Created by**: `trellis init`
+**Created by**: `omtre init`
 
 **Format**: YAML
 
 ```yaml
 worktree_dir: ../worktrees
 copy:
-  - .trellis/.developer
+  - .omtre/.developer
   - .env
 post_create:
   - npm install
@@ -283,7 +283,7 @@ verify:
 
 **Purpose**: Agent registry for Multi-Session.
 
-**Location**: `.trellis/workspace/{developer}/.agents/`
+**Location**: `.omtre/workspace/{developer}/.agents/`
 
 **Content**: `registry.json` tracking running agents.
 
@@ -345,17 +345,17 @@ Automation scripts.
 
 ## Template Files
 
-These files are managed by `trellis update`:
+These files are managed by `omtre update`:
 
 | File                            | Purpose                    |
 | ------------------------------- | -------------------------- |
-| `.trellis/workflow.md`          | Workflow documentation     |
-| `.trellis/config.yaml`         | Project-level config       |
-| `.trellis/worktree.yaml`       | Multi-session config       |
-| `.trellis/.gitignore`          | Git ignore rules           |
-| `.trellis/scripts/**/*.py`     | All Python scripts         |
+| `.omtre/workflow.md`          | Workflow documentation     |
+| `.omtre/config.yaml`         | Project-level config       |
+| `.omtre/worktree.yaml`       | Multi-session config       |
+| `.omtre/.gitignore`          | Git ignore rules           |
+| `.omtre/scripts/**/*.py`     | All Python scripts         |
 | `.claude/hooks/*.py`           | Hook scripts               |
-| `.claude/commands/trellis/*.md` | Slash commands (17 files) |
+| `.claude/commands/omt/*.md` | Slash commands (17 files) |
 | `.claude/agents/*.md`          | Agent definitions (6 files) |
 | `.cursor/commands/*.md`        | Cursor commands            |
 | `.agents/skills/*/SKILL.md`    | Shared agent skills        |
@@ -370,9 +370,9 @@ These files are managed by `trellis update`:
 5. Update hashes after successful update
 
 **Protected paths** (never touched by update/migration):
-- `.trellis/workspace/`
-- `.trellis/spec/`
-- `.trellis/tasks/`
+- `.omtre/workspace/`
+- `.omtre/spec/`
+- `.omtre/tasks/`
 
 **Exclusions**: Files listed in `update.skip` in config.yaml are permanently excluded.
 
@@ -380,10 +380,10 @@ These files are managed by `trellis update`:
 
 ## File Lifecycle
 
-### Created by `trellis init`
+### Created by `omtre init`
 
 ```
-.trellis/
+.omtre/
 ├── .template-hashes.json
 ├── .version
 ├── .gitignore
@@ -401,7 +401,7 @@ These files are managed by `trellis update`:
 ### Created at runtime
 
 ```
-.trellis/
+.omtre/
 ├── .developer           # init_developer.py
 ├── .current-task        # task.py start
 ├── .ralph-state.json    # ralph-loop.py
@@ -419,7 +419,7 @@ These files are managed by `trellis update`:
 
 ```
 # After task completion
-.trellis/tasks/{task}/ → .trellis/tasks/archive/YYYY-MM/
+.omtre/tasks/{task}/ → .omtre/tasks/archive/YYYY-MM/
 
 # After worktree removal
 .agents/registry.json entries removed

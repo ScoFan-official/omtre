@@ -32,7 +32,7 @@ def main():
             "mp":  {"repo": "mattpocock/skills", "license": "MIT"},
             "ecc": {"repo": "davila7/claude-code-templates", "license": "MIT"},
             "imp": {"repo": "pbakaus/impeccable", "license": "Apache-2.0"},
-            "pack": {"repo": "ScoFan-official/oh-my-trellis"},
+            "pack": {"repo": "ScoFan-official/omtre"},
         },
         "counts": {},
         "assets": [

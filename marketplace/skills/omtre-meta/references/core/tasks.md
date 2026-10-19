@@ -7,7 +7,7 @@ Track work items with phase-based execution, parent-child subtasks, and lifecycl
 ## Directory Structure
 
 ```
-.trellis/tasks/
+.omtre/tasks/
 ├── {MM-DD-slug}/                  # Active task directories
 │   ├── task.json                  # Metadata, phases, branch, subtasks
 │   ├── prd.md                     # Requirements document
@@ -140,9 +140,9 @@ List files to inject as context for each agent phase.
 ### Format
 
 ```jsonl
-{"file": ".trellis/spec/backend/index.md", "reason": "Backend guidelines"}
+{"file": ".omtre/spec/backend/index.md", "reason": "Backend guidelines"}
 {"file": "src/services/auth.ts", "reason": "Existing pattern"}
-{"file": ".trellis/tasks/03-24-add-login/prd.md", "reason": "Requirements"}
+{"file": ".omtre/tasks/03-24-add-login/prd.md", "reason": "Requirements"}
 ```
 
 ### Files
@@ -165,10 +165,10 @@ Tasks can have parent-child relationships for decomposing complex work.
 
 ```bash
 # Option 1: Create with --parent flag
-python3 .trellis/scripts/task.py create "Login API" --parent .trellis/tasks/03-24-add-login
+python3 .omtre/scripts/task.py create "Login API" --parent .omtre/tasks/03-24-add-login
 
 # Option 2: Link existing tasks
-python3 .trellis/scripts/task.py add-subtask <parent-dir> <child-dir>
+python3 .omtre/scripts/task.py add-subtask <parent-dir> <child-dir>
 ```
 
 ### Behavior
@@ -189,13 +189,13 @@ Shell commands that run automatically after task lifecycle events.
 ```yaml
 hooks:
   after_create:
-    - python3 .trellis/scripts/hooks/linear_sync.py create
+    - python3 .omtre/scripts/hooks/linear_sync.py create
   after_start:
-    - python3 .trellis/scripts/hooks/linear_sync.py start
+    - python3 .omtre/scripts/hooks/linear_sync.py start
   after_finish:
-    - python3 .trellis/scripts/hooks/linear_sync.py finish
+    - python3 .omtre/scripts/hooks/linear_sync.py finish
   after_archive:
-    - python3 .trellis/scripts/hooks/linear_sync.py archive
+    - python3 .omtre/scripts/hooks/linear_sync.py archive
 ```
 
 ### Events
@@ -219,24 +219,24 @@ Ships with `hooks/linear_sync.py` that syncs task events to Linear via the `line
 
 ## Current Task Pointer
 
-### `.trellis/.current-task`
+### `.omtre/.current-task`
 
 Points to active task directory.
 
 ```
-.trellis/tasks/03-24-add-login
+.omtre/tasks/03-24-add-login
 ```
 
 ### Set Current Task
 
 ```bash
-python3 .trellis/scripts/task.py start <task-dir>
+python3 .omtre/scripts/task.py start <task-dir>
 ```
 
 ### Clear Current Task
 
 ```bash
-python3 .trellis/scripts/task.py finish
+python3 .omtre/scripts/task.py finish
 ```
 
 ---

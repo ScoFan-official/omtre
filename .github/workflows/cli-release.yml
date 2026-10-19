@@ -1,8 +1,8 @@
 name: cli-release
 
-# Canonical CLI distribution: the fork (ScoFan-official/trellis) is the
-# source/build workspace only. This pipeline rebuilds the CLI from the
-# matching public fork tag and publishes the tarball here, so pack releases
+# Canonical CLI distribution: ScoFan-official/omtre is the unified
+# source/build workspace. This pipeline builds the CLI from the
+# matching tag and publishes the tarball here, so pack releases
 # (vX.Y.Z) and CLI releases (cli-v<upstream>-ohmy.<N>) share one user-facing
 # releases page.
 on:
@@ -24,7 +24,7 @@ jobs:
       - name: Clone fork at the matching tag
         run: |
           git clone --depth 1 --branch "${{ steps.fork.outputs.tag }}" \
-            https://github.com/ScoFan-official/trellis.git fork
+            https://github.com/ScoFan-official/omtre.git fork
 
       - uses: pnpm/action-setup@v4
         with:
@@ -40,7 +40,7 @@ jobs:
         working-directory: fork
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter oh-my-trellis... build
+          pnpm --filter omtre... build
 
       - name: Pack CLI
         working-directory: fork/packages/cli
@@ -49,4 +49,4 @@ jobs:
       - name: Create release with asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" oh-my-trellis-*.tgz --generate-notes --repo "${{ github.repository }}"
+        run: gh release create "$GITHUB_REF_NAME" omtre-*.tgz --generate-notes --repo "${{ github.repository }}"

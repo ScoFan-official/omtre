@@ -183,7 +183,7 @@ C10 回执必须分三段，按以下顺序写：
 ## lint 验证
 
 运行环境必须有 Python 3 和 Node 18+。
-包装脚本路径是 `.trellis/scripts/voice_lint.py`。
+包装脚本路径是 `.omtre/scripts/voice_lint.py`。
 脚本由 voice-tooling 票交付。脚本可用后，必须执行本文件自检。
 脚本暂不可用时，检查者必须按本文件逐项人工核对。
 
@@ -192,20 +192,20 @@ C10 回执必须分三段，按以下顺序写：
 检查当前改动文件：
 
 ```sh
-python ./.trellis/scripts/voice_lint.py --changed
+python ./.omtre/scripts/voice_lint.py --changed
 ```
 
 检查全量文件：
 
 ```sh
-python ./.trellis/scripts/voice_lint.py --all
+python ./.omtre/scripts/voice_lint.py --all
 ```
 
 检查指定文件：
 本文件自检使用此式。
 
 ```sh
-python ./.trellis/scripts/voice_lint.py .trellis/spec/agents/voice.md tools/mp-trellis-pack/marketplace/specs/agent-workflow/agents/voice.md
+python ./.omtre/scripts/voice_lint.py .omtre/spec/agents/voice.md marketplace/specs/agent-workflow/agents/voice.md
 ```
 
 ### 棘轮规则
@@ -225,7 +225,7 @@ advisory 提示不阻断检查，也不免除执行者的规则自查责任。
 
 ### 排除与自查
 
-文件检查和存量改造必须跳过 `.trellis/tasks/archive/**`。
+文件检查和存量改造必须跳过 `.omtre/tasks/archive/**`。
 历史档案不得改写。
 
 执行者必须自查机器不能完整判断的规则：

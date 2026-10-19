@@ -1,20 +1,20 @@
 ---
-name: trellis-meta
-description: "Meta-skill for understanding and customizing Mindfold Trellis — the all-in-one AI workflow system for 11 AI coding platforms (Claude Code, Cursor, OpenCode, iFlow, Codex, Kilo, Kiro, Gemini CLI, Antigravity, Qoder, CodeBuddy). Documents the original Trellis system design including architecture, commands, hooks, multi-agent pipelines, monorepo support, and task lifecycle hooks. Use when understanding Trellis architecture, customizing workflows, adding commands or agents, troubleshooting issues, or adapting Trellis to specific projects. Modifications should be recorded in a project-local trellis-local skill, not here."
+name: omtre-meta
+description: "Meta-skill for understanding and customizing omtre — the all-in-one AI workflow system for 11 AI coding platforms (Claude Code, Cursor, OpenCode, iFlow, Codex, Kilo, Kiro, Gemini CLI, Antigravity, Qoder, CodeBuddy). Documents the original omtre system design including architecture, commands, hooks, multi-agent pipelines, monorepo support, and task lifecycle hooks. Use when understanding omtre architecture, customizing workflows, adding commands or agents, troubleshooting issues, or adapting omtre to specific projects. Modifications should be recorded in a project-local omtre-local skill, not here."
 ---
 
-# Trellis Meta-Skill
+# omtre Meta-Skill
 
 ## Version Compatibility
 
 | Item                        | Value            |
 | --------------------------- | ---------------- |
-| **Trellis CLI Version**     | 0.4.0-beta.8     |
+| **omtre CLI Version**       | 0.4.0-beta.8     |
 | **Skill Last Updated**      | 2026-03-24       |
 | **Min Claude Code Version** | 1.0.0+           |
 | **Min Node.js Version**     | >=18.17.0        |
 
-> ⚠️ **Version Mismatch Warning**: If your Trellis CLI version differs from above, some features may not work as documented. Run `trellis --version` to check.
+> ⚠️ **Version Mismatch Warning**: If your omtre CLI version differs from above, some features may not work as documented. Run `omtre --version` to check.
 
 ---
 
@@ -68,13 +68,13 @@ All features work as documented. Hooks provide automatic context injection and q
 
 ### Designing for Portability
 
-When customizing Trellis, consider platform compatibility:
+When customizing omtre, consider platform compatibility:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                 PORTABLE (All 11 Platforms)                  │
-│  - .trellis/workspace/    - .trellis/tasks/                 │
-│  - .trellis/spec/         - Platform commands/skills        │
+│  - .omtre/workspace/      - .omtre/tasks/                   │
+│  - .omtre/spec/           - Platform commands/skills        │
 │  - File-based configs     - JSONL context files             │
 │  - config.yaml            - Monorepo packages support       │
 └─────────────────────────────────────────────────────────────┘
@@ -98,64 +98,64 @@ When customizing Trellis, consider platform compatibility:
 
 ## Purpose
 
-This is the **meta-skill** for Trellis - it documents the original, unmodified Trellis system. When customizing Trellis for a specific project, record changes in a **project-local skill** (`trellis-local`), keeping this meta-skill as the authoritative reference for vanilla Trellis.
+This is the **meta-skill** for omtre - it documents the original, unmodified omtre system. When customizing omtre for a specific project, record changes in a **project-local skill** (`omtre-local`), keeping this meta-skill as the authoritative reference for vanilla omtre.
 
 ## Skill Hierarchy
 
 ```
 ~/.claude/skills/
-└── trellis-meta/              # THIS SKILL - Original Trellis documentation
+└── omtre-meta/                # THIS SKILL - Original omtre documentation
                                # ⚠️ DO NOT MODIFY for project-specific changes
 
 project/.claude/skills/
-└── trellis-local/             # Project-specific customizations
+└── omtre-local/               # Project-specific customizations
                                # ✅ Record all modifications here
 ```
 
 **Why this separation?**
 
-- User may have multiple projects with different Trellis customizations
-- Each project's `trellis-local` skill tracks ITS OWN modifications
-- The meta-skill remains clean as the reference for original Trellis
-- Enables easy upgrades: compare meta-skill with new Trellis version
+- User may have multiple projects with different omtre customizations
+- Each project's `omtre-local` skill tracks ITS OWN modifications
+- The meta-skill remains clean as the reference for original omtre
+- Enables easy upgrades: compare meta-skill with new omtre version
 
 ---
 
 ## Self-Iteration Protocol
 
-When modifying Trellis for a project, follow this protocol:
+When modifying omtre for a project, follow this protocol:
 
 ### 1. Check for Existing Project Skill
 
 ```bash
 # Look for project-local skill
-ls -la .claude/skills/trellis-local/
+ls -la .claude/skills/omtre-local/
 ```
 
 ### 2. Create Project Skill if Missing
 
-If no `trellis-local` exists, create it:
+If no `omtre-local` exists, create it:
 
 ```bash
-mkdir -p .claude/skills/trellis-local
+mkdir -p .claude/skills/omtre-local
 ```
 
-Then create `.claude/skills/trellis-local/SKILL.md`:
+Then create `.claude/skills/omtre-local/SKILL.md`:
 
 ```markdown
 ---
-name: trellis-local
+name: omtre-local
 description: |
-  Project-specific Trellis customizations for [PROJECT_NAME].
-  This skill documents modifications made to the vanilla Trellis system
-  in this project. Inherits from trellis-meta for base documentation.
+  Project-specific omtre customizations for [PROJECT_NAME].
+  This skill documents modifications made to the vanilla omtre system
+  in this project. Inherits from omtre-meta for base documentation.
 ---
 
-# Trellis Local - [PROJECT_NAME]
+# omtre Local - [PROJECT_NAME]
 
 ## Base Version
 
-Trellis version: X.X.X (from package.json or trellis --version)
+omtre version: X.X.X (from package.json or omtre --version)
 Date initialized: YYYY-MM-DD
 
 ## Customizations
@@ -191,16 +191,16 @@ Date initialized: YYYY-MM-DD
 
 ### 3. Record Every Modification
 
-When making ANY change to Trellis, update `trellis-local/SKILL.md`:
+When making ANY change to omtre, update `omtre-local/SKILL.md`:
 
 #### Example: Adding a new command
 
 ```markdown
 ### Commands Added
 
-#### /trellis:my-command
+#### /omt:my-command
 
-- **File**: `.claude/commands/trellis/my-command.md`
+- **File**: `.claude/commands/omt/my-command.md`
 - **Purpose**: [what it does]
 - **Added**: 2026-01-31
 - **Why**: [reason for adding]
@@ -221,9 +221,9 @@ When making ANY change to Trellis, update `trellis-local/SKILL.md`:
 
 ### 4. Never Modify Meta-Skill for Project Changes
 
-The `trellis-meta` skill should ONLY be updated when:
+The `omtre-meta` skill should ONLY be updated when:
 
-- Trellis releases a new version
+- omtre releases a new version
 - Fixing documentation errors in the original
 - Adding missing documentation for original features
 
@@ -231,20 +231,20 @@ The `trellis-meta` skill should ONLY be updated when:
 
 ## Architecture Overview
 
-Trellis transforms AI assistants into structured development partners through **enforced context injection**.
+omtre transforms AI assistants into structured development partners through **enforced context injection**.
 
 ### System Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        USER INTERACTION                              │
-│  /trellis:start  /trellis:brainstorm  /trellis:parallel             │
-│  /trellis:finish-work  /trellis:before-dev  /trellis:check          │
+│  /omt:start  /omt:brainstorm  /omt:parallel                         │
+│  /omt:finish-work  /omt:before-dev  /omt:check                      │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
 ┌─────────────────────────────────▼───────────────────────────────────┐
 │                         SKILLS LAYER                                 │
-│  .claude/commands/trellis/*.md   (17 slash commands)                │
+│  .claude/commands/omt/*.md       (17 slash commands)                │
 │  .claude/agents/*.md             (6 sub-agent definitions)          │
 │  .agents/skills/*/SKILL.md       (shared agent skills layer)        │
 └─────────────────────────────────┬───────────────────────────────────┘
@@ -260,10 +260,10 @@ Trellis transforms AI assistants into structured development partners through **
                                   │
 ┌─────────────────────────────────▼───────────────────────────────────┐
 │                       PERSISTENCE LAYER                              │
-│  .trellis/workspace/  (journals, session history)                   │
-│  .trellis/tasks/      (task tracking, context files, subtasks)      │
-│  .trellis/spec/       (coding guidelines, monorepo per-package)     │
-│  .trellis/config.yaml (packages, hooks, update.skip, spec_scope)   │
+│  .omtre/workspace/    (journals, session history)                   │
+│  .omtre/tasks/        (task tracking, context files, subtasks)      │
+│  .omtre/spec/         (coding guidelines, monorepo per-package)     │
+│  .omtre/config.yaml   (packages, hooks, update.skip, spec_scope)   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -286,21 +286,21 @@ Trellis transforms AI assistants into structured development partners through **
 Track development progress across sessions with per-developer isolation.
 
 ```
-.trellis/workspace/
+.omtre/workspace/
 ├── index.md                    # Global overview
 └── {developer}/                # Per-developer
     ├── index.md                # Personal index (@@@auto markers)
     └── journal-N.md            # Session journals (max 2000 lines)
 ```
 
-**Key files**: `.trellis/.developer` (identity), journals (session history)
+**Key files**: `.omtre/.developer` (identity), journals (session history)
 
 ### 2. Task System
 
 Track work items with phase-based execution, parent-child subtasks, and lifecycle hooks.
 
 ```
-.trellis/tasks/{MM-DD-slug}/
+.omtre/tasks/{MM-DD-slug}/
 ├── task.json           # Metadata, phases, branch, subtasks
 ├── prd.md              # Requirements
 ├── info.md             # Technical design (optional)
@@ -317,13 +317,13 @@ Maintain coding standards that get injected to agents. Supports both single-repo
 
 ```
 # Single repo
-.trellis/spec/
+.omtre/spec/
 ├── frontend/           # Frontend guidelines
 ├── backend/            # Backend guidelines
 └── guides/             # Thinking guides
 
 # Monorepo (per-package)
-.trellis/spec/
+.omtre/spec/
 ├── <package-name>/     # Per-package specs
 │   ├── backend/
 │   ├── frontend/
@@ -380,34 +380,34 @@ plan.py → start.py → Dispatch → implement → check → create-pr
 
 ### Adding a Command
 
-1. Create `.claude/commands/trellis/my-command.md`
-2. Update `trellis-local` skill with the change
+1. Create `.claude/commands/omt/my-command.md`
+2. Update `omtre-local` skill with the change
 
 ### Adding an Agent
 
 1. Create `.claude/agents/my-agent.md` with YAML frontmatter
 2. Update `inject-subagent-context.py` to handle new agent type
 3. Create `my-agent.jsonl` in task directories
-4. Update `trellis-local` skill
+4. Update `omtre-local` skill
 
 ### Modifying Hooks
 
 1. Edit the hook script in `.claude/hooks/`
-2. Document the change in `trellis-local` skill
+2. Document the change in `omtre-local` skill
 3. Note which lines were modified and why
 
 ### Extending Specs
 
-1. Create new category in `.trellis/spec/my-category/`
+1. Create new category in `.omtre/spec/my-category/`
 2. Add `index.md` and guideline files
 3. Reference in JSONL context files
-4. Update `trellis-local` skill
+4. Update `omtre-local` skill
 
 ### Changing Task Workflow
 
 1. Modify `next_action` array in `task.json`
 2. Update dispatch or hook scripts as needed
-3. Document in `trellis-local` skill
+3. Document in `omtre-local` skill
 
 ---
 
@@ -428,7 +428,7 @@ references/
 | Document       | Content                                        |
 | -------------- | ---------------------------------------------- |
 | `overview.md`  | Core systems introduction                      |
-| `files.md`     | All `.trellis/` files with purposes            |
+| `files.md`     | All `.omtre/` files with purposes              |
 | `workspace.md` | Workspace system, journals, developer identity |
 | `tasks.md`     | Task system, subtasks, lifecycle hooks, JSONL   |
 | `specs.md`     | Spec system, monorepo layout, guidelines       |
@@ -465,7 +465,7 @@ references/
 | --------------------------- | -------------------------------- |
 | `platform-compatibility.md` | Detailed platform support matrix |
 | `self-iteration-guide.md`   | How to document customizations   |
-| `trellis-local-template.md` | Template for project-local skill |
+| `omtre-local-template.md`   | Template for project-local skill |
 
 ---
 
@@ -487,11 +487,11 @@ references/
 
 | Path                     | Purpose                            |
 | ------------------------ | ---------------------------------- |
-| `.trellis/.developer`    | Developer identity                 |
-| `.trellis/.current-task` | Active task pointer                |
-| `.trellis/workflow.md`   | Main workflow docs                 |
-| `.trellis/config.yaml`   | Project config (packages, hooks)   |
-| `.trellis/worktree.yaml` | Multi-session config               |
+| `.omtre/.developer`      | Developer identity                 |
+| `.omtre/.current-task`   | Active task pointer                |
+| `.omtre/workflow.md`     | Main workflow docs                 |
+| `.omtre/config.yaml`     | Project config (packages, hooks)   |
+| `.omtre/worktree.yaml`   | Multi-session config               |
 | `.claude/settings.json`  | Hook configuration                 |
 | `.agents/skills/`        | Shared agent skills (agentskills.io) |
 
@@ -499,18 +499,18 @@ references/
 
 ## Upgrade Protocol
 
-When upgrading Trellis to a new version:
+When upgrading omtre to a new version:
 
 1. **Compare** new meta-skill with current
 2. **Review** changes in new version
-3. **Check** `trellis-local` for conflicts
+3. **Check** `omtre-local` for conflicts
 4. **Merge** carefully, preserving customizations
-5. **Update** `trellis-local` with migration notes
+5. **Update** `omtre-local` with migration notes
 
 ```markdown
 ## Changelog
 
-### 2026-02-01 - Upgraded to Trellis X.Y.Z
+### 2026-02-01 - Upgraded to omtre X.Y.Z
 
 - Merged new hook behavior from meta-skill
 - Kept custom agent `my-agent`

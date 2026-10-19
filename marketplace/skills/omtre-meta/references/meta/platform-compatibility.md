@@ -1,12 +1,12 @@
 # Platform Compatibility Reference
 
-Detailed guide on Trellis feature availability across 11 AI coding platforms.
+Detailed guide on omtre feature availability across 11 AI coding platforms.
 
 ---
 
 ## Overview
 
-Trellis v0.4.0 supports **11 platforms**. The key differentiator is **hook support** — Claude Code and iFlow have Python hook systems that enable automatic context injection and quality enforcement. Codex has optional SessionStart hooks. Other platforms use commands/skills with manual context loading.
+omtre v0.4.0 supports **11 platforms**. The key differentiator is **hook support** — Claude Code and iFlow have Python hook systems that enable automatic context injection and quality enforcement. Codex has optional SessionStart hooks. Other platforms use commands/skills with manual context loading.
 
 | Platform    | Config Directory        | CLI Flag        | Hooks       | Command Format   |
 | ----------- | ----------------------- | --------------- | ----------- | ---------------- |
@@ -28,7 +28,7 @@ Trellis v0.4.0 supports **11 platforms**. The key differentiator is **hook suppo
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         TRELLIS FEATURE LAYERS                           │
+│                         OMTRE FEATURE LAYERS                           │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌────────────────────────────────────────────────────────────────────┐ │
@@ -73,14 +73,14 @@ These features work on all platforms because they're file-based.
 
 | Feature            | Location                 | Description                               |
 | ------------------ | ------------------------ | ----------------------------------------- |
-| Workspace system   | `.trellis/workspace/`    | Journals, session history                 |
-| Task system        | `.trellis/tasks/`        | Task tracking, subtasks, lifecycle hooks  |
-| Spec system        | `.trellis/spec/`         | Coding guidelines (monorepo per-package)  |
-| Config system      | `.trellis/config.yaml`   | Packages, hooks, update.skip, spec_scope  |
+| Workspace system   | `.omtre/workspace/`    | Journals, session history                 |
+| Task system        | `.omtre/tasks/`        | Task tracking, subtasks, lifecycle hooks  |
+| Spec system        | `.omtre/spec/`         | Coding guidelines (monorepo per-package)  |
+| Config system      | `.omtre/config.yaml`   | Packages, hooks, update.skip, spec_scope  |
 | Commands/Skills    | Platform-specific dirs   | Command prompts in each platform's format |
 | JSONL context      | `*.jsonl` in task dirs   | Context file lists                        |
-| Developer identity | `.trellis/.developer`    | Who is working                            |
-| Current task       | `.trellis/.current-task` | Active task pointer                       |
+| Developer identity | `.omtre/.developer`    | Who is working                            |
+| Current task       | `.omtre/.current-task` | Active task pointer                       |
 
 ### Layer 2: Shared Agent Skills
 
@@ -120,24 +120,24 @@ All features work automatically. Hooks provide context injection and quality enf
 
 ```bash
 # Initialize
-trellis init -u your-name           # Claude Code (default)
-trellis init --iflow -u your-name   # iFlow
+omtre init -u your-name           # Claude Code (default)
+omtre init --iflow -u your-name   # iFlow
 ```
 
 ### Cursor
 
 ```bash
-trellis init --cursor -u your-name
+omtre init --cursor -u your-name
 ```
 
-- **Works**: Workspace, tasks, specs, commands (read via `.cursor/commands/trellis-*.md`)
+- **Works**: Workspace, tasks, specs, commands (read via `.cursor/commands/omtre-*.md`)
 - **Doesn't work**: Hooks, auto-injection, Ralph Loop, Multi-Session
 - **Workaround**: Manually read spec files at session start
 
 ### OpenCode
 
 ```bash
-trellis init --opencode -u your-name
+omtre init --opencode -u your-name
 ```
 
 - **Works**: Workspace, tasks, specs, agents, commands
@@ -146,7 +146,7 @@ trellis init --opencode -u your-name
 ### Codex
 
 ```bash
-trellis init --codex -u your-name
+omtre init --codex -u your-name
 ```
 
 - Platform-specific skills in `.codex/skills/` + shared skills in `.agents/skills/`
@@ -157,7 +157,7 @@ trellis init --codex -u your-name
 ### Qoder
 
 ```bash
-trellis init --qoder -u your-name
+omtre init --qoder -u your-name
 ```
 
 - Skills-based platform with templates at `.qoder/skills/{name}/SKILL.md`
@@ -166,25 +166,25 @@ trellis init --qoder -u your-name
 ### CodeBuddy (Tencent Cloud)
 
 ```bash
-trellis init --codebuddy -u your-name
+omtre init --codebuddy -u your-name
 ```
 
-- Nested slash commands at `.codebuddy/commands/trellis/{name}.md`
+- Nested slash commands at `.codebuddy/commands/omt/{name}.md`
 - 12 command templates included
 
 ### Kilo, Kiro, Gemini CLI, Antigravity
 
 ```bash
-trellis init --kilo -u your-name
-trellis init --kiro -u your-name
-trellis init --gemini -u your-name
-trellis init --antigravity -u your-name
+omtre init --kilo -u your-name
+omtre init --kiro -u your-name
+omtre init --gemini -u your-name
+omtre init --antigravity -u your-name
 ```
 
 - Each platform uses its native command format
 - Kilo uses workflows (`.kilocode/workflows/`)
 - Kiro uses skills (`.kiro/skills/{name}/SKILL.md`)
-- Gemini uses TOML commands (`.gemini/commands/trellis/{name}.toml`)
+- Gemini uses TOML commands (`.gemini/commands/omt/{name}.toml`)
 - Antigravity uses workflows (`.agent/workflows/`)
 - Core file-based systems work the same across all platforms
 
@@ -192,7 +192,7 @@ trellis init --antigravity -u your-name
 
 ## Version Compatibility Matrix
 
-| Trellis Version   | Platforms Supported             |
+| omtre Version   | Platforms Supported             |
 | ----------------- | ------------------------------- |
 | 0.2.x             | Claude Code, Cursor             |
 | 0.3.0             | 9 platforms (+ OpenCode through Antigravity) |
@@ -221,7 +221,7 @@ ls -la .cursor/ .opencode/ .iflow/ .codex/ .agents/ .kilocode/ .kiro/ .gemini/ .
 
 ```
 Does the platform have hook support?
-├── YES (Claude Code, iFlow) → Full Trellis support
+├── YES (Claude Code, iFlow) → Full omtre support
 ├── PARTIAL (Codex) → SessionStart hook + TOML agents + shared skills
 └── NO  (all others) → Partial support
          ├── Can read files → Layer 1 works

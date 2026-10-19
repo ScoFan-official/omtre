@@ -13,7 +13,7 @@ output is an audit report. Give the user a ruling point before deleting.
 
 - Default targets: repo-root `AGENTS.md`, `CLAUDE.md`. The user may name
   other always-loaded files (e.g. `.cursor/rules/`, `.devin/rules/`).
-- Board files under `.trellis/domains/**` (BOUNDARY / NN-* / worklog /
+- Board files under `.omtre/domains/**` (BOUNDARY / NN-* / worklog /
   review) are append-only by discipline and out of scope for this skill.
 
 ## Procedure
@@ -39,7 +39,7 @@ output is an audit report. Give the user a ruling point before deleting.
    `prune` lines, append "（保留原因：…）" to `annotate` lines — and attach a
    diff summary to the report. If no autonomy tier is configured, default
    to `gated`.
-6. After editing, run `python ./.trellis/scripts/voice_lint.py --changed`
+6. After editing, run `python ./.omtre/scripts/voice_lint.py --changed`
    when that script exists in the consuming repo.
 
 ## Discipline

@@ -34,7 +34,7 @@ Multi-Session enables **parallel, isolated development sessions** using Git work
 │                         MAIN REPOSITORY                                     │
 │                         (your current directory)                            │
 │                                                                             │
-│  /trellis:parallel → Configure task → start.py                             │
+│  /omt:parallel → Configure task → start.py                             │
 │                                           │                                 │
 │                                           │ Creates worktree               │
 │                                           │ Starts agent                   │
@@ -98,7 +98,7 @@ Git worktrees allow multiple working directories from one repository:
 
 ### worktree.yaml
 
-Location: `.trellis/worktree.yaml`
+Location: `.omtre/worktree.yaml`
 
 ```yaml
 # Where worktrees are created (relative to project)
@@ -107,7 +107,7 @@ worktree_dir: ../worktrees
 
 # Files to copy to each worktree (default: [])
 copy:
-  - .trellis/.developer # Developer identity
+  - .omtre/.developer # Developer identity
   - .env # Environment variables
   - .env.local # Local overrides
 
@@ -151,7 +151,7 @@ Each session needs a configured task:
 Creates worktree and starts agent.
 
 ```bash
-python3 .trellis/scripts/multi_agent/start.py <task-dir>
+python3 .omtre/scripts/multi_agent/start.py <task-dir>
 ```
 
 **Actions**:
@@ -159,12 +159,12 @@ python3 .trellis/scripts/multi_agent/start.py <task-dir>
 1. Read `task.json` for branch name
 2. Create git worktree:
    ```bash
-   git worktree add -b <branch> ../trellis-worktrees/<branch>
+   git worktree add -b <branch> ../omtre-worktrees/<branch>
    ```
 3. Copy files from `worktree.yaml` copy list
 4. Copy task directory to worktree
 5. Run `post_create` hooks
-6. Set `.trellis/.current-task` in worktree
+6. Set `.omtre/.current-task` in worktree
 7. Start Claude Dispatch Agent:
    ```bash
    claude -p --agent dispatch \
@@ -178,8 +178,8 @@ python3 .trellis/scripts/multi_agent/start.py <task-dir>
 **Example**:
 
 ```bash
-python3 .trellis/scripts/multi_agent/start.py .trellis/tasks/01-31-add-login-taosu
-# Output: Started agent in ../trellis-worktrees/feature/add-login
+python3 .omtre/scripts/multi_agent/start.py .omtre/tasks/01-31-add-login-taosu
+# Output: Started agent in ../omtre-worktrees/feature/add-login
 ```
 
 ---
@@ -190,19 +190,19 @@ Check all running sessions.
 
 ```bash
 # Overview
-python3 .trellis/scripts/multi_agent/status.py
+python3 .omtre/scripts/multi_agent/status.py
 
 # Detailed view
-python3 .trellis/scripts/multi_agent/status.py --detail <task-name>
+python3 .omtre/scripts/multi_agent/status.py --detail <task-name>
 
 # Watch mode
-python3 .trellis/scripts/multi_agent/status.py --watch <task-name>
+python3 .omtre/scripts/multi_agent/status.py --watch <task-name>
 
 # View logs
-python3 .trellis/scripts/multi_agent/status.py --log <task-name>
+python3 .omtre/scripts/multi_agent/status.py --log <task-name>
 
 # Show registry
-python3 .trellis/scripts/multi_agent/status.py --registry
+python3 .omtre/scripts/multi_agent/status.py --registry
 ```
 
 **Output**:
@@ -217,7 +217,7 @@ Active Sessions:
 └──────────────┴──────────┴────────────────┴──────────┴───────────┘
 
 Resume stopped sessions:
-  cd ../trellis-worktrees/feature/fix-api && claude --resume <session-id>
+  cd ../omtre-worktrees/feature/fix-api && claude --resume <session-id>
 ```
 
 ---
@@ -227,13 +227,13 @@ Resume stopped sessions:
 Creates PR from worktree changes.
 
 ```bash
-python3 .trellis/scripts/multi_agent/create_pr.py [--dry-run]
+python3 .omtre/scripts/multi_agent/create_pr.py [--dry-run]
 ```
 
 **Actions**:
 
 1. Stage changes: `git add -A`
-2. Exclude: `git reset .trellis/workspace/`
+2. Exclude: `git reset .omtre/workspace/`
 3. Commit: `feat(<scope>): <task-name>`
 4. Push to remote
 5. Create Draft PR: `gh pr create --draft`
@@ -247,18 +247,18 @@ Clean up after completion.
 
 ```bash
 # Specific worktree
-python3 .trellis/scripts/multi_agent/cleanup.py <branch-name>
+python3 .omtre/scripts/multi_agent/cleanup.py <branch-name>
 
 # All merged worktrees
-python3 .trellis/scripts/multi_agent/cleanup.py --merged
+python3 .omtre/scripts/multi_agent/cleanup.py --merged
 
 # All worktrees (with confirmation)
-python3 .trellis/scripts/multi_agent/cleanup.py --all
+python3 .omtre/scripts/multi_agent/cleanup.py --all
 ```
 
 **Actions**:
 
-1. Archive task to `.trellis/tasks/archive/YYYY-MM/`
+1. Archive task to `.omtre/tasks/archive/YYYY-MM/`
 2. Remove from registry
 3. Remove worktree: `git worktree remove <path>`
 4. Optionally delete branch
@@ -270,7 +270,7 @@ python3 .trellis/scripts/multi_agent/cleanup.py --all
 Launches Plan Agent to create task configuration.
 
 ```bash
-python3 .trellis/scripts/multi_agent/plan.py \
+python3 .omtre/scripts/multi_agent/plan.py \
   --name <task-slug> \
   --type <backend|frontend|fullstack> \
   --requirement "<description>"
@@ -290,17 +290,17 @@ python3 .trellis/scripts/multi_agent/plan.py \
 
 Tracks all running sessions.
 
-**Location**: `.trellis/workspace/<developer>/.agents/registry.json`
+**Location**: `.omtre/workspace/<developer>/.agents/registry.json`
 
 ```json
 {
   "agents": [
     {
       "id": "feature-add-login",
-      "worktree_path": "/abs/path/to/trellis-worktrees/feature/add-login",
+      "worktree_path": "/abs/path/to/omtre-worktrees/feature/add-login",
       "pid": 12345,
       "started_at": "2026-01-31T10:30:00",
-      "task_dir": ".trellis/tasks/01-31-add-login-taosu"
+      "task_dir": ".omtre/tasks/01-31-add-login-taosu"
     }
   ]
 }
@@ -324,11 +324,11 @@ registry_list_agents()
 
 ```bash
 # Create task
-python3 .trellis/scripts/task.py create "Add login" --slug add-login
+python3 .omtre/scripts/task.py create "Add login" --slug add-login
 
 # Configure
-python3 .trellis/scripts/task.py init-context <task-dir> fullstack
-python3 .trellis/scripts/task.py set-branch <task-dir> feature/add-login
+python3 .omtre/scripts/task.py init-context <task-dir> fullstack
+python3 .omtre/scripts/task.py set-branch <task-dir> feature/add-login
 
 # Write prd.md
 # ...
@@ -337,13 +337,13 @@ python3 .trellis/scripts/task.py set-branch <task-dir> feature/add-login
 ### 2. Start Session
 
 ```bash
-python3 .trellis/scripts/multi_agent/start.py <task-dir>
+python3 .omtre/scripts/multi_agent/start.py <task-dir>
 ```
 
 ### 3. Monitor
 
 ```bash
-python3 .trellis/scripts/multi_agent/status.py --watch add-login
+python3 .omtre/scripts/multi_agent/status.py --watch add-login
 ```
 
 ### 4. After Completion
@@ -353,7 +353,7 @@ python3 .trellis/scripts/multi_agent/status.py --watch add-login
 # Review on GitHub, merge
 
 # Cleanup
-python3 .trellis/scripts/multi_agent/cleanup.py feature/add-login
+python3 .omtre/scripts/multi_agent/cleanup.py feature/add-login
 ```
 
 ---
@@ -364,16 +364,16 @@ Start multiple sessions:
 
 ```bash
 # Session 1
-python3 .trellis/scripts/multi_agent/start.py .trellis/tasks/01-31-add-login
+python3 .omtre/scripts/multi_agent/start.py .omtre/tasks/01-31-add-login
 
 # Session 2 (immediately)
-python3 .trellis/scripts/multi_agent/start.py .trellis/tasks/01-31-fix-api
+python3 .omtre/scripts/multi_agent/start.py .omtre/tasks/01-31-fix-api
 
 # Session 3
-python3 .trellis/scripts/multi_agent/start.py .trellis/tasks/01-31-update-docs
+python3 .omtre/scripts/multi_agent/start.py .omtre/tasks/01-31-update-docs
 
 # Monitor all
-python3 .trellis/scripts/multi_agent/status.py
+python3 .omtre/scripts/multi_agent/status.py
 ```
 
 Each runs independently:
@@ -391,10 +391,10 @@ If a session stops:
 
 ```bash
 # Find session info
-python3 .trellis/scripts/multi_agent/status.py --detail <task-name>
+python3 .omtre/scripts/multi_agent/status.py --detail <task-name>
 
 # Resume
-cd ../trellis-worktrees/feature/task-name
+cd ../omtre-worktrees/feature/task-name
 claude --resume <session-id>
 ```
 
@@ -428,11 +428,11 @@ verify:
   - pnpm typecheck
 ```
 
-**State** (`.trellis/.ralph-state.json`):
+**State** (`.omtre/.ralph-state.json`):
 
 ```json
 {
-  "task": ".trellis/tasks/01-31-add-login",
+  "task": ".omtre/tasks/01-31-add-login",
   "iteration": 2,
   "started_at": "2026-01-31T10:30:00"
 }
@@ -456,7 +456,7 @@ verify:
 1. Check Ralph Loop iteration (max 5)
 2. Verify `verify` commands
 3. Manually run verify commands
-4. Check `.trellis/.ralph-state.json`
+4. Check `.omtre/.ralph-state.json`
 
 ### Worktree Issues
 
@@ -475,8 +475,8 @@ git worktree list
 
 ```bash
 # View
-python3 .trellis/scripts/multi_agent/status.py --registry
+python3 .omtre/scripts/multi_agent/status.py --registry
 
 # Manual edit
-vim .trellis/workspace/<dev>/.agents/registry.json
+vim .omtre/workspace/<dev>/.agents/registry.json
 ```
