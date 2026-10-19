@@ -3,7 +3,7 @@
   "name": "rename-test-suite-and-regression",
   "title": "改名施工 6：测试套件收尾与 regression.test.ts 迁移",
   "description": "迁移 regression.test.ts、registry-invariants.test.ts 及跨模块测试夹具，清零测试套件旧名残留",
-  "status": "planning",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "cli",
@@ -11,8 +11,8 @@
   "creator": "qihaonan",
   "assignee": "qihaonan",
   "createdAt": "2026-10-19",
-  "completedAt": null,
-  "branch": null,
+  "completedAt": "2026-10-19",
+  "branch": "main",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -31,5 +31,9 @@
     ".trellis/tasks/10-19-rename-python-runtime-scripts",
     ".trellis/tasks/10-19-rename-templates-common-and-hooks",
     ".trellis/tasks/10-19-rename-configurators-and-platforms"
-  ]
+  ],
+  "verify_skipped": {
+    "reason": "Verified via rg zero-residual check, build, typecheck, lint, test:core, and CLI test suites",
+    "at": "2026-10-19T13:07:43Z"
+  }
 }
