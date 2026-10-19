@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { InboxPolicy } from "@mindfoldhq/trellis-core/channel";
+import type { InboxPolicy } from "@omtre/core/channel";
 
 import { loadAgent } from "./agent-loader.js";
 import { resolveAcpTarget } from "./adapters/acp.js";

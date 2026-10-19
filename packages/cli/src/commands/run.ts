@@ -31,7 +31,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-import { loadTaskRecord } from "@mindfoldhq/trellis-core/task";
+import { loadTaskRecord } from "@omtre/core/task";
 
 import { isProvider, listProviders, type Provider } from "./channel/adapters/index.js";
 import { loadAgent } from "./channel/agent-loader.js";

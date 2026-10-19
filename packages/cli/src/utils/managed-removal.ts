@@ -26,8 +26,8 @@ import {
 } from "./uninstall-scrubbers.js";
 import {
   cleanupEmptyDirs,
-  TRELLIS_BLOCK_END,
-  TRELLIS_BLOCK_START,
+  OMTRE_BLOCK_END,
+  OMTRE_BLOCK_START,
 } from "./managed-paths.js";
 
 export interface StructuredFileSpec {
@@ -221,8 +221,8 @@ export function buildStructuredFileSpecs(): Map<string, StructuredFileSpec> {
       scrub: (content) =>
         scrubManagedMarkdownBlock(
           content,
-          TRELLIS_BLOCK_START,
-          TRELLIS_BLOCK_END,
+          OMTRE_BLOCK_START,
+          OMTRE_BLOCK_END,
         ),
     },
   ];

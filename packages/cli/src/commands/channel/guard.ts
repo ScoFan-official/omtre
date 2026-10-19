@@ -21,7 +21,7 @@ import {
   reduceWorkerRegistry,
   type ChannelEvent,
   type WorkerState,
-} from "@mindfoldhq/trellis-core/channel";
+} from "@omtre/core/channel";
 
 import { DIR_NAMES } from "../../constants/paths.js";
 

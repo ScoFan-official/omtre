@@ -83,14 +83,14 @@ import {
 import { loadSpecRegistryConfig } from "../utils/registry-config.js";
 import {
   cleanupEmptyDirs,
-  TRELLIS_BLOCK_END,
-  TRELLIS_BLOCK_START,
+  OMTRE_BLOCK_END,
+  OMTRE_BLOCK_START,
 } from "../utils/managed-paths.js";
 
 export {
   cleanupEmptyDirs,
-  TRELLIS_BLOCK_END,
-  TRELLIS_BLOCK_START,
+  OMTRE_BLOCK_END,
+  OMTRE_BLOCK_START,
 } from "../utils/managed-paths.js";
 
 export interface UpdateOptions {
@@ -162,7 +162,7 @@ function getManagedBlock(
 }
 
 function getTrellisManagedBlock(content: string): string | null {
-  return getManagedBlock(content, TRELLIS_BLOCK_START, TRELLIS_BLOCK_END);
+  return getManagedBlock(content, OMTRE_BLOCK_START, OMTRE_BLOCK_END);
 }
 
 function replaceManagedBlock(
@@ -252,8 +252,8 @@ function buildAgentsMdTemplate(cwd: string): string {
     cwd,
     FILE_NAMES.AGENTS,
     agentsMdContent,
-    TRELLIS_BLOCK_START,
-    TRELLIS_BLOCK_END,
+    OMTRE_BLOCK_START,
+    OMTRE_BLOCK_END,
   );
 }
 

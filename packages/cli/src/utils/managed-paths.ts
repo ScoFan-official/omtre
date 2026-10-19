@@ -3,8 +3,13 @@ import path from "node:path";
 
 import { isManagedPath, isManagedRootDir } from "../configurators/index.js";
 
-export const TRELLIS_BLOCK_START = "<!-- TRELLIS:START -->";
-export const TRELLIS_BLOCK_END = "<!-- TRELLIS:END -->";
+export const OMTRE_BLOCK_START = "<!-- OMTRE:START -->";
+export const OMTRE_BLOCK_END = "<!-- OMTRE:END -->";
+export const OMTRE_COPILOT_GUIDANCE_START =
+  "<!-- OMTRE:COPILOT-GUIDANCE:START -->";
+export const OMTRE_COPILOT_GUIDANCE_END = "<!-- OMTRE:COPILOT-GUIDANCE:END -->";
+export const OMTRE_HOOK_INJECTED_MARKER = "omtre-hook-injected";
+export const OMTRE_EMITTED_MARKER = "omtre-emitted";
 
 /** Remove empty managed parents without deleting a managed root directory. */
 export function cleanupEmptyDirs(cwd: string, dirPath: string): void {

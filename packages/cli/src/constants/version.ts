@@ -1,5 +1,5 @@
 /**
- * Package version and name constants.
+ * Package version and name constants for omtre CLI.
  *
  * Extracted from cli/index.ts to avoid import-time side effects
  * (program.parse(), checkForUpdates, etc.) when only VERSION is needed.

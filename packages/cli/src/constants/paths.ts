@@ -1,27 +1,36 @@
 /**
- * Path constants for Trellis workflow structure
+ * Path constants for omtre workflow structure
  *
  * Change these values to rename directories across the entire project.
  * All paths should be relative to the project root.
  */
 
+/** Home directory state root (under os.homedir()) */
+export const HOME_DIR_NAME = ".omtre";
+
+/** CLI binary and prefix constants */
+export const CLI_BIN_NAME = "omtre";
+export const CLI_SHORT_BIN_NAME = "omt";
+export const SKILL_PREFIX = "omtre-";
+export const SLASH_COMMAND_NS = "omt";
+
 // Directory names (can be renamed)
 export const DIR_NAMES = {
   /** Root workflow directory */
-  WORKFLOW: ".trellis",
-  /** Workspace directory (under .trellis/) - developer work areas */
+  WORKFLOW: ".omtre",
+  /** Workspace directory (under .omtre/) - developer work areas */
   WORKSPACE: "workspace",
-  /** Tasks directory (under .trellis/) - unified task storage */
+  /** Tasks directory (under .omtre/) - unified task storage */
   TASKS: "tasks",
   /** Archive directory (under tasks/) */
   ARCHIVE: "archive",
-  /** Spec/guidelines directory (under .trellis/) */
+  /** Spec/guidelines directory (under .omtre/) */
   SPEC: "spec",
-  /** Scripts directory (under .trellis/) */
+  /** Scripts directory (under .omtre/) */
   SCRIPTS: "scripts",
-  /** Channel runtime agent definitions (under .trellis/) */
+  /** Channel runtime agent definitions (under .omtre/) */
   AGENTS: "agents",
-  /** Domain-layer boards (under .trellis/) — user-data zone, scaffold-once */
+  /** Domain-layer boards (under .omtre/) — user-data zone, scaffold-once */
   DOMAINS: "domains",
 } as const;
 
@@ -41,35 +50,49 @@ export const FILE_NAMES = {
   WORKFLOW_GUIDE: "workflow.md",
   /** Journal file prefix */
   JOURNAL_PREFIX: "journal-",
+  /** Workflow configuration file */
+  CONFIG_YAML: "config.yaml",
+  /** Installed workflow version file */
+  VERSION: ".version",
+  /** Template hash manifest file */
+  TEMPLATE_HASHES: ".template-hashes.json",
+  /** Local hook overrides file */
+  HOOKS_LOCAL: "hooks.local.json",
+  /** Runtime state directory */
+  RUNTIME_DIR: ".runtime",
+  /** Ralph loop state file */
+  RALPH_STATE: ".ralph-state.json",
+  /** Migration provenance marker file */
+  MIGRATED_FROM: ".migrated-from",
 } as const;
 
 // Constructed paths (relative to project root)
 export const PATHS = {
-  /** .trellis/ */
+  /** .omtre/ */
   WORKFLOW: DIR_NAMES.WORKFLOW,
-  /** .trellis/workspace/ */
+  /** .omtre/workspace/ */
   WORKSPACE: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.WORKSPACE}`,
-  /** .trellis/tasks/ */
+  /** .omtre/tasks/ */
   TASKS: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.TASKS}`,
-  /** .trellis/spec/ */
+  /** .omtre/spec/ */
   SPEC: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.SPEC}`,
-  /** .trellis/scripts/ */
+  /** .omtre/scripts/ */
   SCRIPTS: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.SCRIPTS}`,
-  /** .trellis/agents/ */
+  /** .omtre/agents/ */
   AGENTS: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.AGENTS}`,
-  /** .trellis/domains/ */
+  /** .omtre/domains/ */
   DOMAINS: `${DIR_NAMES.WORKFLOW}/${DIR_NAMES.DOMAINS}`,
-  /** .trellis/.developer */
+  /** .omtre/.developer */
   DEVELOPER_FILE: `${DIR_NAMES.WORKFLOW}/${FILE_NAMES.DEVELOPER}`,
-  /** .trellis/.current-task */
+  /** .omtre/.current-task */
   CURRENT_TASK_FILE: `${DIR_NAMES.WORKFLOW}/${FILE_NAMES.CURRENT_TASK}`,
-  /** .trellis/workflow.md */
+  /** .omtre/workflow.md */
   WORKFLOW_GUIDE_FILE: `${DIR_NAMES.WORKFLOW}/${FILE_NAMES.WORKFLOW_GUIDE}`,
 } as const;
 
 /**
  * Get developer's workspace directory path
- * @example getWorkspaceDir("john") => ".trellis/workspace/john"
+ * @example getWorkspaceDir("john") => ".omtre/workspace/john"
  */
 export function getWorkspaceDir(developer: string): string {
   return `${PATHS.WORKSPACE}/${developer}`;
@@ -77,7 +100,7 @@ export function getWorkspaceDir(developer: string): string {
 
 /**
  * Get task directory path
- * @example getTaskDir("01-21-my-task") => ".trellis/tasks/01-21-my-task"
+ * @example getTaskDir("01-21-my-task") => ".omtre/tasks/01-21-my-task"
  */
 export function getTaskDir(taskName: string): string {
   return `${PATHS.TASKS}/${taskName}`;
@@ -85,7 +108,7 @@ export function getTaskDir(taskName: string): string {
 
 /**
  * Get archive directory path
- * @example getArchiveDir() => ".trellis/tasks/archive"
+ * @example getArchiveDir() => ".omtre/tasks/archive"
  */
 export function getArchiveDir(): string {
   return `${PATHS.TASKS}/${DIR_NAMES.ARCHIVE}`;
