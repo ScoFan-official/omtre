@@ -24,6 +24,7 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 - [pstack 调研](10-19-pstack-research): `/correct` 为 ≥2 次同类错误按阶梯取最高档修复、新检查须在历史错误上跑红；23 个 playbook 纯提示词路由；MIT 许可，可兼容 AGPL 原样拷贝，但多数文件绑定 Cursor API；omtre 缺 `/correct` 等价物与 playbook 层。
 - [Firefox 原则调研](10-19-firefox-prompt-research): 根 `AGENTS.md` 73 行、5 个模块级 `AGENTS.md`、24 个技能、`review-context.toml` 按路径注入；omtre 已覆盖 Pointers/Lazy，缺按路径触发注入和规则文件定期复审。
 - [改名规则](10-19-rename-rules): 只改根目录（`.omtre/`、`~/.omtre/`）；`TRELLIS_*`→`OMTRE_*` 无过渡；标记→`OMTRE:*`；前缀→`omtre-*`；斜杠命令→`/omt:*`；子命令与内部子目录不变；保留版权、许可证与出处。
+- [新仓库组装](10-19-repo-assembly): 技能包带历史并入根目录；marketplace 由子模块改成带历史的目录，docs-site 删除；`ScoFan-official/omtre` 公开仓已推送 main `713509c9`；发布流水线和 `TEMPLATE_INDEX_URL` 留给后续票。
 
 ## Not yet specified
 

@@ -1,7 +1,7 @@
 # 新仓库组装：并入技能包历史、切断 upstream、建 GitHub 仓库并推送
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: None
 Map: .trellis/tasks/10-19-omtre-standalone/map.md
 
