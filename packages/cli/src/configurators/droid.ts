@@ -7,9 +7,9 @@ import {
 import { getAllDroids, getSettingsTemplate } from "../templates/droid/index.js";
 
 /**
- * The Factory Droid file set — written at init and diffed by `trellis update`.
- * - commands/trellis/ — start + finish-work as slash commands
- * - skills/trellis-{name}/SKILL.md — auto-triggered skills from `common/skills/`
+ * The Factory Droid file set — written at init and diffed by `omtre update`.
+ * - commands/omt/ — start + finish-work as slash commands
+ * - skills/omtre-{name}/SKILL.md — auto-triggered skills from `common/skills/`
  * - droids/{name}.md — sub-agent definitions (Droid calls them "droids")
  * - hooks/*.py — shared hook scripts
  * - settings.json — hook configuration
@@ -17,7 +17,7 @@ import { getAllDroids, getSettingsTemplate } from "../templates/droid/index.js";
 export function collectDroidTemplates(): Map<string, string> {
   const files = collectBothTemplates(
     AI_TOOLS.droid.templateContext,
-    (n) => `.factory/commands/trellis/${n}.md`,
+    (n) => `.factory/commands/omt/${n}.md`,
     ".factory/skills",
   );
   for (const droid of getAllDroids()) {

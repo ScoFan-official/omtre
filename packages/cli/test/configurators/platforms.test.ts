@@ -48,12 +48,12 @@ import {
 } from "../../src/configurators/shared.js";
 
 const BUNDLED_SKILL_NAMES = [
-  "trellis-channel",
-  "trellis-meta",
-  "trellis-session-insight",
-  "trellis-spec-bootstrap",
+  "omtre-channel",
+  "omtre-meta",
+  "omtre-session-insight",
+  "omtre-spec-bootstrap",
 ];
-const BUNDLED_SKILL_NAME = "trellis-meta";
+const BUNDLED_SKILL_NAME = "omtre-meta";
 const BUNDLED_REFERENCE = path.join(
   BUNDLED_SKILL_NAME,
   "references",
@@ -61,7 +61,7 @@ const BUNDLED_REFERENCE = path.join(
   "overview.md",
 );
 const SPEC_BOOTSTRAP_REFERENCE = path.join(
-  "trellis-spec-bootstrap",
+  "omtre-spec-bootstrap",
   "references",
   "spec-writing.md",
 );
@@ -76,9 +76,9 @@ function readConfiguredFile(root: string, relativePath: string): string {
 // `collectTemplates` is the single description of a platform's file set;
 // `configure` writes it. Both directions must hold, and only the forward one
 // ("every collected file is on disk") used to be asserted — which is how
-// 0.5.5 shipped `.agents/skills/trellis-start/SKILL.md` from `configureCodex`
+// 0.5.5 shipped `.agents/skills/omtre-start/SKILL.md` from `configureCodex`
 // with no matching `collectTemplates` entry, leaving upgraders without the
-// file after `trellis update` (see manifests/0.5.7.json).
+// file after `omtre update` (see manifests/0.5.7.json).
 // =============================================================================
 
 /**
@@ -86,19 +86,19 @@ function readConfiguredFile(root: string, relativePath: string): string {
  * describe. Exactly one, and it is deliberate.
  *
  * `.claude/hooks/statusline.py` is written only by
- * `trellis init --with-statusline`. Keeping it out of `collectTemplates` is
+ * `omtre init --with-statusline`. Keeping it out of `collectTemplates` is
  * intentional and separately locked by regression.test.ts
  * "[statusline-opt-in] statusline.py is not in claude's collected templates":
  * `analyzeChanges()` classifies a collected-but-absent file as a new file and
  * would force-install the statusline onto projects that opted out.
  *
  * Known consequence, documented but deliberately NOT fixed here (see
- * `.trellis/tasks/08-06-converge-platform-templates/research/configure-vs-collect-inventory.md`):
+ * `.omtre/tasks/08-06-converge-platform-templates/research/configure-vs-collect-inventory.md`):
  * init records the file in `.template-hashes.json`, then
  * `pruneOrphanManifestKeys` drops it as an orphan because it is in neither
  * `collectTemplates` nor a migration — so an opted-in user's `statusline.py`
- * is frozen after their first `trellis update` and is left behind by
- * `trellis uninstall`.
+ * is frozen after their first `omtre update` and is left behind by
+ * `omtre uninstall`.
  */
 const CONFIGURE_ONLY_PATHS = new Set([".claude/hooks/statusline.py"]);
 
@@ -109,7 +109,7 @@ const CONFIGURE_ONLY_PATHS = new Set([".claude/hooks/statusline.py"]);
  */
 const CONFIGURE_ONLY_EMPTY_DIRS: Partial<Record<(typeof PLATFORM_IDS)[number], string[]>> =
   {
-    // Trellis ships no Codex-specific skills (they all land in
+    // Omtre ships no Codex-specific skills (they all land in
     // `.agents/skills/`, which Codex reads too). The directory is still
     // created so users have the conventional place for their own.
     codex: [".codex/skills"],
@@ -156,14 +156,14 @@ function snapshotDir(root: string): Map<string, string> {
 }
 
 // =============================================================================
-// getConfiguredPlatforms — detects Trellis-owned platform files
+// getConfiguredPlatforms — detects Omtre-owned platform files
 // =============================================================================
 
 describe("getConfiguredPlatforms", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-platforms-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-platforms-"));
     setWriteMode("force");
   });
 
@@ -178,7 +178,7 @@ describe("getConfiguredPlatforms", () => {
     expect(result.size).toBe(0);
   });
 
-  it("does not treat native platform directories as Trellis installations", () => {
+  it("does not treat native platform directories as Omtre installations", () => {
     for (const id of PLATFORM_IDS) {
       fs.mkdirSync(path.join(tmpDir, AI_TOOLS[id].configDir), {
         recursive: true,
@@ -188,19 +188,19 @@ describe("getConfiguredPlatforms", () => {
     expect([...getConfiguredPlatforms(tmpDir)]).toEqual([]);
   });
 
-  it("detects Trellis-namespaced legacy Windsurf workflows as devin", () => {
+  it("detects Omtre-namespaced legacy Windsurf workflows as devin", () => {
     const workflowsDir = path.join(tmpDir, ".windsurf", "workflows");
     fs.mkdirSync(workflowsDir, {
       recursive: true,
     });
     expect(getConfiguredPlatforms(tmpDir).has("devin")).toBe(false);
 
-    fs.writeFileSync(path.join(workflowsDir, "trellis-continue.md"), "# Trellis");
+    fs.writeFileSync(path.join(workflowsDir, "omtre-continue.md"), "# Omtre");
     const result = getConfiguredPlatforms(tmpDir);
     expect(result.has("devin")).toBe(true);
   });
 
-  it("detects every platform from the files Trellis tracked for it", async () => {
+  it("detects every platform from the files Omtre tracked for it", async () => {
     for (const id of PLATFORM_IDS) {
       const platformRoot = path.join(tmpDir, id);
       fs.mkdirSync(platformRoot, { recursive: true });
@@ -210,7 +210,7 @@ describe("getConfiguredPlatforms", () => {
       } finally {
         stopRecordingWrites();
       }
-      fs.mkdirSync(path.join(platformRoot, ".trellis"), { recursive: true });
+      fs.mkdirSync(path.join(platformRoot, ".omtre"), { recursive: true });
       initializeHashes(platformRoot, { trackedPaths: written });
 
       expect([...getConfiguredPlatforms(platformRoot)]).toEqual([id]);
@@ -233,7 +233,7 @@ describe("configurePlatform", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-configure-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-configure-"));
     // Use force mode to avoid interactive prompts
     setWriteMode("force");
   });
@@ -267,7 +267,7 @@ describe("configurePlatform", () => {
   it("configurePlatform writes collected templates byte-for-byte for every platform", async () => {
     for (const id of PLATFORM_IDS) {
       const platformDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), `trellis-parity-${id}-`),
+        path.join(os.tmpdir(), `omtre-parity-${id}-`),
       );
       try {
         await configurePlatform(id, platformDir);
@@ -299,10 +299,10 @@ describe("configurePlatform", () => {
   it("configurePlatform writes no file collectTemplates does not describe, for every platform", async () => {
     // The reverse of the assertion above. Without it, "configure writes a file
     // collectTemplates forgot" passes the suite silently — the exact failure
-    // mode that shipped in 0.5.5 (codex trellis-start).
+    // mode that shipped in 0.5.5 (codex omtre-start).
     for (const id of PLATFORM_IDS) {
       const platformDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), `trellis-reverse-${id}-`),
+        path.join(os.tmpdir(), `omtre-reverse-${id}-`),
       );
       try {
         await configurePlatform(id, platformDir);
@@ -346,7 +346,7 @@ describe("configurePlatform", () => {
     try {
       for (const id of PLATFORM_IDS) {
         const platformDir = fs.mkdtempSync(
-          path.join(os.tmpdir(), `trellis-win-${id}-`),
+          path.join(os.tmpdir(), `omtre-win-${id}-`),
         );
         try {
           await configurePlatform(id, platformDir);
@@ -408,8 +408,8 @@ describe("configurePlatform", () => {
     // Codex writes shared skills under `.agents/skills/` using the neutral
     // placeholder resolver so the rendered files are byte-identical to
     // Gemini's writes for the same skill names — see issue #224 fix.
-    // `trellis-start` is included via `resolveAllAsSkillsNeutral` directly —
-    // it's the user-invocable fallback referenced by the <trellis-bootstrap>
+    // `omtre-start` is included via `resolveAllAsSkillsNeutral` directly —
+    // it's the user-invocable fallback referenced by the <omtre-bootstrap>
     // notice in inject-workflow-state.py (the SessionStart hook was removed
     // for de-recursion).
     const expected = resolveAllAsSkillsNeutral(AI_TOOLS.codex.templateContext);
@@ -431,7 +431,7 @@ describe("configurePlatform", () => {
     }
     expect(fs.existsSync(path.join(skillsRoot, BUNDLED_REFERENCE))).toBe(true);
     expect(
-      fs.existsSync(path.join(skillsRoot, "trellis-start", "SKILL.md")),
+      fs.existsSync(path.join(skillsRoot, "omtre-start", "SKILL.md")),
     ).toBe(true);
   });
 
@@ -456,9 +456,9 @@ describe("configurePlatform", () => {
       // Native SubagentStart injects context, while every profile retains a
       // marker-gated active-task pull fallback when the hook is unavailable.
       expect(written).toBe(replacePythonCommandLiterals(agent.content));
-      expect(written).toContain("<!-- trellis-hook-injected -->");
+      expect(written).toContain("<!-- omtre-hook-injected -->");
       expect(written).toContain("Active task: <path>");
-      expect(written).not.toContain("Required: Load Trellis Context First");
+      expect(written).not.toContain("Required: Load Omtre Context First");
     }
 
     const config = getCodexConfigTemplate();
@@ -527,29 +527,29 @@ describe("configurePlatform", () => {
       expect(fs.existsSync(path.join(hooksDir, script))).toBe(true);
     }
 
-    // Main `trellis` agent wires per-turn + session-start hooks; PYTHON_CMD
+    // Main `omtre` agent wires per-turn + session-start hooks; PYTHON_CMD
     // resolved.
-    const trellisPath = path.join(tmpDir, ".kiro", "agents", "trellis.json");
-    expect(fs.existsSync(trellisPath)).toBe(true);
-    const trellisRaw = fs.readFileSync(trellisPath, "utf-8");
-    expect(trellisRaw).not.toContain("{{PYTHON_CMD}}");
-    const trellis = JSON.parse(trellisRaw) as {
+    const omtrePath = path.join(tmpDir, ".kiro", "agents", "omtre.json");
+    expect(fs.existsSync(omtrePath)).toBe(true);
+    const omtreRaw = fs.readFileSync(omtrePath, "utf-8");
+    expect(omtreRaw).not.toContain("{{PYTHON_CMD}}");
+    const omtre = JSON.parse(omtreRaw) as {
       resources?: string[];
       hooks?: Record<string, { command: string }[]>;
     };
-    expect(trellis.hooks?.userPromptSubmit?.[0].command).toBe(
+    expect(omtre.hooks?.userPromptSubmit?.[0].command).toBe(
       `${expectedPythonCmd} .kiro/hooks/inject-workflow-state.py`,
     );
-    expect(trellis.hooks?.agentSpawn?.[0].command).toBe(
+    expect(omtre.hooks?.agentSpawn?.[0].command).toBe(
       `${expectedPythonCmd} .kiro/hooks/session-start.py`,
     );
-    expect(trellis.resources).toContain("file://.trellis/workflow.md");
+    expect(omtre.resources).toContain("file://.omtre/workflow.md");
 
     // 3 sub-agents keep their inject-subagent-context.py spawn hook.
     for (const name of [
-      "trellis-implement",
-      "trellis-check",
-      "trellis-research",
+      "omtre-implement",
+      "omtre-check",
+      "omtre-research",
     ]) {
       const sub = JSON.parse(
         fs.readFileSync(
@@ -563,7 +563,7 @@ describe("configurePlatform", () => {
     }
 
     // IDE `.kiro.hook` written with PYTHON_CMD resolved and valid schema.
-    const ideHookPath = path.join(hooksDir, "trellis-workflow-state.kiro.hook");
+    const ideHookPath = path.join(hooksDir, "omtre-workflow-state.kiro.hook");
     expect(fs.existsSync(ideHookPath)).toBe(true);
     const ideRaw = fs.readFileSync(ideHookPath, "utf-8");
     expect(ideRaw).not.toContain("{{PYTHON_CMD}}");
@@ -587,7 +587,7 @@ describe("configurePlatform", () => {
     await configurePlatform("gemini", tmpDir);
 
     // Commands as TOML
-    const commandsDir = path.join(tmpDir, ".gemini", "commands", "trellis");
+    const commandsDir = path.join(tmpDir, ".gemini", "commands", "omt");
     expect(fs.existsSync(commandsDir)).toBe(true);
     const tomlFiles = fs
       .readdirSync(commandsDir)
@@ -613,7 +613,7 @@ describe("configurePlatform", () => {
         ).length,
     );
     for (const dir of skillDirs) {
-      expect(dir.name.startsWith("trellis-")).toBe(true);
+      expect(dir.name.startsWith("omtre-")).toBe(true);
       expect(fs.existsSync(path.join(skillsDir, dir.name, "SKILL.md"))).toBe(
         true,
       );
@@ -688,9 +688,9 @@ describe("configurePlatform", () => {
     expect(
       fs.existsSync(path.join(workflowsRoot, "oh-my-update.md")),
     ).toBe(true);
-    // Devin's `trellis-start` override replaces the common version.
+    // Devin's `omtre-start` override replaces the common version.
     const startContent = fs.readFileSync(
-      path.join(workflowsRoot, "trellis-start.md"),
+      path.join(workflowsRoot, "omtre-start.md"),
       "utf-8",
     );
     expect(startContent).toContain("Active task status");
@@ -727,10 +727,10 @@ describe("configurePlatform", () => {
       .filter((f) => f.endsWith(".md"))
       .sort();
     expect(actualCommandFiles).toEqual(
-      expectedCommands.map((c) => `trellis-${c.name}.md`).sort(),
+      expectedCommands.map((c) => `omtre-${c.name}.md`).sort(),
     );
     for (const cmd of expectedCommands) {
-      const name = `trellis-${cmd.name}`;
+      const name = `omtre-${cmd.name}`;
       const filePath = path.join(commandsDir, `${name}.md`);
       const actual = fs.readFileSync(filePath, "utf-8");
       expect(actual).toBe(wrapWithCommandFrontmatter(name, cmd.content));
@@ -752,9 +752,9 @@ describe("configurePlatform", () => {
     }
     expect(fs.existsSync(path.join(skillsDir, BUNDLED_REFERENCE))).toBe(true);
 
-    expect(actualSkillDirs).not.toContain("trellis-finish-work");
-    expect(actualSkillDirs).not.toContain("trellis-continue");
-    expect(actualSkillDirs).not.toContain("trellis-start");
+    expect(actualSkillDirs).not.toContain("omtre-finish-work");
+    expect(actualSkillDirs).not.toContain("omtre-continue");
+    expect(actualSkillDirs).not.toContain("omtre-start");
   });
 
   it("configurePlatform('qoder') does not include compiled artifacts", async () => {
@@ -783,60 +783,60 @@ describe("configurePlatform", () => {
     await configurePlatform("grok", tmpDir);
 
     expect(
-      fs.existsSync(path.join(tmpDir, ".grok", "commands", "trellis-start.md")),
+      fs.existsSync(path.join(tmpDir, ".grok", "commands", "omtre-start.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".grok", "commands", "trellis-continue.md"),
+        path.join(tmpDir, ".grok", "commands", "omtre-continue.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".grok", "commands", "trellis", "start.md"),
+        path.join(tmpDir, ".grok", "commands", "omt", "start.md"),
       ),
     ).toBe(false);
     expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".grok", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".grok", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".grok", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".grok", "agents", "omtre-implement.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".grok", "agents", "trellis-check.md")),
+      fs.existsSync(path.join(tmpDir, ".grok", "agents", "omtre-check.md")),
     ).toBe(true);
     const researchAgentPath = path.join(
       tmpDir,
       ".grok",
       "agents",
-      "trellis-research.md",
+      "omtre-research.md",
     );
     expect(fs.existsSync(researchAgentPath)).toBe(true);
     expect(fs.readFileSync(researchAgentPath, "utf-8")).not.toContain(
-      "Load Trellis Context First",
+      "Load Omtre Context First",
     );
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".grok", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".grok", "agents", "omtre-implement.md"),
         "utf-8",
       ),
-    ).toContain("Load Trellis Context First");
+    ).toContain("Load Omtre Context First");
 
     const templates = collectPlatformTemplates("grok");
-    expect(templates?.has(".grok/commands/trellis-start.md")).toBe(true);
-    expect(templates?.has(".grok/commands/trellis/start.md")).toBe(false);
+    expect(templates?.has(".grok/commands/omtre-start.md")).toBe(true);
+    expect(templates?.has(".grok/commands/omt/start.md")).toBe(false);
     expect(
       [...(templates?.keys() ?? [])].some((key) =>
         key.startsWith(".agents/skills/"),
       ),
     ).toBe(false);
-    expect(templates?.has(".grok/agents/trellis-implement.md")).toBe(true);
-    expect(templates?.has(".grok/agents/trellis-research.md")).toBe(true);
+    expect(templates?.has(".grok/agents/omtre-implement.md")).toBe(true);
+    expect(templates?.has(".grok/agents/omtre-research.md")).toBe(true);
   });
 
   it("configurePlatform('snow') writes class-1 inject hooks, skills, commands, and agents", async () => {
@@ -844,83 +844,83 @@ describe("configurePlatform", () => {
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".snow", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
-    // hasHooks=true → trellis-start is filtered out (session inject replaces it)
+    // hasHooks=true → omtre-start is filtered out (session inject replaces it)
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".snow", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "commands", "trellis-start.json"),
+        path.join(tmpDir, ".snow", "commands", "omtre-start.json"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "commands", "trellis-continue.json"),
+        path.join(tmpDir, ".snow", "commands", "omtre-continue.json"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "commands", "trellis-finish-work.json"),
+        path.join(tmpDir, ".snow", "commands", "omtre-finish-work.json"),
       ),
     ).toBe(true);
 
     const continueCmd = JSON.parse(
       fs.readFileSync(
-        path.join(tmpDir, ".snow", "commands", "trellis-continue.json"),
+        path.join(tmpDir, ".snow", "commands", "omtre-continue.json"),
         "utf-8",
       ),
     ) as { type: string; command: string; location: string };
     expect(continueCmd.type).toBe("prompt");
     expect(continueCmd.location).toBe("project");
-    expect(continueCmd.command).toContain(".trellis");
+    expect(continueCmd.command).toContain(".omtre");
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".snow", "agents", "omtre-implement.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".snow", "agents", "trellis-check.md")),
+      fs.existsSync(path.join(tmpDir, ".snow", "agents", "omtre-check.md")),
     ).toBe(true);
     const researchAgentPath = path.join(
       tmpDir,
       ".snow",
       "agents",
-      "trellis-research.md",
+      "omtre-research.md",
     );
     expect(fs.existsSync(researchAgentPath)).toBe(true);
     // class-1: neither research nor implement ships class-2 pull prelude
     expect(fs.readFileSync(researchAgentPath, "utf-8")).not.toContain(
-      "Load Trellis Context First",
+      "Load Omtre Context First",
     );
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".snow", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".snow", "agents", "omtre-implement.md"),
         "utf-8",
       ),
-    ).not.toContain("Load Trellis Context First");
+    ).not.toContain("Load Omtre Context First");
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".snow", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".snow", "agents", "omtre-implement.md"),
         "utf-8",
       ),
     ).toContain("filesystem-read");
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".snow", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".snow", "agents", "omtre-implement.md"),
         "utf-8",
       ),
     ).toContain("beforeSubAgentStart");
 
     // Native Snow projects can legitimately contain any of these directories;
-    // only Trellis-owned files recorded in the manifest count as configured.
+    // only Omtre-owned files recorded in the manifest count as configured.
     const emptyDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), "trellis-snow-det-"),
+      path.join(os.tmpdir(), "omtre-snow-det-"),
     );
     try {
       fs.mkdirSync(path.join(emptyDir, ".snow"), { recursive: true });
@@ -937,16 +937,16 @@ describe("configurePlatform", () => {
     }
 
     const templates = collectPlatformTemplates("snow");
-    expect(templates?.has(".snow/commands/trellis-start.json")).toBe(false);
-    expect(templates?.has(".snow/skills/trellis-start/SKILL.md")).toBe(false);
-    expect(templates?.has(".snow/commands/trellis-continue.json")).toBe(true);
-    expect(templates?.has(".snow/agents/trellis-implement.md")).toBe(true);
-    expect(templates?.has(".snow/agents/trellis-research.md")).toBe(true);
-    expect(templates?.has(".snow/sub-agents.trellis.json")).toBe(false);
+    expect(templates?.has(".snow/commands/omtre-start.json")).toBe(false);
+    expect(templates?.has(".snow/skills/omtre-start/SKILL.md")).toBe(false);
+    expect(templates?.has(".snow/commands/omtre-continue.json")).toBe(true);
+    expect(templates?.has(".snow/agents/omtre-implement.md")).toBe(true);
+    expect(templates?.has(".snow/agents/omtre-research.md")).toBe(true);
+    expect(templates?.has(".snow/sub-agents.omtre.json")).toBe(false);
     expect(templates?.has(".snow/hooks/onSessionStart.json")).toBe(true);
     expect(templates?.has(".snow/hooks/onUserMessage.json")).toBe(true);
     expect(templates?.has(".snow/hooks/beforeSubAgentStart.json")).toBe(true);
-    expect(templates?.has(".snow/hooks/write-trellis-context.py")).toBe(true);
+    expect(templates?.has(".snow/hooks/write-omtre-context.py")).toBe(true);
     expect(templates?.has(".snow/SNOW.md")).toBe(true);
 
     const sessionHook = fs.readFileSync(
@@ -961,15 +961,15 @@ describe("configurePlatform", () => {
       path.join(tmpDir, ".snow", "hooks", "beforeSubAgentStart.json"),
       "utf-8",
     );
-    expect(sessionHook).toContain("write-trellis-context.py session");
-    expect(userHook).toContain("write-trellis-context.py user");
-    expect(subHook).toContain("write-trellis-context.py subagent");
+    expect(sessionHook).toContain("write-omtre-context.py session");
+    expect(userHook).toContain("write-omtre-context.py user");
+    expect(subHook).toContain("write-omtre-context.py subagent");
 
     const hookPy = fs.readFileSync(
-      path.join(tmpDir, ".snow", "hooks", "write-trellis-context.py"),
+      path.join(tmpDir, ".snow", "hooks", "write-omtre-context.py"),
       "utf-8",
     );
-    expect(hookPy).toContain("TRELLIS_SNOW_HOOK_MODE");
+    expect(hookPy).toContain("OMTRE_SNOW_HOOK_MODE");
     expect(hookPy).toContain("agentKind");
     expect(hookPy).toContain("implement.jsonl");
     expect(hookPy).toContain("COMPACT_MAX_BYTES");
@@ -992,13 +992,13 @@ describe("configurePlatform", () => {
     expect(snowGuide).toContain("class-1 hook inject");
     expect(snowGuide.toLowerCase()).not.toContain("snocli");
     expect(snowGuide.toLowerCase()).not.toContain("snow-cli");
-    expect(snowGuide).not.toContain("sub-agents.trellis.json");
+    expect(snowGuide).not.toContain("sub-agents.omtre.json");
     expect(snowGuide).toContain("Session identity");
     expect(snowGuide).toContain("SNOW_SESSION_ID");
-    expect(snowGuide).toContain("TRELLIS_CONTEXT_ID");
+    expect(snowGuide).toContain("OMTRE_CONTEXT_ID");
 
     const implementAgent = fs.readFileSync(
-      path.join(tmpDir, ".snow", "agents", "trellis-implement.md"),
+      path.join(tmpDir, ".snow", "agents", "omtre-implement.md"),
       "utf-8",
     );
     expect(implementAgent.toLowerCase()).not.toContain("snocli");
@@ -1013,7 +1013,7 @@ describe("configurePlatform", () => {
     expect(implementAgent).toContain("terminal-execute");
 
     expect(
-      fs.existsSync(path.join(tmpDir, ".snow", "sub-agents.trellis.json")),
+      fs.existsSync(path.join(tmpDir, ".snow", "sub-agents.omtre.json")),
     ).toBe(false);
     expect(
       fs.existsSync(path.join(tmpDir, ".snow", "hooks", "onSessionStart.json")),
@@ -1025,7 +1025,7 @@ describe("configurePlatform", () => {
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".snow", "hooks", "write-trellis-context.py"),
+        path.join(tmpDir, ".snow", "hooks", "write-omtre-context.py"),
       ),
     ).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".snow", "SNOW.md"))).toBe(true);
@@ -1036,32 +1036,32 @@ describe("configurePlatform", () => {
     expect(AI_TOOLS.snow.templateContext.hasHooks).toBe(true);
     expect(AI_TOOLS.snow.hasPythonHooks).toBe(true);
     expect(AI_TOOLS.snow.extraManagedPaths ?? []).not.toContain(
-      ".snow/sub-agents.trellis.json",
+      ".snow/sub-agents.omtre.json",
     );
   });
 
   it("configurePlatform('dsh') writes shared + dsh-private skills and the operator guide", async () => {
     await configurePlatform("dsh", tmpDir);
 
-    // hasHooks=false → trellis-start stays as a user-invocable dsh skill
+    // hasHooks=false → omtre-start stays as a user-invocable dsh skill
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".dsh", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".dsh", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".dsh", "skills", "trellis-continue", "SKILL.md"),
+        path.join(tmpDir, ".dsh", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".dsh", "skills", "trellis-finish-work", "SKILL.md"),
+        path.join(tmpDir, ".dsh", "skills", "omtre-finish-work", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".dsh", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".dsh", "skills", "omtre-start", "SKILL.md"),
         "utf-8",
       ),
     ).toContain("--platform dsh");
@@ -1069,12 +1069,12 @@ describe("configurePlatform", () => {
     // Shared workflow skills land in .agents/skills/, entry skills stay private
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".agents", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".agents", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
 
@@ -1099,37 +1099,37 @@ describe("configurePlatform", () => {
 
     const expectedPrivateSkills = resolveSkills(AI_TOOLS.zcode.templateContext);
     const expectedCheck = expectedPrivateSkills.find(
-      (skill) => skill.name === "trellis-check",
+      (skill) => skill.name === "omtre-check",
     );
     if (!expectedCheck) {
-      throw new Error("Expected ZCode private skills to include trellis-check");
+      throw new Error("Expected ZCode private skills to include omtre-check");
     }
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "commands", "trellis", "start.md"),
+        path.join(tmpDir, ".zcode", "commands", "omt", "start.md"),
       ),
     ).toBe(false);
     expect(fs.existsSync(path.join(tmpDir, ".agents", "skills"))).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".agents", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-continue", "SKILL.md"),
+        path.join(tmpDir, ".agents", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(false);
 
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-start", "SKILL.md"),
+        path.join(tmpDir, ".zcode", "skills", "omtre-start", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-continue", "SKILL.md"),
+        path.join(tmpDir, ".zcode", "skills", "omtre-continue", "SKILL.md"),
       ),
     ).toBe(false);
     expect(
@@ -1138,46 +1138,46 @@ describe("configurePlatform", () => {
           tmpDir,
           ".zcode",
           "skills",
-          "trellis-finish-work",
+          "omtre-finish-work",
           "SKILL.md",
         ),
       ),
     ).toBe(false);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".zcode", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".zcode", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".zcode", "skills", "omtre-check", "SKILL.md"),
         "utf-8",
       ),
     ).toBe(replacePythonCommandLiterals(expectedCheck.content));
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".zcode", "agents", "trellis-implement.md"),
+        path.join(tmpDir, ".zcode", "agents", "omtre-implement.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".zcode", "agents", "trellis-check.md")),
+      fs.existsSync(path.join(tmpDir, ".zcode", "agents", "omtre-check.md")),
     ).toBe(true);
     const researchAgentPath = path.join(
       tmpDir,
       ".zcode",
       "agents",
-      "trellis-research.md",
+      "omtre-research.md",
     );
     expect(fs.existsSync(researchAgentPath)).toBe(true);
     const implementAgent = fs.readFileSync(
-      path.join(tmpDir, ".zcode", "agents", "trellis-implement.md"),
+      path.join(tmpDir, ".zcode", "agents", "omtre-implement.md"),
       "utf-8",
     );
-    expect(implementAgent).toContain("Trellis Context Loading Protocol");
-    expect(implementAgent).toContain("<!-- trellis-hook-injected -->");
-    expect(implementAgent).not.toContain("Load Trellis Context First");
+    expect(implementAgent).toContain("Omtre Context Loading Protocol");
+    expect(implementAgent).toContain("<!-- omtre-hook-injected -->");
+    expect(implementAgent).not.toContain("Load Omtre Context First");
     expect(fs.readFileSync(researchAgentPath, "utf-8")).not.toContain(
-      "Load Trellis Context First",
+      "Load Omtre Context First",
     );
 
     const generatedConfig = readConfiguredFile(tmpDir, ".zcode/config.json");
@@ -1193,37 +1193,37 @@ describe("configurePlatform", () => {
 
     const templates = collectPlatformTemplates("zcode");
     expect(templates?.get(".zcode/config.json")).toBe(generatedConfig);
-    expect(templates?.has(".zcode/commands/trellis/start.md")).toBe(false);
+    expect(templates?.has(".zcode/commands/omt/start.md")).toBe(false);
     expect(
       [...(templates?.keys() ?? [])].some((key) =>
         key.startsWith(".agents/skills/"),
       ),
     ).toBe(false);
-    expect(templates?.has(".agents/skills/trellis-start/SKILL.md")).toBe(false);
-    expect(templates?.has(".agents/skills/trellis-continue/SKILL.md")).toBe(
+    expect(templates?.has(".agents/skills/omtre-start/SKILL.md")).toBe(false);
+    expect(templates?.has(".agents/skills/omtre-continue/SKILL.md")).toBe(
       false,
     );
-    expect(templates?.has(".agents/skills/trellis-check/SKILL.md")).toBe(false);
-    expect(templates?.has(".zcode/skills/trellis-start/SKILL.md")).toBe(false);
-    expect(templates?.has(".zcode/skills/trellis-continue/SKILL.md")).toBe(
+    expect(templates?.has(".agents/skills/omtre-check/SKILL.md")).toBe(false);
+    expect(templates?.has(".zcode/skills/omtre-start/SKILL.md")).toBe(false);
+    expect(templates?.has(".zcode/skills/omtre-continue/SKILL.md")).toBe(
       false,
     );
-    expect(templates?.has(".zcode/skills/trellis-finish-work/SKILL.md")).toBe(
+    expect(templates?.has(".zcode/skills/omtre-finish-work/SKILL.md")).toBe(
       false,
     );
-    expect(templates?.has(".zcode/skills/trellis-check/SKILL.md")).toBe(true);
-    expect(templates?.has(".zcode/skills/trellis-meta/SKILL.md")).toBe(true);
-    expect(templates?.has(".zcode/agents/trellis-implement.md")).toBe(true);
-    expect(templates?.has(".zcode/agents/trellis-check.md")).toBe(true);
-    expect(templates?.has(".zcode/agents/trellis-research.md")).toBe(true);
-    expect(templates?.get(".zcode/agents/trellis-implement.md")).toContain(
-      "Trellis Context Loading Protocol",
+    expect(templates?.has(".zcode/skills/omtre-check/SKILL.md")).toBe(true);
+    expect(templates?.has(".zcode/skills/omtre-meta/SKILL.md")).toBe(true);
+    expect(templates?.has(".zcode/agents/omtre-implement.md")).toBe(true);
+    expect(templates?.has(".zcode/agents/omtre-check.md")).toBe(true);
+    expect(templates?.has(".zcode/agents/omtre-research.md")).toBe(true);
+    expect(templates?.get(".zcode/agents/omtre-implement.md")).toContain(
+      "Omtre Context Loading Protocol",
     );
-    expect(templates?.get(".zcode/agents/trellis-implement.md")).not.toContain(
-      "Load Trellis Context First",
+    expect(templates?.get(".zcode/agents/omtre-implement.md")).not.toContain(
+      "Load Omtre Context First",
     );
-    expect(templates?.get(".zcode/agents/trellis-research.md")).not.toContain(
-      "Load Trellis Context First",
+    expect(templates?.get(".zcode/agents/omtre-research.md")).not.toContain(
+      "Load Omtre Context First",
     );
   });
 
@@ -1236,7 +1236,7 @@ describe("configurePlatform", () => {
     await configurePlatform("codebuddy", tmpDir);
 
     const expected = resolveCommands(AI_TOOLS.codebuddy.templateContext);
-    const commandsDir = path.join(tmpDir, ".codebuddy", "commands", "trellis");
+    const commandsDir = path.join(tmpDir, ".codebuddy", "commands", "omt");
     expect(fs.existsSync(commandsDir)).toBe(true);
 
     const actualFiles = fs
@@ -1334,7 +1334,7 @@ describe("configurePlatform", () => {
 
     const expected = resolvePlaceholders(getCopilotHooksConfig());
     const tracked = path.join(tmpDir, ".github", "copilot", "hooks.json");
-    const discovery = path.join(tmpDir, ".github", "hooks", "trellis.json");
+    const discovery = path.join(tmpDir, ".github", "hooks", "omtre.json");
 
     expect(fs.existsSync(tracked)).toBe(true);
     expect(fs.existsSync(discovery)).toBe(true);
@@ -1443,10 +1443,10 @@ describe("configurePlatform", () => {
     expect(fs.existsSync(path.join(tmpDir, ".cursor", "commands"))).toBe(true);
   });
 
-  it("configurePlatform('droid') creates .factory/commands/trellis directory", async () => {
+  it("configurePlatform('droid') creates .factory/commands/omt directory", async () => {
     await configurePlatform("droid", tmpDir);
     expect(
-      fs.existsSync(path.join(tmpDir, ".factory", "commands", "trellis")),
+      fs.existsSync(path.join(tmpDir, ".factory", "commands", "omt")),
     ).toBe(true);
   });
 
@@ -1457,7 +1457,7 @@ describe("configurePlatform", () => {
       tmpDir,
       ".factory",
       "commands",
-      "trellis",
+      "omt",
       "start.md",
     );
     expect(fs.existsSync(startPath)).toBe(false);
@@ -1465,7 +1465,7 @@ describe("configurePlatform", () => {
       tmpDir,
       ".factory",
       "commands",
-      "trellis",
+      "omt",
       "finish-work.md",
     );
     expect(fs.existsSync(finishPath)).toBe(true);
@@ -1473,7 +1473,7 @@ describe("configurePlatform", () => {
       tmpDir,
       ".factory",
       "commands",
-      "trellis",
+      "omt",
       "continue.md",
     );
     expect(fs.existsSync(continuePath)).toBe(true);
@@ -1482,13 +1482,13 @@ describe("configurePlatform", () => {
       tmpDir,
       ".factory",
       "skills",
-      "trellis-check",
+      "omtre-check",
       "SKILL.md",
     );
     expect(fs.existsSync(skillPath)).toBe(true);
     const content = fs.readFileSync(skillPath, "utf-8");
     expect(content.startsWith("---\n")).toBe(true);
-    expect(content).toContain("name: trellis-check");
+    expect(content).toContain("name: omtre-check");
   });
 
   it("configurePlatform('pi') creates extension-backed Pi assets", async () => {
@@ -1497,18 +1497,18 @@ describe("configurePlatform", () => {
     expect(fs.existsSync(path.join(tmpDir, ".pi", "settings.json"))).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".pi", "prompts", "trellis-finish-work.md"),
+        path.join(tmpDir, ".pi", "prompts", "omtre-finish-work.md"),
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-continue.md")),
+      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "omtre-continue.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "trellis-start.md")),
+      fs.existsSync(path.join(tmpDir, ".pi", "prompts", "omtre-start.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".agents", "skills", "trellis-check", "SKILL.md"),
+        path.join(tmpDir, ".agents", "skills", "omtre-check", "SKILL.md"),
       ),
     ).toBe(true);
     expect(
@@ -1520,38 +1520,38 @@ describe("configurePlatform", () => {
       ),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "agents", "trellis-implement.md")),
+      fs.existsSync(path.join(tmpDir, ".pi", "agents", "omtre-implement.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "agents", "trellis-check.md")),
+      fs.existsSync(path.join(tmpDir, ".pi", "agents", "omtre-check.md")),
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(tmpDir, ".pi", "agents", "trellis-research.md")),
+      fs.existsSync(path.join(tmpDir, ".pi", "agents", "omtre-research.md")),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(tmpDir, ".pi", "extensions", "trellis", "index.ts"),
+        path.join(tmpDir, ".pi", "extensions", "omtre", "index.ts"),
       ),
     ).toBe(true);
     expect(fs.existsSync(path.join(tmpDir, ".pi", "hooks"))).toBe(false);
 
     const extension = fs.readFileSync(
-      path.join(tmpDir, ".pi", "extensions", "trellis", "index.ts"),
+      path.join(tmpDir, ".pi", "extensions", "omtre", "index.ts"),
       "utf-8",
     );
     expect(extension).toContain("registerTool?.({");
-    expect(extension).toContain('name: "trellis_subagent"');
+    expect(extension).toContain('name: "omtre_subagent"');
     expect(extension).toContain('pi.on?.("session_start"');
     expect(extension).toContain('pi.on?.("tool_call"');
     expect(extension).toContain("ctx?.sessionManager?.getSessionId");
-    expect(extension).toContain("TRELLIS_PI_CLI_JS");
+    expect(extension).toContain("OMTRE_PI_CLI_JS");
     expect(extension).toContain("function formatPiOutput");
-    expect(extension).toContain('"## Trellis Agent Definition"');
+    expect(extension).toContain('"## Omtre Agent Definition"');
     expect(extension).toContain("ctx?.ui?.notify?.(");
     expect(extension).toContain("systemPrompt:");
-    expect(extension).toContain("isTrellisAgent(root, agentName)");
-    expect(extension).not.toContain("message: buildTrellisContext");
-    expect(extension).not.toContain('message:\n      "Trellis project context');
+    expect(extension).toContain("isOmtreAgent(root, agentName)");
+    expect(extension).not.toContain("message: buildOmtreContext");
+    expect(extension).not.toContain('message:\n      "Omtre project context');
     expect(extension).not.toContain("persistent: true");
     expect(extension).not.toContain(
       '["--mode", "json", "-p", "--no-session", toPiPromptArgument(prompt)]',
@@ -1563,7 +1563,7 @@ describe("configurePlatform", () => {
     expect(extension).not.toContain("inject-workflow-state.py");
     expect(extension).not.toContain("inject-subagent-context.py");
     expect(extension).not.toContain("session-start.py");
-    // get_context.py is allowed: it lives in .trellis/scripts/ and is the
+    // get_context.py is allowed: it lives in .omtre/scripts/ and is the
     // shared session-overview script invoked by every platform's hook.
 
     const settings = JSON.parse(
@@ -1594,7 +1594,7 @@ describe("configurePlatform", () => {
 
     expect(
       fs.readFileSync(
-        path.join(tmpDir, ".pi", "extensions", "trellis", "index.ts"),
+        path.join(tmpDir, ".pi", "extensions", "omtre", "index.ts"),
         "utf-8",
       ),
     ).toBe(replacePythonCommandLiterals(getPiExtensionTemplate()));
@@ -1604,8 +1604,8 @@ describe("configurePlatform", () => {
         path.join(tmpDir, ".pi", "agents", `${agent.name}.md`),
         "utf-8",
       );
-      if (["trellis-implement", "trellis-check"].includes(agent.name)) {
-        expect(content).toContain("Required: Load Trellis Context First");
+      if (["omtre-implement", "omtre-check"].includes(agent.name)) {
+        expect(content).toContain("Required: Load Omtre Context First");
       } else {
         expect(content).toBe(replacePythonCommandLiterals(agent.content));
       }
@@ -1615,26 +1615,26 @@ describe("configurePlatform", () => {
   it("collectPlatformTemplates('pi') maps prompts, skills, agents, extension, and settings", () => {
     const templates = collectPlatformTemplates("pi");
     expect(templates).toBeInstanceOf(Map);
-    expect(templates?.get(".pi/prompts/trellis-start.md")).toBeDefined();
-    expect(templates?.get(".pi/prompts/trellis-finish-work.md")).toBeDefined();
-    expect(templates?.get(".pi/prompts/trellis-continue.md")).toBeDefined();
+    expect(templates?.get(".pi/prompts/omtre-start.md")).toBeDefined();
+    expect(templates?.get(".pi/prompts/omtre-finish-work.md")).toBeDefined();
+    expect(templates?.get(".pi/prompts/omtre-continue.md")).toBeDefined();
     expect(
-      templates?.get(".agents/skills/trellis-check/SKILL.md"),
+      templates?.get(".agents/skills/omtre-check/SKILL.md"),
     ).toBeDefined();
     expect(
       templates?.get(
-        ".agents/skills/trellis-meta/references/local-architecture/overview.md",
+        ".agents/skills/omtre-meta/references/local-architecture/overview.md",
       ),
     ).toBeDefined();
     expect(
       templates?.get(
-        ".agents/skills/trellis-spec-bootstrap/references/spec-writing.md",
+        ".agents/skills/omtre-spec-bootstrap/references/spec-writing.md",
       ),
     ).toBeDefined();
-    expect(templates?.get(".pi/agents/trellis-implement.md")).toContain(
-      "Required: Load Trellis Context First",
+    expect(templates?.get(".pi/agents/omtre-implement.md")).toContain(
+      "Required: Load Omtre Context First",
     );
-    expect(templates?.get(".pi/extensions/trellis/index.ts")).toBe(
+    expect(templates?.get(".pi/extensions/omtre/index.ts")).toBe(
       replacePythonCommandLiterals(getPiExtensionTemplate()),
     );
     expect(templates?.get(".pi/settings.json")).toBe(
@@ -1642,25 +1642,25 @@ describe("configurePlatform", () => {
     );
   });
 
-  it("collectPlatformTemplates('droid') maps commands under .factory/commands/trellis/", () => {
+  it("collectPlatformTemplates('droid') maps commands under .factory/commands/omt/", () => {
     const templates = collectPlatformTemplates("droid");
     expect(templates).toBeInstanceOf(Map);
     // Droid is agent-capable → start.md not emitted.
     expect(
-      templates?.get(".factory/commands/trellis/start.md"),
+      templates?.get(".factory/commands/omt/start.md"),
     ).toBeUndefined();
     expect(
-      templates?.get(".factory/commands/trellis/finish-work.md"),
+      templates?.get(".factory/commands/omt/finish-work.md"),
     ).toBeDefined();
     expect(
-      templates?.get(".factory/commands/trellis/continue.md"),
+      templates?.get(".factory/commands/omt/continue.md"),
     ).toBeDefined();
   });
 
   it("does not throw for any platform", async () => {
     for (const id of PLATFORM_IDS) {
       const platformDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), `trellis-cfg-${id}-`),
+        path.join(os.tmpdir(), `omtre-cfg-${id}-`),
       );
       try {
         setWriteMode("force");
@@ -1706,7 +1706,7 @@ describe("configurePlatform", () => {
     expect(templates?.get(".github/copilot/hooks.json")).toBe(
       resolvePlaceholders(getCopilotHooksConfig()),
     );
-    expect(templates?.get(".github/hooks/trellis.json")).toBe(
+    expect(templates?.get(".github/hooks/omtre.json")).toBe(
       resolvePlaceholders(getCopilotHooksConfig()),
     );
   });

@@ -1,11 +1,11 @@
 {
   "onSessionStart": [
     {
-      "description": "Inject Trellis session context on Snow session start (additionalContext + .snow/log breadcrumb)",
+      "description": "Inject Omtre session context on Snow session start (additionalContext + .snow/log breadcrumb)",
       "hooks": [
         {
           "type": "command",
-          "command": "python -X utf8 .snow/hooks/write-trellis-context.py session",
+          "command": "python -X utf8 .snow/hooks/write-omtre-context.py session",
           "timeout": 20000,
           "enabled": true
         }

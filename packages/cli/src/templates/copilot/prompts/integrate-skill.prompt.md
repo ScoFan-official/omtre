@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: Integrate Claude Skill into Project Guidelines"
+description: "Omtre Copilot prompt: Integrate Claude Skill into Project Guidelines"
 ---
 
 # Integrate Claude Skill into Project Guidelines
@@ -22,8 +22,8 @@ Adapt and integrate a Claude global skill into your project's development guidel
 
 > [!] **Important**: The goal of skill integration is to update **development guidelines**, not to generate project code directly.
 >
-> - Guidelines content -> Write to `.trellis/spec/{target}/doc.md`
-> - Code examples -> Place in `.trellis/spec/{target}/examples/skills/<skill-name>/`
+> - Guidelines content -> Write to `.omtre/spec/{target}/doc.md`
+> - Code examples -> Place in `.omtre/spec/{target}/examples/skills/<skill-name>/`
 > - Example files -> Use `.template` suffix (e.g., `component.tsx.template`) to avoid IDE errors
 >
 > Where `{target}` is `frontend` or `backend`, determined by skill type.
@@ -47,10 +47,10 @@ Based on skill type, determine which guidelines to update:
 
 | Skill Category | Integration Target |
 |----------------|-------------------|
-| UI/Frontend (`frontend-design`, `web-artifacts-builder`) | `.trellis/spec/frontend/` |
-| Backend/API (`mcp-builder`) | `.trellis/spec/backend/` |
-| Documentation (`doc-coauthoring`, `docx`, `pdf`) | `.trellis/` or create dedicated guidelines |
-| Testing (`webapp-testing`) | `.trellis/spec/frontend/` (E2E) |
+| UI/Frontend (`frontend-design`, `web-artifacts-builder`) | `.omtre/spec/frontend/` |
+| Backend/API (`mcp-builder`) | `.omtre/spec/backend/` |
+| Documentation (`doc-coauthoring`, `docx`, `pdf`) | `.omtre/` or create dedicated guidelines |
+| Testing (`webapp-testing`) | `.omtre/spec/frontend/` (E2E) |
 
 ### 3. Analyze Skill Content
 
@@ -94,7 +94,7 @@ See `examples/skills/<skill-name>/`
 
 ```bash
 # Directory structure ({target} = frontend or backend)
-.trellis/spec/{target}/
+.omtre/spec/{target}/
 |-- doc.md                      # Add skill-related section
 |-- index.md                    # Update index
 +-- examples/
@@ -126,7 +126,7 @@ Add to the Quick Navigation table in `index.md`:
 
 ### # Overview
 - **Skill description**: [Functionality description]
-- **Integration target**: `.trellis/spec/{target}/`
+- **Integration target**: `.omtre/spec/{target}/`
 
 ### # Tech Stack Compatibility
 
@@ -138,9 +138,9 @@ Add to the Quick Navigation table in `index.md`:
 
 | Type | Path |
 |------|------|
-| Guidelines doc | `.trellis/spec/{target}/doc.md` (section: `skill-<name>`) |
-| Code examples | `.trellis/spec/{target}/examples/skills/<name>/` |
-| Index update | `.trellis/spec/{target}/index.md` |
+| Guidelines doc | `.omtre/spec/{target}/doc.md` (section: `skill-<name>`) |
+| Code examples | `.omtre/spec/{target}/examples/skills/<name>/` |
+| Index update | `.omtre/spec/{target}/index.md` |
 
 > `{target}` = `frontend` or `backend`
 
@@ -183,14 +183,14 @@ If this skill is frequently used, create a shortcut command:
 | `frontend-design` | `frontend` | `examples/skills/frontend-design/` |
 | `mcp-builder` | `backend` | `examples/skills/mcp-builder/` |
 | `webapp-testing` | `frontend` | `examples/skills/webapp-testing/` |
-| `doc-coauthoring` | `.trellis/` | N/A (documentation workflow only) |
+| `doc-coauthoring` | `.omtre/` | N/A (documentation workflow only) |
 
 ## Example: Integrating `mcp-builder` Skill
 
 ### Directory Structure
 
 ```
-.trellis/spec/backend/
+.omtre/spec/backend/
 |-- doc.md                           # Add MCP section
 |-- index.md                         # Add index entry
 +-- examples/

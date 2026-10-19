@@ -12,6 +12,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { DIR_NAMES, SKILL_PREFIX } from "../constants/paths.js";
 import {
   AI_TOOLS,
   getManagedPaths,
@@ -66,7 +67,7 @@ interface PlatformFunctions {
 /**
  * Registry entry for a platform whose configuration is exactly "write these
  * files": `configure` is derived from `collectTemplates`, so the file set is
- * described once and `trellis init` and `trellis update` cannot disagree
+ * described once and `omtre init` and `omtre update` cannot disagree
  * about it.
  *
  * The three platforms that also do something a `Map<path, content>` cannot
@@ -125,14 +126,17 @@ export const PLATFORM_MANAGED_DIRS = PLATFORM_IDS.flatMap((id) =>
   getManagedPaths(id),
 );
 
-/** All directories managed by Trellis (including .trellis itself) */
-export const ALL_MANAGED_DIRS = [".trellis", ...new Set(PLATFORM_MANAGED_DIRS)];
+/** All directories managed by Omtre (including .omtre itself) */
+export const ALL_MANAGED_DIRS = [
+  DIR_NAMES.WORKFLOW,
+  ...new Set(PLATFORM_MANAGED_DIRS),
+];
 
 /**
- * Detect platforms from Trellis-owned templates, not native config directories.
+ * Detect platforms from Omtre-owned templates, not native config directories.
  *
- * A platform directory may predate Trellis. The template hash manifest records
- * only files Trellis actually wrote, while the platform template registry
+ * A platform directory may predate Omtre. The template hash manifest records
+ * only files Omtre actually wrote, while the platform template registry
  * supplies each platform's distinct file layout.
  */
 export function getConfiguredPlatforms(cwd: string): Set<AITool> {
@@ -152,17 +156,17 @@ export function getConfiguredPlatforms(cwd: string): Set<AITool> {
       platforms.add(id);
     }
   }
-  // Back-compat: Windsurf was renamed to Devin. Require Trellis ownership or
-  // a Trellis-namespaced workflow so a native Windsurf directory is not enough.
+  // Back-compat: Windsurf was renamed to Devin. Require Omtre ownership or
+  // an Omtre-namespaced workflow so a native Windsurf directory is not enough.
   const legacyWindsurfRoot = ".windsurf/workflows";
   const hasTrackedWindsurfTemplate = Object.keys(hashes).some((relativePath) =>
-    relativePath.startsWith(`${legacyWindsurfRoot}/trellis-`),
+    relativePath.startsWith(`${legacyWindsurfRoot}/${SKILL_PREFIX}`),
   );
   let hasLegacyWindsurfTemplate = false;
   try {
     hasLegacyWindsurfTemplate = fs
       .readdirSync(path.join(cwd, legacyWindsurfRoot))
-      .some((name) => name.startsWith("trellis-"));
+      .some((name) => name.startsWith(SKILL_PREFIX));
   } catch {
     // Missing or unreadable legacy directory is not a configured platform.
   }

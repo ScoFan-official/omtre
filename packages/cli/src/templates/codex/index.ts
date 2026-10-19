@@ -2,11 +2,11 @@
  * Codex templates
  *
  * These are GENERIC templates for user projects.
- * Do NOT use Trellis project's own .agents/skills or .codex directories
+ * Do NOT use Omtre project's own .agents/skills or .codex directories
  * (which may be customized).
  *
  * Workflow skills are NOT stored here. They come from templates/common/ and are
- * written to .agents/skills/ as trellis-*, which Codex reads alongside
+ * written to .agents/skills/ as omtre-*, which Codex reads alongside
  * .codex/skills/ (see configurators/codex.ts).
  *
  * Directory structure:

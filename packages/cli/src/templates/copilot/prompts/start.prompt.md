@@ -1,10 +1,10 @@
 ---
-description: "Trellis Copilot prompt: Start Session"
+description: "Omtre Copilot prompt: Start Session"
 ---
 
 # Start Session
 
-Initialize a Trellis-managed development session. This platform has no session-start hook, so manually load the equivalent context by following these steps (each one mirrors a section the hook would otherwise inject).
+Initialize a Omtre-managed development session. This platform has no session-start hook, so manually load the equivalent context by following these steps (each one mirrors a section the hook would otherwise inject).
 
 ---
 
@@ -12,27 +12,27 @@ Initialize a Trellis-managed development session. This platform has no session-s
 Identity, git status, current task, active tasks, journal location.
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py
 ```
 
-If this output includes a line beginning `Trellis update available:`, copy the full line verbatim when summarizing session context. Do not shorten operational command hints.
+If this output includes a line beginning `Omtre update available:`, copy the full line verbatim when summarizing session context. Do not shorten operational command hints.
 
 ## Step 2: Workflow overview
 Phase Index + skill routing table + DO-NOT-skip rules.
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py --mode phase
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py --mode phase
 ```
 
-Full guide in `.trellis/workflow.md` (read on demand).
+Full guide in `.omtre/workflow.md` (read on demand).
 
 ## Step 3: Guideline indexes
 Discover packages + spec layers, then read each relevant index file.
 
 ```bash
-{{PYTHON_CMD}} ./.trellis/scripts/get_context.py --mode packages
-cat .trellis/spec/guides/index.md
-cat .trellis/spec/<package>/<layer>/index.md   # for each relevant layer
+{{PYTHON_CMD}} ./.omtre/scripts/get_context.py --mode packages
+cat .omtre/spec/guides/index.md
+cat .omtre/spec/<package>/<layer>/index.md   # for each relevant layer
 ```
 
 Index files list the specific guideline docs to read when you actually start coding.
@@ -40,13 +40,13 @@ Index files list the specific guideline docs to read when you actually start cod
 ## Step 4: Decide next action
 From Step 1 you know the current task and status. Check the task directory:
 
-- **Active task status `planning` + no `prd.md`** → Phase 1.1. Load the `trellis-brainstorm` skill.
+- **Active task status `planning` + no `prd.md`** → Phase 1.1. Load the `omtre-brainstorm` skill.
 - **Active task status `planning` + `prd.md` exists** → stay in Phase 1. Lightweight tasks can be PRD-only; complex tasks need `design.md` + `implement.md`. Load the relevant Phase 1 step detail before `task.py start`.
 - **Active task status `in_progress`** → Phase 2 step 2.1. Load the step detail:
   ```bash
-  {{PYTHON_CMD}} ./.trellis/scripts/get_context.py --mode phase --step 2.1 --platform {{CLI_FLAG}}
+  {{PYTHON_CMD}} ./.omtre/scripts/get_context.py --mode phase --step 2.1 --platform {{CLI_FLAG}}
   ```
-- **No active task** → classify first, then follow the repo's autonomy mode (`.trellis/config.yaml` `autonomy`): under `gated`, ask whether this turn may create a Trellis task (complex work: also planning); under `hands-off`, create the task without asking when one is warranted. If the user says no, skip Trellis for this session.
+- **No active task** → classify first, then follow the repo's autonomy mode (`.omtre/config.yaml` `autonomy`): under `gated`, ask whether this turn may create a Omtre task (complex work: also planning); under `hands-off`, create the task without asking when one is warranted. If the user says no, skip Omtre for this session.
 
 ---
 
@@ -54,10 +54,10 @@ From Step 1 you know the current task and status. Check the task directory:
 
 | User intent | Skill |
 |---|---|
-| New feature / unclear requirements | `trellis-brainstorm` |
-| About to write code | `trellis-before-dev` |
-| Done coding / quality check | `trellis-check` |
-| Stuck / fixed same bug multiple times | `trellis-break-loop` |
-| Learned something worth capturing | `trellis-update-spec` |
+| New feature / unclear requirements | `omtre-brainstorm` |
+| About to write code | `omtre-before-dev` |
+| Done coding / quality check | `omtre-check` |
+| Stuck / fixed same bug multiple times | `omtre-break-loop` |
+| Learned something worth capturing | `omtre-update-spec` |
 
-Full rules + anti-rationalization table in `.trellis/workflow.md`.
+Full rules + anti-rationalization table in `.omtre/workflow.md`.

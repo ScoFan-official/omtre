@@ -5,9 +5,9 @@
  * with YAML frontmatter (name + description). Slash commands are code-built-in,
  * so no commands directory is generated.
  *
- * Workflow templates are surfaced as skills with `trellis-` prefix (invocable
- * via `/skill trellis-start`, `/skill trellis-continue`, etc.).
- * Subagent skills (trellis-implement, trellis-check) use `runAs: subagent`
+ * Workflow templates are surfaced as skills with `omtre-` prefix (invocable
+ * via `/skill omtre-start`, `/skill omtre-continue`, etc.).
+ * Subagent skills (omtre-implement, omtre-check) use `runAs: subagent`
  * frontmatter so Reasonix spawns them as isolated subagent loops.
  */
 
@@ -20,7 +20,7 @@ import {
 } from "./shared.js";
 
 /**
- * The Reasonix file set — written at init and diffed by `trellis update`.
+ * The Reasonix file set — written at init and diffed by `omtre update`.
  */
 export function collectReasonixTemplates(): Map<string, string> {
   const config = AI_TOOLS.reasonix;
@@ -41,7 +41,7 @@ export function collectReasonixTemplates(): Map<string, string> {
     files.set(filePath, content);
   }
 
-  // Subagent skills (trellis-implement, trellis-check) — written with
+  // Subagent skills (omtre-implement, omtre-check) — written with
   // runAs: subagent frontmatter for isolated subagent loops.
   for (const agent of getAllAgents()) {
     files.set(`.reasonix/skills/${agent.name}/SKILL.md`, agent.content);

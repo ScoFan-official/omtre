@@ -76,13 +76,13 @@ function walkOpenCodeTemplateDir(): Map<string, string> {
 }
 
 /**
- * The opencode file set — written at init and diffed by `trellis update`.
+ * The opencode file set — written at init and diffed by `omtre update`.
  */
 export function collectOpenCodeTemplates(): Map<string, string> {
   const files = walkOpenCodeTemplateDir();
   const ctx = AI_TOOLS.opencode.templateContext;
   for (const cmd of resolveCommands(ctx)) {
-    files.set(`.opencode/commands/trellis/${cmd.name}.md`, cmd.content);
+    files.set(`.opencode/commands/omt/${cmd.name}.md`, cmd.content);
   }
   for (const [filePath, content] of collectSkillTemplates(
     ".opencode/skills",

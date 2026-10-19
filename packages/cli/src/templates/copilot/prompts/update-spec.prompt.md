@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: Update Code-Spec - Capture Executable Contracts"
+description: "Omtre Copilot prompt: Update Code-Spec - Capture Executable Contracts"
 ---
 
 # Update Code-Spec - Capture Executable Contracts
@@ -59,13 +59,13 @@ For triggered tasks, include all sections below:
 ## Spec Structure Overview
 
 ```
-.trellis/spec/
+.omtre/spec/
 ├── backend/           # Backend coding standards
-�?  ├── index.md       # Overview and links
-�?  └── *.md           # Topic-specific guidelines
+�?  ├── index.md       # Overview and links
+�?  └── *.md           # Topic-specific guidelines
 ├── frontend/          # Frontend coding standards
-�?  ├── index.md       # Overview and links
-�?  └── *.md           # Topic-specific guidelines
+�?  ├── index.md       # Overview and links
+�?  └── *.md           # Topic-specific guidelines
 └── guides/            # Thinking checklists (NOT coding specs!)
     ├── index.md       # Guide index
     └── *.md           # Topic-specific guides
@@ -80,15 +80,15 @@ For triggered tasks, include all sections below:
 
 **Decision Rule**: Ask yourself:
 
-- "This is **how to write** the code" �?Put in `backend/` or `frontend/`
-- "This is **what to consider** before writing" �?Put in `guides/`
+- "This is **how to write** the code" �?Put in `backend/` or `frontend/`
+- "This is **what to consider** before writing" �?Put in `guides/`
 
 **Example**:
 
 | Learning | Wrong Location | Correct Location |
 |----------|----------------|------------------|
-| "Use `reconfigure()` not `TextIOWrapper` for Windows stdout" | �?`guides/cross-platform-thinking-guide.md` | �?`backend/script-conventions.md` |
-| "Remember to check encoding when writing cross-platform code" | �?`backend/script-conventions.md` | �?`guides/cross-platform-thinking-guide.md` |
+| "Use `reconfigure()` not `TextIOWrapper` for Windows stdout" | �?`guides/cross-platform-thinking-guide.md` | �?`backend/script-conventions.md` |
+| "Remember to check encoding when writing cross-platform code" | �?`backend/script-conventions.md` | �?`guides/cross-platform-thinking-guide.md` |
 
 **Guides should be short checklists that point to specs**, not duplicate the detailed rules.
 
@@ -124,7 +124,7 @@ Before editing, read the current code-spec to:
 - Find the right section for your update
 
 ```bash
-cat .trellis/spec/<category>/<file>.md
+cat .omtre/spec/<category>/<file>.md
 ```
 
 ### Step 4: Make the Update
@@ -301,10 +301,10 @@ If you're unsure what to update, answer these prompts:
    - Better approach (pattern)
 
 3. **Would future AI/developers need to know this?**
-   - To understand how the code works �?Yes, update spec
-   - To maintain or extend the feature �?Yes, update spec
-   - To avoid repeating mistakes �?Yes, update spec
-   - Purely one-off implementation detail �?Maybe skip
+   - To understand how the code works �?Yes, update spec
+   - To maintain or extend the feature �?Yes, update spec
+   - To avoid repeating mistakes �?Yes, update spec
+   - Purely one-off implementation detail �?Maybe skip
 
 4. **Which area does it relate to?**
    - [ ] Backend code
@@ -336,8 +336,8 @@ Before finishing your code-spec update:
 
 ```
 Development Flow:
-  Learn something �?/ �?Knowledge captured
-       �?                                 �?
+  Learn something �?/ �?Knowledge captured
+       �?                                 �?
   / ←──────────────────── Future sessions benefit
   (deep bug analysis)
 ```

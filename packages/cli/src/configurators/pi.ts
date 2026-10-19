@@ -28,14 +28,14 @@ function resolvePiCommands(): ReturnType<typeof resolveCommands> {
 }
 
 /**
- * The Pi file set — written at init and diffed by `trellis update`.
+ * The Pi file set — written at init and diffed by `omtre update`.
  */
 export function collectPiTemplates(): Map<string, string> {
   const files = new Map<string, string>();
   const ctx = AI_TOOLS.pi.templateContext;
 
   for (const command of resolvePiCommands()) {
-    files.set(`.pi/prompts/trellis-${command.name}.md`, command.content);
+    files.set(`.pi/prompts/omtre-${command.name}.md`, command.content);
   }
 
   // Shared skills go to `.agents/skills/` (Pi discovers this cross-platform
@@ -54,7 +54,7 @@ export function collectPiTemplates(): Map<string, string> {
     files.set(`.pi/agents/${agent.name}.md`, agent.content);
   }
 
-  files.set(".pi/extensions/trellis/index.ts", getExtensionTemplate());
+  files.set(".pi/extensions/omtre/index.ts", getExtensionTemplate());
 
   const settings = getSettingsTemplate();
   files.set(

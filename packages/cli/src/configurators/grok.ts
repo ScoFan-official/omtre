@@ -4,7 +4,7 @@
  * Grok Build (xAI) is a pull-based class-2 platform (agentCapable, no hooks).
  * Three output paths:
  * - `.grok/skills/` — workflow and bundled skills
- * - `.grok/commands/trellis-*.md` — flat slash commands (Grok layout)
+ * - `.grok/commands/omtre-*.md` — flat slash commands (Grok layout)
  * - `.grok/agents/` — sub-agent definitions with pull-based prelude
  *
  * Do not install SessionStart/UserPromptSubmit injection hooks here until Grok
@@ -22,7 +22,7 @@ import {
 } from "./shared.js";
 
 /**
- * The Grok Build file set — written at init and diffed by `trellis update`.
+ * The Grok Build file set — written at init and diffed by `omtre update`.
  */
 export function collectGrokTemplates(): Map<string, string> {
   const config = AI_TOOLS.grok;
@@ -38,10 +38,10 @@ export function collectGrokTemplates(): Map<string, string> {
     files.set(filePath, content);
   }
 
-  // 2. Commands → flat .grok/commands/trellis-<name>.md
+  // 2. Commands → flat .grok/commands/omtre-<name>.md
   //    Grok discovers slash commands as flat *.md under commands/ (stem = name).
   for (const cmd of resolveCommands(ctx)) {
-    files.set(`.grok/commands/trellis-${cmd.name}.md`, cmd.content);
+    files.set(`.grok/commands/omtre-${cmd.name}.md`, cmd.content);
   }
 
   // 3. Sub-agents → .grok/agents/ (with pull-based prelude on implement/check)

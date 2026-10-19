@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: Break the Loop - Deep Bug Analysis"
+description: "Omtre Copilot prompt: Break the Loop - Deep Bug Analysis"
 ---
 
 # Break the Loop - Deep Bug Analysis
@@ -59,8 +59,8 @@ What broader problems does this bug reveal?
 
 Solidify insights into the system:
 
-- [ ] Update `.trellis/spec/guides/` thinking guides
-- [ ] Update `.trellis/spec/backend/` or `frontend/` docs
+- [ ] Update `.omtre/spec/guides/` thinking guides
+- [ ] Update `.omtre/spec/backend/` or `frontend/` docs
 - [ ] Create issue record (if applicable)
 - [ ] Create feature ticket for root fix
 - [ ] Update check commands if needed
@@ -117,12 +117,12 @@ Three levels of insight:
 **IMPORTANT**: After completing the analysis above, you MUST immediately:
 
 1. **Update spec/guides** - Don't just list TODOs, actually update the relevant files:
-   - If it's a cross-platform issue â†?update `cross-platform-thinking-guide.md`
-   - If it's a cross-layer issue â†?update `cross-layer-thinking-guide.md`
-   - If it's a code reuse issue â†?update `code-reuse-thinking-guide.md`
-   - If it's domain-specific â†?update `backend/*.md` or `frontend/*.md`
+   - If it's a cross-platform issue ï¿½?update `cross-platform-thinking-guide.md`
+   - If it's a cross-layer issue ï¿½?update `cross-layer-thinking-guide.md`
+   - If it's a code reuse issue ï¿½?update `code-reuse-thinking-guide.md`
+   - If it's domain-specific ï¿½?update `backend/*.md` or `frontend/*.md`
 
-2. **Sync templates** - After updating `.trellis/spec/`, sync to `src/templates/markdown/spec/`
+2. **Sync templates** - After updating `.omtre/spec/`, sync to `src/templates/markdown/spec/`
 
 3. **Commit the spec updates** - This is the primary output, not just the analysis text
 

@@ -10,7 +10,7 @@ import {
 import { getAllAgents, getSettingsTemplate } from "../templates/qoder/index.js";
 
 /**
- * The Qoder file set — written at init and diffed by `trellis update`.
+ * The Qoder file set — written at init and diffed by `omtre update`.
  *
  * Qoder is a pull-based class-2 platform. Custom Commands require YAML
  * frontmatter with `name` + `description` and use a flat layout, so
@@ -22,7 +22,7 @@ import { getAllAgents, getSettingsTemplate } from "../templates/qoder/index.js";
 export function collectQoderTemplates(): Map<string, string> {
   const files = collectBothTemplates(
     AI_TOOLS.qoder.templateContext,
-    (n) => `.qoder/commands/trellis-${n}.md`,
+    (n) => `.qoder/commands/omtre-${n}.md`,
     ".qoder/skills",
     (filePath, content) => {
       const name = path.basename(filePath, ".md");

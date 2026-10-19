@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: PART 3: Customize Your Development Guidelines"
+description: "Omtre Copilot prompt: PART 3: Customize Your Development Guidelines"
 ---
 
 You are a senior developer onboarding a new team member to this project's AI-assisted workflow system.
@@ -45,7 +45,7 @@ Every AI session starts with a blank slate. Unlike human engineers who accumulat
 
 **The Problem**: Without memory, AI asks the same questions repeatedly, makes the same mistakes, and can't build on previous work.
 
-**The Solution**: The `.trellis/workspace/` system captures what happened in each session - what was done, what was learned, what problems were solved. The `/` command reads this history at session start, giving AI "artificial memory."
+**The Solution**: The `.omtre/workspace/` system captures what happened in each session - what was done, what was learned, what problems were solved. The `/` command reads this history at session start, giving AI "artificial memory."
 
 ### Challenge 2: AI Has Generic Knowledge, Not Project-Specific Knowledge
 
@@ -53,7 +53,7 @@ AI models are trained on millions of codebases - they know general patterns for 
 
 **The Problem**: AI writes code that "works" but doesn't match your project's style. It uses patterns that conflict with existing code. It makes decisions that violate unwritten team rules.
 
-**The Solution**: The `.trellis/spec/` directory contains project-specific guidelines. The `/before-*-dev` commands inject this specialized knowledge into AI context before coding starts.
+**The Solution**: The `.omtre/spec/` directory contains project-specific guidelines. The `/before-*-dev` commands inject this specialized knowledge into AI context before coding starts.
 
 ### Challenge 3: AI Context Window Is Limited
 
@@ -68,7 +68,7 @@ Even after injecting guidelines, AI has limited context window. As conversation 
 ## SYSTEM STRUCTURE
 
 ```
-.trellis/
+.omtre/
 |-- .developer              # Your identity (gitignored)
 |-- workflow.md             # Complete workflow documentation
 |-- workspace/              # "AI Memory" - session history
@@ -214,7 +214,7 @@ All the context AI built during this session will be lost when session ends. The
 ### Example 1: Bug Fix Session
 
 **[1/8] /** - AI needs project context before touching code
-**[2/8] python3 ./.trellis/scripts/task.py create "Fix bug" --description "Fix the reported bug" --slug fix-bug** - Track work for future reference
+**[2/8] python3 ./.omtre/scripts/task.py create "Fix bug" --description "Fix the reported bug" --slug fix-bug** - Track work for future reference
 **[3/8] /** - Inject project-specific development guidelines
 **[4/8] Investigate and fix the bug** - Actual development work
 **[5/8] /** - Re-verify code against guidelines
@@ -225,7 +225,7 @@ All the context AI built during this session will be lost when session ends. The
 ### Example 2: Planning Session (No Code)
 
 **[1/4] /** - Context needed even for non-coding work
-**[2/4] python3 ./.trellis/scripts/task.py create "Planning task" --description "Plan the upcoming work" --slug planning-task** - Planning is valuable work
+**[2/4] python3 ./.omtre/scripts/task.py create "Planning task" --description "Plan the upcoming work" --slug planning-task** - Planning is valuable work
 **[3/4] Review docs, create subtask list** - Actual planning work
 **[4/4] / (with --summary)** - Planning decisions must be recorded
 
@@ -272,23 +272,23 @@ After explaining Part 1 and Part 2, check if the project's development guideline
 
 ## Step 1: Check Current Guidelines Status
 
-Check if `.trellis/spec/` contains empty templates or customized guidelines:
+Check if `.omtre/spec/` contains empty templates or customized guidelines:
 
 ```bash
 # Check if files are still empty templates (look for placeholder text)
-grep -l "To be filled by the team" .trellis/spec/backend/*.md 2>/dev/null | wc -l
-grep -l "To be filled by the team" .trellis/spec/frontend/*.md 2>/dev/null | wc -l
+grep -l "To be filled by the team" .omtre/spec/backend/*.md 2>/dev/null | wc -l
+grep -l "To be filled by the team" .omtre/spec/frontend/*.md 2>/dev/null | wc -l
 ```
 
 ## Step 2: Determine Situation
 
 **Situation A: First-time setup (empty templates)**
 
-If guidelines are empty templates (contain "To be filled by the team"), this is the first time using Trellis in this project.
+If guidelines are empty templates (contain "To be filled by the team"), this is the first time using Omtre in this project.
 
 Explain to the developer:
 
-"I see that the development guidelines in `.trellis/spec/` are still empty templates. This is normal for a new Trellis setup!
+"I see that the development guidelines in `.omtre/spec/` are still empty templates. This is normal for a new Omtre setup!
 
 The templates contain placeholder text that needs to be replaced with YOUR project's actual conventions. Without this, `/before-*-dev` commands won't provide useful guidance.
 
@@ -298,7 +298,7 @@ The templates contain placeholder text that needs to be replaced with YOUR proje
 2. Identify the patterns and conventions already in use
 3. Document them in the guideline files
 
-For example, for `.trellis/spec/backend/database-guidelines.md`:
+For example, for `.omtre/spec/backend/database-guidelines.md`:
 - What ORM/query library does your project use?
 - How are migrations managed?
 - What naming conventions for tables/columns?
@@ -313,14 +313,14 @@ Explain to the developer:
 
 "Great! Your team has already customized the development guidelines. You can start using `/before-*-dev` commands right away.
 
-I recommend reading through `.trellis/spec/` to familiarize yourself with the team's coding standards."
+I recommend reading through `.omtre/spec/` to familiarize yourself with the team's coding standards."
 
 ## Step 3: Help Fill Guidelines (If Empty)
 
 If the developer wants help filling guidelines, create a feature to track this:
 
 ```bash
-python3 ./.trellis/scripts/task.py create "Fill spec guidelines" --description "Fill in the spec guideline files" --slug fill-spec-guidelines
+python3 ./.omtre/scripts/task.py create "Fill spec guidelines" --description "Fill in the spec guideline files" --slug fill-spec-guidelines
 ```
 
 Then systematically analyze the codebase and fill each guideline file:
@@ -349,14 +349,14 @@ Work through one file at a time:
 
 After covering all three parts, summarize:
 
-"You're now onboarded to the Trellis workflow system! Here's what we covered:
+"You're now onboarded to the Omtre workflow system! Here's what we covered:
 - Part 1: Core concepts (why this workflow exists)
 - Part 2: Real-world examples (how to apply the workflow)
 - Part 3: Guidelines status (empty templates need filling / already customized)
 
 **Next steps** (tell user):
 1. Run `/` to record this onboard session
-2. [If guidelines empty] Start filling in `.trellis/spec/` guidelines
+2. [If guidelines empty] Start filling in `.omtre/spec/` guidelines
 3. [If guidelines ready] Start your first development task
 
 What would you like to do first?"

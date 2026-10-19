@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: Create New Copilot Prompt"
+description: "Omtre Copilot prompt: Create New Copilot Prompt"
 ---
 
 # Create New Copilot Prompt

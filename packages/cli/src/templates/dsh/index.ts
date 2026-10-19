@@ -4,15 +4,15 @@
  * dsh is a class-2 pull-based, skills-only platform:
  * - Workflow + bundled skills go to the shared `.agents/skills/` root via
  *   the neutral resolver (byte-identical to Codex/Gemini/Pi/Kimi writes).
- * - User-invocable entry points (`trellis-start` / `trellis-continue` /
- *   `trellis-finish-work`, loaded by the dsh agent through its skill-loader
+ * - User-invocable entry points (`omtre-start` / `omtre-continue` /
+ *   `omtre-finish-work`, loaded by the dsh agent through its skill-loader
  *   tool) live under `.dsh/skills/<name>/SKILL.md` — dsh's own highest-rank
  *   project skill root.
  * - Operator guide `.dsh/DSH.md`.
  *
- * dsh has no shipped session-start hook, so `trellis-start` is kept as a
+ * dsh has no shipped session-start hook, so `omtre-start` is kept as a
  * user-invocable skill. dsh ships no project-level sub-agent definition
- * surface, so no trellis-implement / trellis-check / trellis-research agent
+ * surface, so no omtre-implement / omtre-check / omtre-research agent
  * prompts are written; implement/check/research run inline through the
  * workflow skills.
  */

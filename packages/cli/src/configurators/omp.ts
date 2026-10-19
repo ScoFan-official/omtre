@@ -10,7 +10,7 @@ import {
 import { getAllAgents, getExtensionTemplate } from "../templates/omp/index.js";
 
 /**
- * The OMP file set — written at init and diffed by `trellis update`.
+ * The OMP file set — written at init and diffed by `omtre update`.
  * OMP has no settings.json — the native provider auto-discovers all capabilities.
  */
 export function collectOmpTemplates(): Map<string, string> {
@@ -21,7 +21,7 @@ export function collectOmpTemplates(): Map<string, string> {
   // Commands → .omp/commands/
   for (const command of resolveCommands(ctx)) {
     files.set(
-      `.omp/commands/trellis-${command.name}.md`,
+      `.omp/commands/omtre-${command.name}.md`,
       wrapWithOmpFrontmatter(command.name, command.content),
     );
   }
@@ -42,7 +42,7 @@ export function collectOmpTemplates(): Map<string, string> {
 
   // Extension
   files.set(
-    ".omp/extensions/trellis/index.ts",
+    ".omp/extensions/omtre/index.ts",
     replacePythonCommandLiterals(getExtensionTemplate()),
   );
 

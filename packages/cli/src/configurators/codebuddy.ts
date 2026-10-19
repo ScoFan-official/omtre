@@ -10,9 +10,9 @@ import {
 } from "../templates/codebuddy/index.js";
 
 /**
- * The CodeBuddy file set — written at init and diffed by `trellis update`.
- * - commands/trellis/ — start + finish-work as slash commands
- * - skills/trellis-{name}/SKILL.md — auto-triggered skills from `common/skills/`
+ * The CodeBuddy file set — written at init and diffed by `omtre update`.
+ * - commands/omt/ — start + finish-work as slash commands
+ * - skills/omtre-{name}/SKILL.md — auto-triggered skills from `common/skills/`
  * - agents/{name}.md — sub-agent definitions
  * - hooks/*.py — shared hook scripts
  * - settings.json — hook configuration
@@ -20,7 +20,7 @@ import {
 export function collectCodebuddyTemplates(): Map<string, string> {
   const files = collectBothTemplates(
     AI_TOOLS.codebuddy.templateContext,
-    (n) => `.codebuddy/commands/trellis/${n}.md`,
+    (n) => `.codebuddy/commands/omt/${n}.md`,
     ".codebuddy/skills",
   );
   for (const agent of getAllAgents()) {

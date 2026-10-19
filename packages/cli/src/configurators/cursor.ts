@@ -7,9 +7,9 @@ import {
 import { getAllAgents, getHooksConfig } from "../templates/cursor/index.js";
 
 /**
- * The Cursor file set — written at init and diffed by `trellis update`.
- * - commands/ — start + finish-work as slash commands (trellis- prefix, flat)
- * - skills/trellis-{name}/SKILL.md — auto-triggered skills from `common/skills/`
+ * The Cursor file set — written at init and diffed by `omtre update`.
+ * - commands/ — start + finish-work as slash commands (omtre- prefix, flat)
+ * - skills/omtre-{name}/SKILL.md — auto-triggered skills from `common/skills/`
  * - agents/{name}.md — sub-agent definitions
  * - hooks/*.py — shared hook scripts
  * - hooks.json — hook configuration (separate file, not settings.json)
@@ -17,7 +17,7 @@ import { getAllAgents, getHooksConfig } from "../templates/cursor/index.js";
 export function collectCursorTemplates(): Map<string, string> {
   const files = collectBothTemplates(
     AI_TOOLS.cursor.templateContext,
-    (n) => `.cursor/commands/trellis-${n}.md`,
+    (n) => `.cursor/commands/omtre-${n}.md`,
     ".cursor/skills",
   );
   for (const agent of getAllAgents()) {

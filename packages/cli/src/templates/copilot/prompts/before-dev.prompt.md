@@ -1,5 +1,5 @@
 ---
-description: "Trellis Copilot prompt: before-dev.prompt"
+description: "Omtre Copilot prompt: before-dev.prompt"
 ---
 
 Read the relevant development guidelines before starting your task.
@@ -13,7 +13,7 @@ Execute these steps:
 
 2. **Discover packages and their spec layers**:
    ```bash
-   python3 ./.trellis/scripts/get_context.py --mode packages
+   python3 ./.omtre/scripts/get_context.py --mode packages
    ```
 
 3. **Identify which specs apply** to your task based on:
@@ -23,7 +23,7 @@ Execute these steps:
 
 4. **Read the spec index** for each relevant module:
    ```bash
-   cat .trellis/spec/<package>/<layer>/index.md
+   cat .omtre/spec/<package>/<layer>/index.md
    ```
    Follow the **"Pre-Development Checklist"** section in the index.
 
@@ -31,7 +31,7 @@ Execute these steps:
 
 6. **Always read shared guides**:
    ```bash
-   cat .trellis/spec/guides/index.md
+   cat .omtre/spec/guides/index.md
    ```
 
 7. Understand the coding standards and patterns you need to follow, then proceed with your development plan.

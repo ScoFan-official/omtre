@@ -10,14 +10,14 @@ import {
 import { getAllAgents, getSettingsTemplate } from "../templates/trae/index.js";
 
 /**
- * The Trae IDE file set — written at init and diffed by `trellis update`.
+ * The Trae IDE file set — written at init and diffed by `omtre update`.
  *
  * Trae is a class-2 platform: hooks fire on SessionStart + UserPromptSubmit in
  * the main session, but cannot inject sub-agent prompts. Sub-agents use a
  * pull-based prelude to load context themselves.
  *
  *   .trae/
- *   ├── commands/      # Slash commands (trellis-*.md with frontmatter)
+ *   ├── commands/      # Slash commands (omtre-*.md with frontmatter)
  *   ├── skills/        # Skill definitions
  *   ├── agents/        # Sub-agent definitions with pull-based prelude
  *   ├── hooks/         # Shared Python hook scripts
@@ -26,7 +26,7 @@ import { getAllAgents, getSettingsTemplate } from "../templates/trae/index.js";
 export function collectTraeTemplates(): Map<string, string> {
   const files = collectBothTemplates(
     AI_TOOLS.trae.templateContext,
-    (n) => `.trae/commands/trellis-${n}.md`,
+    (n) => `.trae/commands/omtre-${n}.md`,
     ".trae/skills",
     (filePath, content) => {
       const name = path.basename(filePath, ".md");

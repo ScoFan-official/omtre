@@ -6,7 +6,7 @@
  * UserPromptSubmit, and PreToolUse for Agent/Task), so `hasHooks` is true.
  * Four output paths:
  * - `.zcode/skills/` — ZCode-private workflow and bundled skills
- * - `.zcode/commands/trellis/` — slash commands (invoked as /trellis:<name>)
+ * - `.zcode/commands/omt/` — slash commands (invoked as /omt:<name>)
  * - `.zcode/agents/` — sub-agent definitions with hook-injection fallback
  * - `.zcode/hooks/` + `.zcode/config.json` — shared Python hook scripts and
  *   the workspace hook registration
@@ -28,7 +28,7 @@ import {
 const ZCODE_HOOKS_DIR = ".zcode/hooks";
 
 /**
- * The ZCode file set — written at init and diffed by `trellis update`.
+ * The ZCode file set — written at init and diffed by `omtre update`.
  */
 export function collectZcodeTemplates(): Map<string, string> {
   const config = AI_TOOLS.zcode;
@@ -44,9 +44,9 @@ export function collectZcodeTemplates(): Map<string, string> {
     files.set(filePath, content);
   }
 
-  // 2. Commands → .zcode/commands/trellis/
+  // 2. Commands → .zcode/commands/omt/
   for (const cmd of resolveCommands(ctx)) {
-    files.set(`.zcode/commands/trellis/${cmd.name}.md`, cmd.content);
+    files.set(`.zcode/commands/omt/${cmd.name}.md`, cmd.content);
   }
 
   // 3. Sub-agents → .zcode/agents/ (hook-inject; templates carry fallback).
@@ -71,7 +71,7 @@ export function collectZcodeTemplates(): Map<string, string> {
 
 /** Print the manual global-plugin fallback required by affected ZCode builds. */
 export function printZcodeSetupHint(): void {
-  if (process.env.VITEST || process.env.TRELLIS_QUIET) return;
+  if (process.env.VITEST || process.env.OMTRE_QUIET) return;
 
   const plugin = AI_TOOLS.zcode.globalHookPlugin;
   if (!plugin) return;

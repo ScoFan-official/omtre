@@ -20,9 +20,9 @@ import {
 
 /**
  * User-set `model` / `model_reasoning_effort` top-level keys on a generated
- * `trellis-*.toml` agent profile. Users configure sub-agent models by
+ * `omtre-*.toml` agent profile. Users configure sub-agent models by
  * editing these files directly (matches Codex's own docs) — there is no
- * `.trellis/config.yaml` indirection.
+ * `.omtre/config.yaml` indirection.
  */
 export interface CodexAgentModelKeys {
   model?: string;
@@ -31,7 +31,7 @@ export interface CodexAgentModelKeys {
 
 /**
  * Extract user-set `model` / `model_reasoning_effort` top-level keys from an
- * existing `trellis-*.toml` agent profile. Only matches uncommented
+ * existing `omtre-*.toml` agent profile. Only matches uncommented
  * `key = "value"` lines (the static template's `# model = "..."` hint lines
  * never match). Not a general TOML parser — these files are known-flat with
  * no `[section]` headers.
@@ -82,7 +82,7 @@ function tomlUnescape(value: string): string {
 
 /**
  * Re-insert preserved `model` / `model_reasoning_effort` keys right after
- * `sandbox_mode = "..."` in a freshly rendered `trellis-*.toml` agent
+ * `sandbox_mode = "..."` in a freshly rendered `omtre-*.toml` agent
  * profile. Unset keys omit the corresponding line entirely (Codex falls
  * back through spawn value -> `[agents]` default -> parent). The fresh
  * template content never contains these keys itself (only commented
@@ -113,13 +113,13 @@ export function applyCodexAgentModelKeys(
 
 function isCodexAgentTomlPath(filePath: string): boolean {
   return (
-    filePath.startsWith(".codex/agents/trellis-") && filePath.endsWith(".toml")
+    filePath.startsWith(".codex/agents/omtre-") && filePath.endsWith(".toml")
   );
 }
 
 /**
  * Preserve any user-set `model` / `model_reasoning_effort` keys from the
- * on-disk `.codex/agents/trellis-*.toml` files (at `cwd`) into every
+ * on-disk `.codex/agents/omtre-*.toml` files (at `cwd`) into every
  * matching entry of `files` (the freshly rendered desired content). Mutates
  * `files` in place. Must run before hash comparison / write so that a
  * project whose only local edit is these two keys is not flagged as a
@@ -143,7 +143,7 @@ export function preserveCodexAgentModelKeys(
 }
 
 /**
- * The Codex file set — written at init and diffed by `trellis update`.
+ * The Codex file set — written at init and diffed by `omtre update`.
  * - .agents/skills/ — shared skills from common source, rendered with the
  *   neutral placeholder resolver so the auto-triggered skill templates from
  *   `common/skills/` are byte-identical regardless of which platform writes
@@ -190,7 +190,7 @@ export function collectCodexTemplates(): Map<string, string> {
  */
 export async function configureCodex(cwd: string): Promise<void> {
   // Build map → post-process map → write. Rendered up front so the preserved
-  // user keys are grafted onto exactly the bytes `trellis update` compares
+  // user keys are grafted onto exactly the bytes `omtre update` compares
   // against — update.ts runs preserveCodexAgentModelKeys over its already
   // rendered map too, and the two must agree. writeTemplateMap re-renders,
   // which is a no-op (replacePythonCommandLiterals is idempotent).
@@ -199,7 +199,7 @@ export async function configureCodex(cwd: string): Promise<void> {
   await writeTemplateMap(cwd, files);
 
   // RESIDUAL — not expressible as a path→content pair: a directory with no
-  // files in it. Trellis ships no Codex-specific skills (the workflow skills
+  // files in it. Omtre ships no Codex-specific skills (the workflow skills
   // all land in .agents/skills/, which Codex reads too), but users need the
   // conventional place for their own, and manifest-prune.ts treats
   // `.codex/skills/<custom>/` as user-owned data the manifest must not claim.
@@ -211,17 +211,17 @@ export async function configureCodex(cwd: string): Promise<void> {
   // accepts `codex_hooks`. Without this flag the hooks.json is ignored and
   // inject-workflow-state.py will never fire. Codex 0.129+ also gates each
   // installed hook behind a one-time `/hooks` review — until the user approves
-  // it the workflow breadcrumb won't auto-inject (the trellis-bootstrap
+  // it the workflow breadcrumb won't auto-inject (the omtre-bootstrap
   // fallback in inject-workflow-state.py covers this case). Documented in
   // spec/cli/backend/platform-integration.md.
-  if (!process.env.VITEST && !process.env.TRELLIS_QUIET) {
+  if (!process.env.VITEST && !process.env.OMTRE_QUIET) {
     process.stderr.write(
       "⚠️  Codex hooks require `features.hooks = true` in your " +
         "~/.codex/config.toml (Codex 0.129+; older versions: `codex_hooks = true`). " +
-        "On Codex 0.129+ also run `/hooks` once to approve the Trellis " +
-        "hooks. Without these the Trellis workflow breadcrumb and native " +
+        "On Codex 0.129+ also run `/hooks` once to approve the Omtre " +
+        "hooks. Without these the Omtre workflow breadcrumb and native " +
         "sub-agent context won't auto-inject (agents retain a pull fallback). " +
-        "See Trellis docs for details.\n",
+        "See Omtre docs for details.\n",
     );
   }
 }

@@ -2,7 +2,7 @@
  * DeepSeek Harness (dsh) configurator.
  *
  * dsh is a class-2 pull-based platform (agentCapable, no shipped
- * session-start hook, no project-level hooks/settings Trellis may write).
+ * session-start hook, no project-level hooks/settings Omtre may write).
  * The dsh agent loads skills by name through its skill-loader tool and
  * discovers them from the project roots `<projectRoot>/.dsh/skills`
  * (rank 100) and `<projectRoot>/.agents/skills` (rank 200). Two output
@@ -11,15 +11,15 @@
  *   resolver so the files stay byte-identical to Codex/Gemini/Pi/Kimi
  *   writes into the same shared root.
  * - `.dsh/skills/` — dsh-private user-invocable entry skills
- *   (`trellis-start` / `trellis-continue` / `trellis-finish-work`),
- *   platform-resolved (`--platform dsh`, `trellis-<name>` skill refs), in
+ *   (`omtre-start` / `omtre-continue` / `omtre-finish-work`),
+ *   platform-resolved (`--platform dsh`, `omtre-<name>` skill refs), in
  *   dsh's own highest-rank project skill root.
  * - `.dsh/DSH.md` — operator guide; also gives the platform a
- *   configDir-owned tracked file so `trellis platforms` / `uninstall`
+ *   configDir-owned tracked file so `omtre platforms` / `uninstall`
  *   can detect and scope dsh.
  *
  * dsh ships no project-level sub-agent definition surface, so no
- * trellis-implement / trellis-check / trellis-research agent prompts are
+ * omtre-implement / omtre-check / omtre-research agent prompts are
  * written; implement/check/research run inline through the workflow skills.
  */
 
@@ -34,14 +34,14 @@ import {
 
 /**
  * Command templates that become user-invocable dsh skills
- * (`trellis-start` / `trellis-continue` / `trellis-finish-work`). dsh has
+ * (`omtre-start` / `omtre-continue` / `omtre-finish-work`). dsh has
  * no slash-command palette, so the session-boundary commands are delivered
  * as SKILL.md files in `.dsh/skills/`.
  */
 const DSH_COMMAND_SKILL_NAMES = new Set([
-  "trellis-start",
-  "trellis-continue",
-  "trellis-finish-work",
+  "omtre-start",
+  "omtre-continue",
+  "omtre-finish-work",
 ]);
 
 /** Session-boundary commands resolved as dsh skills (dsh-private root, so
@@ -54,7 +54,7 @@ function resolveDshCommandSkills(): ReturnType<typeof resolveAllAsSkills> {
 }
 
 /**
- * The dsh file set — written at init and diffed by `trellis update`.
+ * The dsh file set — written at init and diffed by `omtre update`.
  */
 export function collectDshTemplates(): Map<string, string> {
   const ctx = AI_TOOLS.dsh.templateContext;

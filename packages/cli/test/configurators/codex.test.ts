@@ -16,7 +16,7 @@ import { getAllAgents } from "../../src/templates/codex/index.js";
 describe("extractCodexAgentModelKeys", () => {
   it("returns empty object when no model keys are present", () => {
     const content = [
-      'name = "trellis-implement"',
+      'name = "omtre-implement"',
       'sandbox_mode = "workspace-write"',
       "",
       'developer_instructions = """',
@@ -101,7 +101,7 @@ describe("extractCodexAgentModelKeys", () => {
 
 describe("applyCodexAgentModelKeys", () => {
   const fresh = [
-    'name = "trellis-implement"',
+    'name = "omtre-implement"',
     'sandbox_mode = "workspace-write"',
     '# model = "gpt-5.4"',
     '# model_reasoning_effort = "low"',
@@ -150,7 +150,7 @@ describe("preserveCodexAgentModelKeys", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-codex-model-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-codex-model-"));
   });
 
   afterEach(() => {
@@ -225,7 +225,7 @@ describe("preserveCodexAgentModelKeys", () => {
     ).not.toMatch(/^model = "/m);
   });
 
-  it("does not touch files outside .codex/agents/trellis-*.toml", () => {
+  it("does not touch files outside .codex/agents/omtre-*.toml", () => {
     const files = new Map<string, string>([
       [".codex/hooks.json", '{"hooks":[]}'],
     ]);

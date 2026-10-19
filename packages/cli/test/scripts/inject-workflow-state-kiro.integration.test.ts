@@ -18,7 +18,7 @@ import os from "node:os";
 import path from "node:path";
 import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = getOmtreTemplatePath("scripts");
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 const SHARED_HOOKS = path.resolve(
   __dirname,
   "../../src/templates/shared-hooks",

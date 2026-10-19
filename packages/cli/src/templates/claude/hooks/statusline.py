@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Trellis StatusLine — project-level status display for Claude Code.
+Omtre StatusLine — project-level status display for Claude Code.
 
-Reads Claude Code session JSON from stdin + Trellis task data from filesystem.
+Reads Claude Code session JSON from stdin + Omtre task data from filesystem.
 Outputs 1-2 lines:
   With active task:  [P1] Task title (status)  +  info line
   Without task:      info line only
@@ -70,39 +70,39 @@ def _normalize_task_ref(task_ref: str) -> str:
         normalized = normalized[2:]
 
     if normalized.startswith("tasks/"):
-        return f".trellis/{normalized}"
+        return f".omtre/{normalized}"
 
     return normalized
 
 
-def _resolve_task_dir(trellis_dir: Path, task_ref: str) -> Path:
+def _resolve_task_dir(omtre_dir: Path, task_ref: str) -> Path:
     normalized = _normalize_task_ref(task_ref)
     path_obj = Path(normalized)
     if path_obj.is_absolute():
         return path_obj
-    if normalized.startswith(".trellis/"):
-        return trellis_dir.parent / path_obj
-    return trellis_dir / "tasks" / path_obj
+    if normalized.startswith(".omtre/"):
+        return omtre_dir.parent / path_obj
+    return omtre_dir / "tasks" / path_obj
 
 
-def _find_trellis_dir() -> Path | None:
-    """Walk up from cwd to find .trellis/ directory."""
+def _find_omtre_dir() -> Path | None:
+    """Walk up from cwd to find .omtre/ directory."""
     current = Path.cwd()
     for parent in [current, *current.parents]:
-        candidate = parent / ".trellis"
+        candidate = parent / ".omtre"
         if candidate.is_dir():
             return candidate
     return None
 
 
-def _get_current_task(trellis_dir: Path) -> dict | None:
-    """Load current task info through Trellis' active task resolver."""
-    return _get_current_task_for_input(trellis_dir, {})
+def _get_current_task(omtre_dir: Path) -> dict | None:
+    """Load current task info through Omtre's active task resolver."""
+    return _get_current_task_for_input(omtre_dir, {})
 
 
-def _get_current_task_for_input(trellis_dir: Path, cc_data: dict) -> dict | None:
+def _get_current_task_for_input(omtre_dir: Path, cc_data: dict) -> dict | None:
     """Load current task info for the Claude Code session JSON."""
-    scripts_dir = trellis_dir / "scripts"
+    scripts_dir = omtre_dir / "scripts"
     if str(scripts_dir) not in sys.path:
         sys.path.insert(0, str(scripts_dir))
     try:
@@ -110,11 +110,11 @@ def _get_current_task_for_input(trellis_dir: Path, cc_data: dict) -> dict | None
     except Exception:
         return None
 
-    active = resolve_active_task(trellis_dir.parent, cc_data, platform="claude")
+    active = resolve_active_task(omtre_dir.parent, cc_data, platform="claude")
     if not active.task_path:
         return None
 
-    task_path = _resolve_task_dir(trellis_dir, active.task_path)
+    task_path = _resolve_task_dir(omtre_dir, active.task_path)
     if active.stale:
         return {
             "title": task_path.name,
@@ -135,9 +135,9 @@ def _get_current_task_for_input(trellis_dir: Path, cc_data: dict) -> dict | None
     }
 
 
-def _count_active_tasks(trellis_dir: Path) -> int:
+def _count_active_tasks(omtre_dir: Path) -> int:
     """Count non-archived task directories with valid task.json."""
-    tasks_dir = trellis_dir / "tasks"
+    tasks_dir = omtre_dir / "tasks"
     if not tasks_dir.is_dir():
         return 0
     count = 0
@@ -147,8 +147,8 @@ def _count_active_tasks(trellis_dir: Path) -> int:
     return count
 
 
-def _get_developer(trellis_dir: Path) -> str:
-    content = _read_text(trellis_dir / ".developer")
+def _get_developer(omtre_dir: Path) -> str:
+    content = _read_text(omtre_dir / ".developer")
     if not content:
         return "unknown"
     for line in content.splitlines():
@@ -257,13 +257,13 @@ def main() -> None:
     except (json.JSONDecodeError, ValueError):
         cc_data = {}
 
-    trellis_dir = _find_trellis_dir()
+    omtre_dir = _find_omtre_dir()
     SEP = " \033[90m·\033[0m "
 
-    # --- Trellis data ---
-    task = _get_current_task_for_input(trellis_dir, cc_data) if trellis_dir else None
-    dev = _get_developer(trellis_dir) if trellis_dir else ""
-    task_count = _count_active_tasks(trellis_dir) if trellis_dir else 0
+    # --- Omtre data ---
+    task = _get_current_task_for_input(omtre_dir, cc_data) if omtre_dir else None
+    dev = _get_developer(omtre_dir) if omtre_dir else ""
+    task_count = _count_active_tasks(omtre_dir) if omtre_dir else 0
 
     # --- CC session data ---
     model = cc_data.get("model", {}).get("display_name", "?")

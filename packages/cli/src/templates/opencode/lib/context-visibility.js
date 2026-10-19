@@ -13,7 +13,7 @@ const MAX_CONTEXT_PART_OFFSET = Object.values(CONTEXT_PART_KINDS).reduce(
 /**
  * Return the first ordinary user-authored text part.
  *
- * Trellis plugins can run in either order, so callers must not mistake a
+ * Omtre plugins can run in either order, so callers must not mistake a
  * synthetic context part inserted by another plugin for the user's prompt.
  */
 export function findUserTextPart(parts) {

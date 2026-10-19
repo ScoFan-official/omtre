@@ -2,9 +2,9 @@ import { AI_TOOLS } from "../types/ai-tools.js";
 import { collectBothTemplates } from "./shared.js";
 
 /**
- * The Kilo CLI file set — written at init and diffed by `trellis update`.
+ * The Kilo CLI file set — written at init and diffed by `omtre update`.
  * - workflows/ — start + finish-work as slash commands
- * - skills/trellis-{name}/SKILL.md — auto-triggered skills from `common/skills/`
+ * - skills/omtre-{name}/SKILL.md — auto-triggered skills from `common/skills/`
  */
 export function collectKiloTemplates(): Map<string, string> {
   return collectBothTemplates(

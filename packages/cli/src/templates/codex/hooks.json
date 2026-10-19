@@ -13,7 +13,7 @@
     ],
     "SubagentStart": [
       {
-        "matcher": "^(?:trellis-implement|trellis-check|trellis-research)$",
+        "matcher": "^(?:omtre-implement|omtre-check|omtre-research)$",
         "hooks": [
           {
             "type": "command",
