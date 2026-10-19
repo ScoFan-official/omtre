@@ -284,7 +284,7 @@ def cmd_run_verify(args: argparse.Namespace) -> int:
             print(json.dumps({"verified": False, "reason": "no_contract", "results": []}, ensure_ascii=False))
         else:
             print(colored("No verification contract recorded. Add one with:", Colors.YELLOW))
-            print("  python .trellis/scripts/task.py add-verify <dir> \"<cmd>\"")
+            print("  python .omtre/scripts/task.py add-verify <dir> \"<cmd>\"")
         return 1
 
     repo_root = get_repo_root()
@@ -320,7 +320,7 @@ def verify_required(repo_root: Path) -> bool:
     `supervised-delivery` blocks by default and the other two stay as loud
     warnings until the operator opts in.
     """
-    config = clai_delta.read_trellis_config(repo_root)
+    config = clai_delta.read_omtre_config(repo_root)
     default = clai_delta.read_autonomy(repo_root) == clai_delta.TIER_SUPERVISED
     if "verify_required" not in config:
         return default
@@ -370,7 +370,7 @@ def archive_gate(task_data: dict, task_dir: Path, args: argparse.Namespace, repo
             print(
                 colored(
                     f"Warning: archiving without evidence — {message}. "
-                    "Set `verify_required: true` in .trellis/config.yaml to make this a refusal.",
+                    "Set `verify_required: true` in .omtre/config.yaml to make this a refusal.",
                     Colors.YELLOW,
                 )
             )
@@ -378,7 +378,7 @@ def archive_gate(task_data: dict, task_dir: Path, args: argparse.Namespace, repo
         print(
             colored(
                 f"Error: refusing to archive — {message} (verify_required is on).\n"
-                "  Record one: python .trellis/scripts/task.py add-verify <dir> \"<cmd>\"\n"
+                "  Record one: python .omtre/scripts/task.py add-verify <dir> \"<cmd>\"\n"
                 "  Or bypass for this task: --skip-verify \"<why>\"",
                 Colors.RED,
             ),

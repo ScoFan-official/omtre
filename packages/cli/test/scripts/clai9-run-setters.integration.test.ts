@@ -17,11 +17,9 @@ import { spawnSync, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 function findPython(): string | null {
   for (const bin of ["python3", "python"]) {
@@ -38,10 +36,10 @@ function findPython(): string | null {
 const PYTHON = findPython();
 
 function runTask(repo: string, ...args: string[]) {
-  return spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  return spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
-    env: { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" },
+    env: { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" },
   });
 }
 
@@ -60,7 +58,7 @@ function createTask(repo: string, slug: string): string {
     throw new Error(`create ${slug} failed: ${r.stdout}${r.stderr}`);
   }
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(slug));
   if (!dir) throw new Error(`no task dir matching ${slug}`);
   return dir;
@@ -73,7 +71,7 @@ function readField(
 ): unknown {
   const data = JSON.parse(
     fs.readFileSync(
-      path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+      path.join(repo, ".omtre", "tasks", dirName, "task.json"),
       "utf-8",
     ),
   ) as Record<string, unknown>;
@@ -81,7 +79,7 @@ function readField(
 }
 
 function taskJsonPath(repo: string, dirName: string): string {
-  return path.join(repo, ".trellis", "tasks", dirName, "task.json");
+  return path.join(repo, ".omtre", "tasks", dirName, "task.json");
 }
 
 let repo = "";
@@ -89,21 +87,21 @@ let worktree = "";
 
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "set-worktree-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".omtre", "scripts"), {
     recursive: true,
   });
-  const init = spawnSync(PYTHON as string, [".trellis/scripts/init_developer.py", "tester"], {
+  const init = spawnSync(PYTHON as string, [".omtre/scripts/init_developer.py", "tester"], {
     cwd: repo,
     encoding: "utf-8",
-    env: { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" },
+    env: { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" },
   });
   if (init.status !== 0) {
     throw new Error(`init_developer failed: ${init.stderr}`);
   }
   // The runner creates the worktree before recording it, so fixtures point at
   // a directory that actually exists.
-  worktree = path.join(repo, ".trellis", ".runtime", "worktrees", "demo");
+  worktree = path.join(repo, ".omtre", ".runtime", "worktrees", "demo");
   fs.mkdirSync(worktree, { recursive: true });
 });
 
@@ -121,7 +119,7 @@ describe.skipIf(PYTHON === null)("task.py set-worktree", () => {
 
   it("overwrites an earlier pointer (re-claim after a failed run)", () => {
     const dir = createTask(repo, "a-one");
-    const other = path.join(repo, ".trellis", ".runtime", "worktrees", "demo2");
+    const other = path.join(repo, ".omtre", ".runtime", "worktrees", "demo2");
     fs.mkdirSync(other, { recursive: true });
 
     expect(runTask(repo, "set-worktree", dir, worktree).status).toBe(0);
@@ -140,7 +138,7 @@ describe.skipIf(PYTHON === null)("task.py set-worktree", () => {
 
   it("refuses a path that is not an existing directory", () => {
     const dir = createTask(repo, "a-one");
-    const ghost = path.join(repo, ".trellis", ".runtime", "worktrees", "ghost");
+    const ghost = path.join(repo, ".omtre", ".runtime", "worktrees", "ghost");
     const r = runTask(repo, "set-worktree", dir, ghost);
 
     expect(r.status).not.toBe(0);
@@ -151,7 +149,7 @@ describe.skipIf(PYTHON === null)("task.py set-worktree", () => {
   it("reports a task dir that does not exist without creating one", () => {
     const r = runTask(repo, "set-worktree", "01-01-nope", worktree);
     expect(r.status).not.toBe(0);
-    expect(fs.existsSync(path.join(repo, ".trellis", "tasks", "01-01-nope"))).toBe(
+    expect(fs.existsSync(path.join(repo, ".omtre", "tasks", "01-01-nope"))).toBe(
       false,
     );
   });

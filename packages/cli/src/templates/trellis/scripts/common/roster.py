@@ -22,10 +22,10 @@ import re
 from pathlib import Path
 
 from .paths import DIR_WORKFLOW
-from .trellis_config import parse_simple_yaml
+from .omtre_config import parse_simple_yaml
 
-# A card name resolves to ``.trellis/agents/<name>.md`` or
-# ``.trellis/agents/<name>/AGENT.md`` — the same rule agent-loader.ts's
+# A card name resolves to ``.omtre/agents/<name>.md`` or
+# ``.omtre/agents/<name>/AGENT.md`` — the same rule agent-loader.ts's
 # findAgentFile applies. Anything else is rejected as a name, not treated
 # as a path.
 _SAFE_CARD_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
@@ -49,7 +49,7 @@ def agent_card_path(repo_root: Path, name: str) -> Path | None:
     """Resolve a card name the way findAgentFile does.
 
     ``<name>.md`` wins over ``<name>/AGENT.md``. The resolved path must stay
-    inside ``.trellis/agents/`` — a ``..``-style name would otherwise escape
+    inside ``.omtre/agents/`` — a ``..``-style name would otherwise escape
     the roster directory (the name regex alone still admits ``..``).
     """
     if not _SAFE_CARD_NAME.match(name):
@@ -126,7 +126,7 @@ def _card_reference_problems(
     if card is None:
         return [
             f"{source}: agent card '{card_name}' not found "
-            f"(expected .trellis/agents/{card_name}.md). {fix_hint}"
+            f"(expected .omtre/agents/{card_name}.md). {fix_hint}"
         ]
     problems: list[str] = []
     fm = _card_frontmatter(card)
@@ -193,7 +193,7 @@ def _card_reference_problems(
 
 
 def _config_roster_problems(repo_root: Path) -> list[str]:
-    """Validate the roster-facing keys of .trellis/config.yaml."""
+    """Validate the roster-facing keys of .omtre/config.yaml."""
     problems: list[str] = []
     config_file = repo_root / DIR_WORKFLOW / _CONFIG_FILE
     try:

@@ -191,7 +191,7 @@ def cmd_start(args: argparse.Namespace) -> int:
 
     if not full_path.is_dir():
         print(colored(f"Error: Task not found: {task_input}", Colors.RED))
-        print("Hint: Use task name (e.g., 'my-task') or full path (e.g., '.trellis/tasks/01-31-my-task')")
+        print("Hint: Use task name (e.g., 'my-task') or full path (e.g., '.omtre/tasks/01-31-my-task')")
         return 1
 
     # Context-manifest gate (#573): a seeded-but-uncurated implement/check
@@ -212,8 +212,8 @@ def cmd_start(args: argparse.Namespace) -> int:
                 Colors.RED,
             ))
             print("Sub-agents (implement/check) would run with zero spec context.")
-            print(f"  Curate:  python3 .trellis/scripts/task.py add-context {task_input} implement <path> \"<why>\"")
-            print(f"  Verify:  python3 .trellis/scripts/task.py validate {task_input}")
+            print(f"  Curate:  python3 .omtre/scripts/task.py add-context {task_input} implement <path> \"<why>\"")
+            print(f"  Verify:  python3 .omtre/scripts/task.py validate {task_input}")
             print("  Intentionally empty? Re-run start with --allow-empty-context")
             return 1
 
@@ -230,7 +230,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         # an absolute-path fallback) is exactly the pattern that let a `..`
         # ref escape into storage before this fix.
         print(colored(f"Error: Task not found: {task_input}", Colors.RED))
-        print("Hint: Use task name (e.g., 'my-task') or full path (e.g., '.trellis/tasks/01-31-my-task')")
+        print("Hint: Use task name (e.g., 'my-task') or full path (e.g., '.omtre/tasks/01-31-my-task')")
         return 1
 
     task_json_path = full_path / FILE_TASK_JSON
@@ -281,7 +281,7 @@ def cmd_start(args: argparse.Namespace) -> int:
 
     if not resolve_context_key():
         # Degraded mode: no session identity available.
-        # Hook didn't inject TRELLIS_CONTEXT_ID (common on Windows + Claude Code,
+        # Hook didn't inject OMTRE_CONTEXT_ID (common on Windows + Claude Code,
         # --continue resume path, fork distribution, hooks disabled, etc.). Skip
         # per-session pointer write; AI continues based on conversation context.
         print(colored(
@@ -291,7 +291,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         ))
         print(colored(
             "Hint: run inside an AI IDE/session that exposes session identity, "
-            "or set TRELLIS_CONTEXT_ID before running task.py start.",
+            "or set OMTRE_CONTEXT_ID before running task.py start.",
             Colors.YELLOW,
         ))
 
@@ -634,10 +634,10 @@ Examples:
   python3 task.py create "Add login feature" --description "Email + password sign-in" --slug add-login
   python3 task.py create "Add login feature" --description "Email + password sign-in" --slug add-login --package cli
   python3 task.py create "Add login feature" --description "Email + password sign-in" --meta linear=ENG-123 --meta epic=auth
-  python3 task.py create "Child task" --description "Session cookie handling" --slug child --parent .trellis/tasks/01-21-parent
-  python3 task.py add-context <dir> implement .trellis/spec/cli/backend/auth.md "Auth guidelines"
+  python3 task.py create "Child task" --description "Session cookie handling" --slug child --parent .omtre/tasks/01-21-parent
+  python3 task.py add-context <dir> implement .omtre/spec/cli/backend/auth.md "Auth guidelines"
   python3 task.py set-branch <dir> task/add-login
-  python3 task.py start .trellis/tasks/01-21-add-login
+  python3 task.py start .omtre/tasks/01-21-add-login
   python3 task.py current --source
   python3 task.py finish
   python3 task.py rename add-login add-sso --dry-run  # Preview the change set
@@ -677,9 +677,9 @@ def main() -> int:
             "sub-agent-capable platforms and curated by the AI during planning when needed.",
             file=sys.stderr,
         )
-        print("See .trellis/workflow.md planning artifact guidance or run:", file=sys.stderr)
+        print("See .omtre/workflow.md planning artifact guidance or run:", file=sys.stderr)
         print(
-            "  python3 ./.trellis/scripts/get_context.py --mode phase --step 1",
+            "  python3 ./.omtre/scripts/get_context.py --mode phase --step 1",
             file=sys.stderr,
         )
         print(
@@ -791,14 +791,14 @@ def main() -> int:
     p_worktree.add_argument("dir", help="Task directory")
     p_worktree.add_argument("path", help="Worktree directory, or - to clear")
 
-    # set-pr (CLAI-9 — run support: the review pointer trellis run writes back)
+    # set-pr (CLAI-9 — run support: the review pointer omtre run writes back)
     p_pr = subparsers.add_parser(
         "set-pr", help="Record the review PR for a ticket"
     )
     p_pr.add_argument("dir", help="Task directory")
     p_pr.add_argument("url", help="PR URL (http/https)")
 
-    # delivery-gate (CLAI-8 — the push answer for `trellis run`)
+    # delivery-gate (CLAI-8 — the push answer for `omtre run`)
     p_gate = subparsers.add_parser(
         "delivery-gate", help="May this repo push the given ref?"
     )

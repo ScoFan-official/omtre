@@ -1,6 +1,6 @@
 /**
  * Integration test for the `.gitattributes` "merge=union" rule shipped for
- * developer journal files under `.trellis/workspace/` (#415 quick-fix tier).
+ * developer journal files under `.omtre/workspace/` (#415 quick-fix tier).
  *
  * Simulates two branches diverging from a common base, each appending a
  * different session block to the same journal file, then merges them with
@@ -14,10 +14,11 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const GITATTRIBUTES_TEMPLATE = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/gitattributes.txt",
+const GITATTRIBUTES_TEMPLATE = path.join(
+  getOmtreTemplatePath(),
+  "gitattributes.txt",
 );
 
 function git(cwd: string, ...args: string[]): { status: number; stdout: string; stderr: string } {
@@ -37,14 +38,14 @@ describe("journal-*.md merge=union gitattributes rule", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-gitattr-merge-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-gitattr-merge-"));
     gitOk(tmp, "init", "-q", "-b", "main");
     gitOk(tmp, "config", "user.email", "test@example.com");
     gitOk(tmp, "config", "user.name", "Test");
 
     fs.copyFileSync(GITATTRIBUTES_TEMPLATE, path.join(tmp, ".gitattributes"));
 
-    const workspaceDir = path.join(tmp, ".trellis", "workspace", "tester");
+    const workspaceDir = path.join(tmp, ".omtre", "workspace", "tester");
     fs.mkdirSync(workspaceDir, { recursive: true });
     fs.writeFileSync(
       path.join(workspaceDir, "journal-1.md"),
@@ -58,7 +59,7 @@ describe("journal-*.md merge=union gitattributes rule", () => {
     // Domain-layer append surfaces covered by merge=union.
     const domainWorklogDir = path.join(
       tmp,
-      ".trellis",
+      ".omtre",
       "domains",
       "board",
       "worklog",
@@ -69,7 +70,7 @@ describe("journal-*.md merge=union gitattributes rule", () => {
       "# worklog — devin-MACHINE-subagent\n\nbase entry\n",
     );
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "domains", "REGISTRY.md"),
+      path.join(tmp, ".omtre", "domains", "REGISTRY.md"),
       "# REGISTRY\n\nbase-line/\n",
     );
 
@@ -83,14 +84,14 @@ describe("journal-*.md merge=union gitattributes rule", () => {
 
   it("does not apply merge=union to index.md", () => {
     const content = fs.readFileSync(path.join(tmp, ".gitattributes"), "utf-8");
-    expect(content).toContain(".trellis/workspace/*/journal-*.md merge=union");
+    expect(content).toContain(".omtre/workspace/*/journal-*.md merge=union");
     expect(content).not.toMatch(/index\.md.*merge=union/);
   });
 
   it("merges two branches' appended journal sessions cleanly (no conflict markers)", () => {
     const journalPath = path.join(
       tmp,
-      ".trellis",
+      ".omtre",
       "workspace",
       "tester",
       "journal-1.md",
@@ -118,13 +119,13 @@ describe("journal-*.md merge=union gitattributes rule", () => {
   it("merges parallel appends to domain worklog and REGISTRY cleanly (no conflict markers)", () => {
     const worklogPath = path.join(
       tmp,
-      ".trellis",
+      ".omtre",
       "domains",
       "board",
       "worklog",
       "devin-MACHINE-subagent.md",
     );
-    const registryPath = path.join(tmp, ".trellis", "domains", "REGISTRY.md");
+    const registryPath = path.join(tmp, ".omtre", "domains", "REGISTRY.md");
 
     gitOk(tmp, "checkout", "-q", "-b", "branch-a");
     fs.appendFileSync(worklogPath, "\n## entry from branch-a\n");
@@ -154,7 +155,7 @@ describe("journal-*.md merge=union gitattributes rule", () => {
   it("still produces a normal git conflict on index.md for the same parallel-edit scenario", () => {
     const indexPath = path.join(
       tmp,
-      ".trellis",
+      ".omtre",
       "workspace",
       "tester",
       "index.md",

@@ -101,7 +101,7 @@ const PLATFORM_HOOK_CONFIGS = [
   {
     // Cursor's beforeSubmitPrompt schema accepts only `{continue, user_message}`
     // — it cannot inject context. The per-turn workflow-state hook is therefore
-    // not wired for Cursor; only sessionStart carries Trellis context.
+    // not wired for Cursor; only sessionStart carries Omtre context.
     platform: "cursor",
     path: "cursor/hooks.json",
     schema: "flat",

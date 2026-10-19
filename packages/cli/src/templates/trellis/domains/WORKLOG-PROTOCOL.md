@@ -62,8 +62,8 @@ commit 粒度：一条工作线一串 commit，不混线；message 写清「做�
 
 裁决优先级（写死）：**git 历史 > worklog 条目 > README `## 进度`**。
 
-1. `git pull`（有 remote）+ `git log -1 -- .trellis/domains/<slug>/` —— 板块工件可达。
-2. 锚定进行中/受阻：`grep -rnE "\[~\]|\[!\]|🔄|⛔" .trellis/domains/<slug>/`——看全板标记，不凭文件顶部猜闲忙。
+1. `git pull`（有 remote）+ `git log -1 -- .omtre/domains/<slug>/` —— 板块工件可达。
+2. 锚定进行中/受阻：`grep -rnE "\[~\]|\[!\]|🔄|⛔" .omtre/domains/<slug>/`——看全板标记，不凭文件顶部猜闲忙。
 3. worklog ↔ README 进度按条目对账：勾了没证据 → 标 `[!]` 待人工裁决；worklog 有证据没勾 → 补勾。
 4. **信任但核验**：条目引用的 commit 跑 `git merge-base --is-ancestor <hash> HEAD` 验可达；其「验证」字段命令重跑一遍（防幻影地基）。
 5. 标 `[~]` 开新条目续做。

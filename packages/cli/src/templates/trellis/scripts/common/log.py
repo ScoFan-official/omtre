@@ -2,7 +2,7 @@
 Terminal output utilities: colors and structured logging.
 
 Single source of truth for Colors and log_* functions
-used across all Trellis scripts.
+used across all omtre scripts.
 """
 
 from __future__ import annotations

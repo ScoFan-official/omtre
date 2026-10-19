@@ -14,11 +14,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 const DEVELOPER = "tester";
 
@@ -47,25 +45,25 @@ function setupRepo(tmp: string, autoCommit: boolean): void {
   git(tmp, "config", "user.email", "test@example.com");
   git(tmp, "config", "user.name", "Test");
 
-  const scriptsDest = path.join(tmp, ".trellis", "scripts");
+  const scriptsDest = path.join(tmp, ".omtre", "scripts");
   fs.mkdirSync(scriptsDest, { recursive: true });
   fs.cpSync(TEMPLATE_SCRIPTS, scriptsDest, { recursive: true });
 
   fs.writeFileSync(
-    path.join(tmp, ".trellis", "config.yaml"),
+    path.join(tmp, ".omtre", "config.yaml"),
     `session_auto_commit: ${autoCommit}\n`,
   );
 
   const r = spawnSync(
     "python3",
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: tmp, encoding: "utf-8" },
   );
   if (r.status !== 0) {
     throw new Error(`init_developer failed: ${r.stderr}`);
   }
 
-  // .trellis/.developer, .current-task, and .runtime/ are gitignored by
+  // .omtre/.developer, .current-task, and .runtime/ are gitignored by
   // design (session-local state) — commit everything else so a linked
   // worktree checkout has the scripts/config/journal/index.
   git(tmp, "add", "-A");
@@ -77,7 +75,7 @@ function runAddSession(
 ): { status: number; stdout: string; stderr: string } {
   const r = spawnSync(
     "python3",
-    [".trellis/scripts/add_session.py", "--title", "parallel session", "--no-commit"],
+    [".omtre/scripts/add_session.py", "--title", "parallel session", "--no-commit"],
     { cwd: repo, encoding: "utf-8" },
   );
   return { status: r.status ?? 1, stdout: r.stdout, stderr: r.stderr };
@@ -88,7 +86,7 @@ describe.skipIf(!hasPython())("add_session.py worktree warning", () => {
   let worktreeDir: string | null;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-worktree-warn-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-worktree-warn-"));
     worktreeDir = null;
   });
 
@@ -114,7 +112,7 @@ describe.skipIf(!hasPython())("add_session.py worktree warning", () => {
     setupRepo(tmp, true);
 
     worktreeDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), "trellis-worktree-warn-linked-"),
+      path.join(os.tmpdir(), "omtre-worktree-warn-linked-"),
     );
     fs.rmdirSync(worktreeDir);
     git(tmp, "worktree", "add", worktreeDir, "-b", "feature-x");
@@ -122,14 +120,14 @@ describe.skipIf(!hasPython())("add_session.py worktree warning", () => {
     // Developer identity is gitignored (session-local), so a fresh worktree
     // checkout does not carry it over — set it directly for this worktree.
     fs.writeFileSync(
-      path.join(worktreeDir, ".trellis", ".developer"),
+      path.join(worktreeDir, ".omtre", ".developer"),
       `name=${DEVELOPER}\n`,
     );
 
     const r = spawnSync(
       "python3",
       [
-        ".trellis/scripts/add_session.py",
+        ".omtre/scripts/add_session.py",
         "--title",
         "parallel session",
         "--no-commit",
@@ -145,20 +143,20 @@ describe.skipIf(!hasPython())("add_session.py worktree warning", () => {
     setupRepo(tmp, false);
 
     worktreeDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), "trellis-worktree-warn-off-"),
+      path.join(os.tmpdir(), "omtre-worktree-warn-off-"),
     );
     fs.rmdirSync(worktreeDir);
     git(tmp, "worktree", "add", worktreeDir, "-b", "feature-y");
 
     fs.writeFileSync(
-      path.join(worktreeDir, ".trellis", ".developer"),
+      path.join(worktreeDir, ".omtre", ".developer"),
       `name=${DEVELOPER}\n`,
     );
 
     const r = spawnSync(
       "python3",
       [
-        ".trellis/scripts/add_session.py",
+        ".omtre/scripts/add_session.py",
         "--title",
         "parallel session",
         "--no-commit",

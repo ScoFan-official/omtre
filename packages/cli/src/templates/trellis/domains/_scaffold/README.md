@@ -1,7 +1,7 @@
 <!-- 旗位行：施工旗必须落在文件第一行（`head -1` 直读）。插旗 = 把本行替换为 `旗: <平台>-<机器>-<写作者> · <task-slug或会话标识> · 自 <YYYY-MM-DD HH:mm>` 并随 commit 入库生效；收工同一 commit 删旗行、恢复本注释。读永远自由，写先要旗。 -->
 # <板块slug> — <一句话用途，与 REGISTRY 行对齐>
 
-> 本板块文件全部属用户数据，不在 `trellis update` 模板管理面；协议权威文本 = `../DISCIPLINE.md` / `../WORKLOG-PROTOCOL.md`。
+> 本板块文件全部属用户数据，不在 `omtre update` 模板管理面；协议权威文本 = `../DISCIPLINE.md` / `../WORKLOG-PROTOCOL.md`。
 > 骨架 = 本文件（旗位 + 下列四节）+ `BOUNDARY.md` + `worklog/` + `review/`；首个 `NN-*` 随第一条真实需求同 commit 落地，不预建空文档。
 
 ## 边界

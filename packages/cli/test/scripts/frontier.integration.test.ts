@@ -18,11 +18,9 @@ import { spawnSync, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 const DEVELOPER = "tester";
 
@@ -43,13 +41,13 @@ const PYTHON = findPython();
 function testEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    TRELLIS_WRITER: "qoder-TESTHOST-agent",
-    TRELLIS_CONTEXT_ID: "frontier-itest",
+    OMTRE_WRITER: "qoder-TESTHOST-agent",
+    OMTRE_CONTEXT_ID: "frontier-itest",
   };
 }
 
 function runTask(repo: string, ...args: string[]) {
-  return spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  return spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
     env: testEnv(),
@@ -67,7 +65,7 @@ function frontierJson(repo: string, ...extra: string[]) {
 
 function dirOf(repo: string, needle: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(needle));
   if (!dir) throw new Error(`no task dir matching ${needle}`);
   return dir;
@@ -76,7 +74,7 @@ function dirOf(repo: string, needle: string): string {
 function readTaskJson(repo: string, dirName: string): Record<string, unknown> {
   return JSON.parse(
     fs.readFileSync(
-      path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+      path.join(repo, ".omtre", "tasks", dirName, "task.json"),
       "utf-8",
     ),
   );
@@ -88,7 +86,7 @@ function writeTaskJson(
   data: Record<string, unknown>,
 ): void {
   fs.writeFileSync(
-    path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+    path.join(repo, ".omtre", "tasks", dirName, "task.json"),
     JSON.stringify(data, null, 2),
     "utf-8",
   );
@@ -116,13 +114,13 @@ let repo = "";
 
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "frontier-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".omtre", "scripts"), {
     recursive: true,
   });
   const init = spawnSync(
     PYTHON as string,
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: repo, encoding: "utf-8", env: testEnv() },
   );
   if (init.status !== 0) {

@@ -11,9 +11,9 @@ Note:
     ``cmd_init_context`` was removed in v0.5.0-beta.12. JSONL context files
     are created empty at ``task.py create`` time; the AI agent curates real
     entries during planning when the task needs sub-agent/spec context. See
-    ``.trellis/workflow.md`` for the current planning artifact contract.
+    ``.omtre/workflow.md`` for the current planning artifact contract.
 
-    Older Trellis versions seeded those files with a ``{"_example": ...}``
+    Older omtre versions seeded those files with a ``{"_example": ...}``
     placeholder row. ``cmd_validate`` now rejects that row so a task cannot
     validate locally and then fail PR preflight, which treats it as
     unresolved scaffolding.
@@ -37,7 +37,7 @@ from .paths import DIR_ARCHIVE, DIR_TASKS, DIR_WORKFLOW, FILE_TASK_JSON, get_rep
 from .task_utils import resolve_task_dir
 
 # Extensions that look like code rather than spec/research docs. Entries with
-# one of these extensions outside .trellis/spec/, docs/docs-site, or the
+# one of these extensions outside .omtre/spec/, docs/docs-site, or the
 # task's own directory get a hygiene warning in `task.py validate` — the
 # reader is a sub-agent, not a human, so code paths belong in the diff the
 # agent reads itself, not in implement.jsonl / check.jsonl.
@@ -221,7 +221,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
             print(
                 colored(
                     "Warning: no verification contract — `verify_required: true` is set "
-                    "in .trellis/config.yaml and `archive` will refuse this task.",
+                    "in .omtre/config.yaml and `archive` will refuse this task.",
                     Colors.YELLOW,
                 )
             )
@@ -266,12 +266,12 @@ def cmd_validate(args: argparse.Namespace) -> int:
 def _is_exempt_from_code_file_warning(file_path: str, task_rel: str) -> bool:
     """Whether a jsonl entry path is exempt from the code-file hygiene warning.
 
-    Exempt: spec docs (``.trellis/spec/``), documentation (``docs``,
+    Exempt: spec docs (``.omtre/spec/``), documentation (``docs``,
     ``docs-site``), and the task's own directory (execution plans, generated
     artifacts, etc. legitimately live there).
     """
     posix_path = file_path.replace("\\", "/").lstrip("/")
-    exempt_prefixes = (".trellis/spec/", "docs/", "docs-site/")
+    exempt_prefixes = (".omtre/spec/", "docs/", "docs-site/")
     if posix_path.startswith(exempt_prefixes):
         return True
     if task_rel and (posix_path == task_rel or posix_path.startswith(f"{task_rel}/")):
@@ -335,7 +335,7 @@ def _resolve_context_entry_path(
 def _validate_jsonl(jsonl_file: Path, repo_root: Path, task_dir: Path | None = None) -> int:
     """Validate a single JSONL file.
 
-    ``{"_example": ...}`` placeholder rows written by older Trellis versions
+    ``{"_example": ...}`` placeholder rows written by older omtre versions
     are hard errors: PR preflight rejects them as unresolved scaffolding, so
     accepting them here would pass locally and fail later. Other rows without
     a ``file`` field are skipped silently, matching what consumers do.
@@ -459,7 +459,7 @@ def _validate_jsonl(jsonl_file: Path, repo_root: Path, task_dir: Path | None = N
             f"  {colored(f'{file_name}: ✗ (0 curated entries — sub-agents would get zero spec context)', Colors.RED)}"
         )
         print(
-            f"    Curate it:  python3 .trellis/scripts/task.py add-context <task> {action} <path> \"<why>\""
+            f"    Curate it:  python3 .omtre/scripts/task.py add-context <task> {action} <path> \"<why>\""
         )
         print(
             "    Intentionally empty? Bypass at start: task.py start <task> --allow-empty-context"

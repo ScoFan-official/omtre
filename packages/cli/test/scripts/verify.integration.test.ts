@@ -17,11 +17,9 @@ import { spawnSync, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 const DEVELOPER = "tester";
 
@@ -42,8 +40,8 @@ const PYTHON = findPython();
 function testEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    TRELLIS_WRITER: "qoder-TESTHOST-agent",
-    TRELLIS_CONTEXT_ID: "verify-itest",
+    OMTRE_WRITER: "qoder-TESTHOST-agent",
+    OMTRE_CONTEXT_ID: "verify-itest",
   };
 }
 
@@ -51,7 +49,7 @@ let repo = "";
 let env: NodeJS.ProcessEnv = testEnv();
 
 function runTask(...args: string[]) {
-  return spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  return spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
     env,
@@ -60,7 +58,7 @@ function runTask(...args: string[]) {
 
 function dirOf(needle: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(needle));
   if (!dir) throw new Error(`no task dir matching ${needle}`);
   return dir;
@@ -69,7 +67,7 @@ function dirOf(needle: string): string {
 function readTaskJson(dirName: string): Record<string, unknown> {
   return JSON.parse(
     fs.readFileSync(
-      path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+      path.join(repo, ".omtre", "tasks", dirName, "task.json"),
       "utf-8",
     ),
   );
@@ -77,7 +75,7 @@ function readTaskJson(dirName: string): Record<string, unknown> {
 
 function writeTaskJson(dirName: string, data: Record<string, unknown>): void {
   fs.writeFileSync(
-    path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+    path.join(repo, ".omtre", "tasks", dirName, "task.json"),
     JSON.stringify(data, null, 2),
     "utf-8",
   );
@@ -99,12 +97,12 @@ function createTask(slug: string): string {
 
 function isActive(dirName: string): boolean {
   return fs.existsSync(
-    path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+    path.join(repo, ".omtre", "tasks", dirName, "task.json"),
   );
 }
 
 function setAutonomy(mode: string | null): void {
-  const configPath = path.join(repo, ".trellis", "config.yaml");
+  const configPath = path.join(repo, ".omtre", "config.yaml");
   if (mode === null) {
     if (fs.existsSync(configPath)) fs.rmSync(configPath);
     return;
@@ -114,13 +112,13 @@ function setAutonomy(mode: string | null): void {
 
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "verify-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".omtre", "scripts"), {
     recursive: true,
   });
   const init = spawnSync(
     PYTHON as string,
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: repo, encoding: "utf-8", env: testEnv() },
   );
   if (init.status !== 0)
@@ -232,7 +230,7 @@ describe("run-verify", () => {
     expect(runTask("add-verify", dir, "python hang.py", "--timeout", "2").status).toBe(0);
 
     const started = Date.now();
-    const r = spawnSync(PYTHON as string, [".trellis/scripts/task.py", "run-verify", dir, "--json"], {
+    const r = spawnSync(PYTHON as string, [".omtre/scripts/task.py", "run-verify", dir, "--json"], {
       cwd: repo,
       encoding: "utf-8",
       env,
@@ -281,7 +279,7 @@ describe("archive gate", () => {
     // The inline-comment form is the one that silently breaks a config reader,
     // so the accessor's fixture has to cover it.
     fs.writeFileSync(
-      path.join(repo, ".trellis", "config.yaml"),
+      path.join(repo, ".omtre", "config.yaml"),
       "verify_required: true   # archive needs a contract\n",
       "utf-8",
     );
@@ -296,7 +294,7 @@ describe("archive gate", () => {
     // The third tier promised this: an unattended run must not archive on
     // prose. The key overrides in both directions.
     fs.writeFileSync(
-      path.join(repo, ".trellis", "config.yaml"),
+      path.join(repo, ".omtre", "config.yaml"),
       "autonomy: supervised-delivery\n",
       "utf-8",
     );
@@ -306,7 +304,7 @@ describe("archive gate", () => {
     expect(isActive(dir)).toBe(true);
 
     fs.writeFileSync(
-      path.join(repo, ".trellis", "config.yaml"),
+      path.join(repo, ".omtre", "config.yaml"),
       "autonomy: supervised-delivery\nverify_required: no\n",
       "utf-8",
     );
@@ -353,11 +351,11 @@ describe("archive gate", () => {
     expect(r.status).toBe(0);
 
     const months = fs.readdirSync(
-      path.join(repo, ".trellis", "tasks", "archive"),
+      path.join(repo, ".omtre", "tasks", "archive"),
     );
     const archived = path.join(
       repo,
-      ".trellis",
+      ".omtre",
       "tasks",
       "archive",
       months[0],
@@ -392,7 +390,7 @@ describe("validate shape checks", () => {
   it("warns about a missing contract when verify_required is on", () => {
     const dir = createTask("s-three");
     fs.writeFileSync(
-      path.join(repo, ".trellis", "config.yaml"),
+      path.join(repo, ".omtre", "config.yaml"),
       "verify_required: true\n",
       "utf-8",
     );

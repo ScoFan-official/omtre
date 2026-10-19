@@ -2,13 +2,13 @@
 """CLAI fork delta — domain-board mechanics collected in one module.
 
 This file is the single place the CLAI (ClaiDevSkill) fork diverges from
-upstream Trellis in script logic. Call sites stay thin: one or two lines in
+upstream in script logic. Call sites stay thin: one or two lines in
 `task.py` (start gates / finish warn), `common/task_store.py` (create sugar /
 archive gates), `common/task_context.py` (validate reconcile), and
 `common/session_context.py` (context rendering) delegate here.
 
 CLAI DELTA LIST (numbered for the contract document — when an upstream
-`trellis update` conflicts, reconcile against this list item by item):
+`omtre update` conflicts, reconcile against this list item by item):
 
     CLAI-1  task.py create/start --domain <slug>
             Sugar for a `meta.domain` write on the task (same effect as
@@ -19,12 +19,12 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             (旗行), start is refused with the flag reported. Own flag or a
             stale flag (>24h) proceeds. This is the only mechanical gate in
             the flag protocol — flag insertion/removal itself stays manual.
-            Identity resolution (D8): `TRELLIS_WRITER` wins, else
+            Identity resolution (D8): `OMTRE_WRITER` wins, else
             `{platform}-{machine}` from the repo's own config dirs, so a Qoder
             / Codex / Claude session no longer computes a Devin identity and
             cannot mistake Devin's live flag for its own.
     CLAI-3  task.py validate domain ↔ REGISTRY reconciliation
-            Every directory under .trellis/domains/ (except _scaffold) must
+            Every directory under .omtre/domains/ (except _scaffold) must
             have a REGISTRY.md line, and every REGISTRY line must resolve to
             an existing directory. Mismatches fail validate.
             Sibling check: when a worklog entry heading carries a trailing
@@ -42,7 +42,7 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             per-turn hook appends to the no_task breadcrumb (both read
             the same common/frontier.py — no second query implementation).
     CLAI-6  get_context 当前模式 (autonomy) line
-            Reads .trellis/config.yaml `autonomy:`; `gated` | `hands-off` |
+            Reads .omtre/config.yaml `autonomy:`; `gated` | `hands-off` |
             `supervised-delivery`, default hands-off when the key is absent or
             unrecognized (an unrecognized value never becomes the push tier).
     CLAI-7  start artifact gate + archive design-review gate
@@ -56,7 +56,7 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             with neither meta.domain nor a `Domain:` line passes, so
             pre-domain-layer tickets are never retro-locked.
     CLAI-8  task.py delivery-gate <ref> [--json]
-            The push answer for `trellis run`, per the three-tier model in the
+            The push answer for `omtre run`, per the three-tier model in the
             domain's `02-e2e-delivery-gate-model.md`. Decision order is
             load-bearing: tier (`supervised-delivery` only — every other tier
             refuses outright), then protected positions (a whitelist entry
@@ -83,7 +83,7 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             The mechanical face of the commit discipline `workflow.md` states in
             prose (Phase 3.4 / finish-work: files you did not edit this session
             NEVER enter a commit; board files land in their own close-out
-            commit). `trellis run` asks this one question instead of carrying a
+            commit). `omtre run` asks this one question instead of carrying a
             second copy of the rule list, and an agent driving commits by hand
             can ask the same verb — one authority. Answers with a machine code
             (`ok` + `offending`); refuses rather than warns, because in an
@@ -92,16 +92,16 @@ CLAI DELTA LIST (numbered for the contract document — when an upstream
             "secret": this list also gates delivery, so a false positive halts
             an entire line, and `src/use-secret-store.ts` is application code.
 
-Writer identity (own-writer matching): `TRELLIS_WRITER` env var wins; otherwise
+Writer identity (own-writer matching): `OMTRE_WRITER` env var wins; otherwise
 `{platform}-{hostname}`, the platform read from the repo's own config dirs
 (`common/cli_adapter.detect_platform`) — Devin sessions therefore keep the
 `devin-<hostname>` string they always produced. A flag's writer field is an
 opaque string compared by equality.
 Agents that name themselves with a writer suffix (`qoder-HOST-agent`, the shape
-the domain boards actually carry) must set `TRELLIS_WRITER` to that exact string
+the domain boards actually carry) must set `OMTRE_WRITER` to that exact string
 — detection cannot guess a suffix. Repos whose hygiene rules ban machine
 identifiers in committed files (e.g. "no hostnames in git history") should set
-`TRELLIS_WRITER` to a neutral alias like `devin` — the protocol only needs
+`OMTRE_WRITER` to a neutral alias like `devin` — the protocol only needs
 uniqueness.
 """
 
@@ -122,7 +122,7 @@ from .io import describe_json_read_failure, read_json_checked, write_json
 from .log import Colors, colored
 from .paths import DIR_WORKFLOW, FILE_TASK_JSON, get_repo_root
 from .task_utils import resolve_task_dir
-from .trellis_config import read_trellis_config
+from .omtre_config import read_omtre_config
 
 
 # =============================================================================
@@ -130,8 +130,8 @@ from .trellis_config import read_trellis_config
 # =============================================================================
 
 # Env override for the writer identity stamped into flag lines. Mirrors the
-# TRELLIS_DEVELOPER pattern: env first, convention-derived default after.
-ENV_WRITER = "TRELLIS_WRITER"
+# OMTRE_DEVELOPER pattern: env first, convention-derived default after.
+ENV_WRITER = "OMTRE_WRITER"
 
 DIR_DOMAINS = "domains"
 SCAFFOLD_DIR = "_scaffold"  # skeleton template — not a board, exempt everywhere
@@ -169,7 +169,7 @@ _WORKLOG_STATUS_RE = re.compile(r"^\s*-\s*\*\*状态\*\*：\s*\[([~x])\]")
 def own_writer_id(repo_root: Path | None = None) -> str:
     """Return this session's writer identity for flag ownership checks.
 
-    `TRELLIS_WRITER` wins (explicit identity — the deterministic fixture knob and
+    `OMTRE_WRITER` wins (explicit identity — the deterministic fixture knob and
     the escape for agents that name themselves with a writer suffix, e.g.
     `qoder-HOST-agent`; the protocol only needs the string to be stable).
     Otherwise `{platform}-{machine}`, with the platform read from the repo's own
@@ -512,8 +512,8 @@ def worklog_anchor_problems(repo_root: Path) -> list[str]:
 
 def read_autonomy(repo_root: Path) -> str:
     """Read config.yaml `autonomy:`; unknown/absent → hands-off. CLAI-6."""
-    # read_trellis_config already collapses missing/malformed to {}.
-    config = read_trellis_config(repo_root)
+    # read_omtre_config already collapses missing/malformed to {}.
+    config = read_omtre_config(repo_root)
     value = config.get("autonomy")
     if isinstance(value, str) and value.strip() in KNOWN_AUTONOMY:
         return value.strip()
@@ -675,7 +675,7 @@ FILE_IMPLEMENT = "implement.md"
 PRD_DOMAIN_SCAN_LINES = 40
 
 _DOMAIN_LINE_RE = re.compile(r"^\s*Domain\s*[:：]\s*(.+?)\s*$")
-_DOMAIN_PATH_RE = re.compile(r"\.trellis/domains/([a-z0-9][a-z0-9-]*)/?")
+_DOMAIN_PATH_RE = re.compile(r"\.omtre/domains/([a-z0-9][a-z0-9-]*)/?")
 # `none（<reason>）` — the reason is mandatory; parens may be full- or
 # half-width. A bare `none` is a shape error, not a valid declaration.
 _DOMAIN_NONE_RE = re.compile(r"none\s*[（(]\s*\S.*?[）)]\s*$", re.IGNORECASE)
@@ -688,7 +688,7 @@ FRONTEND_SUFFIXES = frozenset(
     (".tsx", ".jsx", ".vue", ".svelte", ".astro", ".css", ".scss", ".less", ".html")
 )
 FRONTEND_SPEC_PATHS = frozenset(
-    (".trellis/spec/product.md", ".trellis/spec/design-system.md")
+    (".omtre/spec/product.md", ".omtre/spec/design-system.md")
 )
 
 
@@ -721,7 +721,7 @@ def start_artifact_problems(task_json_path: Path, repo_root: Path) -> list[str]:
     Fires on routing intent, not on every task: either meta.domain resolves
     to a board, or prd.md carries a `Domain:` line (shape-checked). Tasks
     with neither pass — pre-domain-layer tickets (Laber/Rakazo history) are
-    never retro-locked by a `trellis update`.
+    never retro-locked by an `omtre update`.
 
     In a `verify_required: true` repo a missing verification contract also
     refuses start: the same opt-in that makes archive refuse should fail
@@ -756,13 +756,13 @@ def start_artifact_problems(task_json_path: Path, repo_root: Path) -> list[str]:
             problems.append(
                 f"prd.md has no `Domain:` line — meta.domain={domain} routes "
                 "this task to a board. Add one of:\n"
-                f"    Domain: .trellis/domains/{domain}/\n"
+                f"    Domain: .omtre/domains/{domain}/\n"
                 "    Domain: none（<one-line reason>）"
             )
         elif classify_domain_value(value) is None:
             problems.append(
                 f"malformed `Domain:` line: '{value}' — use "
-                "`.trellis/domains/<slug>/` or `none（<one-line reason>）` "
+                "`.omtre/domains/<slug>/` or `none（<one-line reason>）` "
                 "(a bare slug is neither form)."
             )
 
@@ -975,7 +975,7 @@ def read_delivery_config(repo_root: Path) -> dict:
     as `malformed` rather than coerced — an unparseable whitelist must not
     silently become no whitelist or a guessed one.
     """
-    raw = read_trellis_config(repo_root).get(DELIVERY_SECTION)
+    raw = read_omtre_config(repo_root).get(DELIVERY_SECTION)
     result = {"auto_push_refs": [], "protected_refs": [], "malformed": None}
     if raw is None:
         return result
@@ -1139,10 +1139,10 @@ def cmd_set_pr(args: argparse.Namespace) -> int:
     return 0
 
 
-# CLAI-10 — the commit-discipline rule list, owned here so `trellis run` and an
+# CLAI-10 — the commit-discipline rule list, owned here so `omtre run` and an
 # agent committing by hand answer to the same authority.
 PROTECTED_PATH_FRAGMENTS = (
-    ".trellis/domains/",
+    ".omtre/domains/",
     ".env",
     ".pem",
     ".key",
@@ -1162,7 +1162,7 @@ PROTECTED_PATH_FRAGMENTS = (
 def is_protected_path(path: str) -> bool:
     """Does this path belong in an automated commit? True means it does NOT.
 
-    Board files (`.trellis/domains/**`) land in a human close-out commit under
+    Board files (`.omtre/domains/**`) land in a human close-out commit under
     the writer's own flag; key material never lands anywhere unreviewed.
     """
     norm = str(path or "").replace("\\", "/").lower()

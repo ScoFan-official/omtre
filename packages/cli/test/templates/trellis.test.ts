@@ -34,13 +34,13 @@ import {
   implementAgentTemplate,
   checkAgentTemplate,
   configYamlTemplate,
-} from "../../src/templates/trellis/index.js";
+} from "../../src/templates/extract.js";
 
 // =============================================================================
 // Template Constants — module-level string exports
 // =============================================================================
 
-describe("trellis template constants", () => {
+describe("omtre template constants", () => {
   const allTemplates = {
     scriptsInit,
     commonInit,
@@ -221,12 +221,19 @@ describe("trellis template constants", () => {
         return [];
       }
       const templates = collectPlatformTemplates(id);
+      const legacyPrefix = `${"t"}${"rellis"}`;
+      const legacyTitle = `${"T"}${"rellis"}`;
+      const agentPattern = new RegExp(`(?:omtre|${legacyPrefix})-(implement|check)`);
+      const preludePatterns = [
+        "Required: Load Omtre Context First",
+        `Required: Load ${legacyTitle} Context First`,
+      ];
       const hasPullBasedPrelude =
         templates !== undefined &&
         [...templates.entries()].some(
           ([filePath, content]) =>
-            /trellis-(implement|check)/.test(filePath) &&
-            content.includes("Required: Load Trellis Context First"),
+            agentPattern.test(filePath) &&
+            preludePatterns.some((p) => content.includes(p)),
         );
       if (!hasPullBasedPrelude) {
         return [];
@@ -278,26 +285,26 @@ describe("trellis template constants", () => {
     const block = inProgressBreadcrumb();
     expect(block).toContain("Main-session default");
     expect(block).toContain("Sub-agent self-exemption");
-    expect(block).toContain("already running as `trellis-implement`");
-    expect(block).toContain("do NOT spawn another `trellis-implement`");
-    expect(block).toContain("already running as `trellis-check`");
-    expect(block).toContain("do NOT spawn another `trellis-check`");
+    expect(block).toContain("already running as `omtre-implement`");
+    expect(block).toContain("do NOT spawn another `omtre-implement`");
+    expect(block).toContain("already running as `omtre-check`");
+    expect(block).toContain("do NOT spawn another `omtre-check`");
     expect(block).toContain("main session only");
   });
 
   it("[issue-237] workflow.md Phase 2 dispatch steps require prompt recursion guards", () => {
     expect(workflowMdTemplate).toContain("**Dispatch prompt guard**");
     expect(workflowMdTemplate).toContain(
-      "already the `trellis-implement` sub-agent",
+      "already the `omtre-implement` sub-agent",
     );
     expect(workflowMdTemplate).toContain(
-      "not spawn another `trellis-implement` / `trellis-check`",
+      "not spawn another `omtre-implement` / `omtre-check`",
     );
     expect(workflowMdTemplate).toContain(
-      "already the `trellis-check` sub-agent",
+      "already the `omtre-check` sub-agent",
     );
     expect(workflowMdTemplate).toContain(
-      "not spawn another `trellis-check` / `trellis-implement`",
+      "not spawn another `omtre-check` / `omtre-implement`",
     );
   });
 
@@ -404,7 +411,7 @@ describe("getAllScripts", () => {
 
 // =============================================================================
 // getAllAgents — channel runtime agent definitions dispatched at init/update.
-// agent-loader.ts loads `.trellis/agents/<name>.md` and requires `---` YAML
+// agent-loader.ts loads `.omtre/agents/<name>.md` and requires `---` YAML
 // frontmatter at the top with a flat `name: <name>` field. These tests pin the
 // contract so a future template edit can't silently break channel spawn.
 // =============================================================================
@@ -431,7 +438,7 @@ describe("getAllAgents", () => {
       expect(frontmatterClose, `${file} must have a closing --- frontmatter line`).toBeGreaterThan(0);
       const frontmatter = content.slice(4, frontmatterClose);
       // The agent's `name:` field must match the file basename so
-      // `trellis channel spawn --agent <name>` resolves correctly.
+      // `omtre channel spawn --agent <name>` resolves correctly.
       const expectedName = file.replace(/\.md$/, "");
       const nameLine = frontmatter
         .split("\n")
@@ -446,7 +453,7 @@ describe("getAllAgents", () => {
 });
 
 // =============================================================================
-// getAllDomainFiles — domain-layer scaffold seeded once under .trellis/domains/.
+// getAllDomainFiles — domain-layer scaffold seeded once under .omtre/domains/.
 // These files are user data after init (update never rewrites them; see the
 // PROTECTED_PATHS coverage in update.ts), so the contract pinned here is only
 // that the map carries the expected seed set.

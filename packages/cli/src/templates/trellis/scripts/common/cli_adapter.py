@@ -80,7 +80,7 @@ class CLIAdapter:
     _AGENT_NAME_MAP: ClassVar[dict[Platform, dict[str, str]]] = {
         "claude": {},  # No mapping needed
         "opencode": {
-            "plan": "trellis-plan",  # 'plan' is built-in in OpenCode
+            "plan": "omtre-plan",  # 'plan' is built-in in OpenCode
         },
     }
 
@@ -91,7 +91,7 @@ class CLIAdapter:
             agent: Original agent name (e.g., 'plan', 'dispatch')
 
         Returns:
-            Platform-specific agent name (e.g., 'trellis-plan' for OpenCode)
+            Platform-specific agent name (e.g., 'omtre-plan' for OpenCode)
         """
         mapping = self._AGENT_NAME_MAP.get(self.platform, {})
         return mapping.get(agent, agent)
@@ -177,67 +177,67 @@ class CLIAdapter:
 
         Args:
             project_root: Project root directory
-            *parts: Additional path parts (e.g., 'trellis', 'finish-work.md')
+            *parts: Additional path parts (e.g., 'omt', 'finish-work.md')
 
         Returns:
             Path to commands directory or file
 
         Note:
-            Cursor uses prefix naming: .cursor/commands/trellis-<name>.md
+            Cursor uses prefix naming: .cursor/commands/omtre-<name>.md
             Antigravity uses workflow directory: .agent/workflows/<name>.md
-            Devin uses workflow directory: .devin/workflows/trellis-<name>.md
+            Devin uses workflow directory: .devin/workflows/omtre-<name>.md
             Copilot uses prompt files: .github/prompts/<name>.prompt.md
-            Pi uses prompt templates: .pi/prompts/trellis-<name>.md
-            Claude/OpenCode use subdirectory: .claude/commands/trellis/<name>.md
+            Pi uses prompt templates: .pi/prompts/omtre-<name>.md
+            Claude/OpenCode use subdirectory: .claude/commands/omt/<name>.md
         """
         if self.platform == "pi":
             prompts_dir = self.get_config_dir(project_root) / "prompts"
             if not parts:
                 return prompts_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
                 if filename.endswith(".md"):
                     filename = filename[:-3]
-                return prompts_dir / f"trellis-{filename}.md"
+                return prompts_dir / f"omtre-{filename}.md"
             return prompts_dir / Path(*parts)
-        # OMP and Grok: flat slash commands under .{platform}/commands/trellis-<name>.md
+        # OMP and Grok: flat slash commands under .{platform}/commands/omtre-<name>.md
         if self.platform in ("omp", "grok"):
             commands_dir = self.get_config_dir(project_root) / "commands"
             if not parts:
                 return commands_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
                 if filename.endswith(".md"):
                     filename = filename[:-3]
-                return commands_dir / f"trellis-{filename}.md"
+                return commands_dir / f"omtre-{filename}.md"
             return commands_dir / Path(*parts)
 
-        # Kimi: commands are skills under .kimi-code/skills/trellis-<name>/SKILL.md
+        # Kimi: commands are skills under .kimi-code/skills/omtre-<name>/SKILL.md
         if self.platform == "kimi":
             skills_dir = self.get_config_dir(project_root) / "skills"
             if not parts:
                 return skills_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
                 if filename.endswith(".md"):
                     filename = filename[:-3]
-                return skills_dir / f"trellis-{filename}" / "SKILL.md"
+                return skills_dir / f"omtre-{filename}" / "SKILL.md"
             return skills_dir / Path(*parts)
 
         if self.platform == "devin":
             workflow_dir = self.get_config_dir(project_root) / "workflows"
             if not parts:
                 return workflow_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
-                return workflow_dir / f"trellis-{filename}"
+                return workflow_dir / f"omtre-{filename}"
             return workflow_dir / Path(*parts)
 
         if self.platform in ("antigravity", "kilo"):
             workflow_dir = self.get_config_dir(project_root) / "workflows"
             if not parts:
                 return workflow_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
                 return workflow_dir / filename
             return workflow_dir / Path(*parts)
@@ -246,7 +246,7 @@ class CLIAdapter:
             prompts_dir = project_root / ".github" / "prompts"
             if not parts:
                 return prompts_dir
-            if len(parts) >= 2 and parts[0] == "trellis":
+            if len(parts) >= 2 and parts[0] == "omt":
                 filename = parts[-1]
                 if filename.endswith(".md"):
                     filename = filename[:-3]
@@ -257,17 +257,17 @@ class CLIAdapter:
             return self.get_config_dir(project_root) / "commands"
 
         # Cursor uses prefix naming instead of subdirectory
-        if self.platform == "cursor" and len(parts) >= 2 and parts[0] == "trellis":
-            # Convert trellis/<name>.md to trellis-<name>.md
+        if self.platform == "cursor" and len(parts) >= 2 and parts[0] == "omt":
+            # Convert omt/<name>.md to omtre-<name>.md
             filename = parts[-1]
             return (
-                self.get_config_dir(project_root) / "commands" / f"trellis-{filename}"
+                self.get_config_dir(project_root) / "commands" / f"omtre-{filename}"
             )
 
         return self.get_config_dir(project_root) / "commands" / Path(*parts)
 
-    def get_trellis_command_path(self, name: str) -> str:
-        """Get relative path to a trellis command file.
+    def get_omtre_command_path(self, name: str) -> str:
+        """Get relative path to an omtre command file.
 
         Args:
             name: Command name without extension (e.g., 'finish-work', 'check')
@@ -276,43 +276,43 @@ class CLIAdapter:
             Relative path string for use in JSONL entries
 
         Note:
-            Cursor: .cursor/commands/trellis-<name>.md
-            Codex: .agents/skills/trellis-<name>/SKILL.md
-            Kiro: .kiro/skills/trellis-<name>/SKILL.md
-            Gemini: .gemini/commands/trellis/<name>.toml
+            Cursor: .cursor/commands/omtre-<name>.md
+            Codex: .agents/skills/omtre-<name>/SKILL.md
+            Kiro: .kiro/skills/omtre-<name>/SKILL.md
+            Gemini: .gemini/commands/omt/<name>.toml
             Antigravity: .agent/workflows/<name>.md
-            Devin: .devin/workflows/trellis-<name>.md
-            Pi: .pi/prompts/trellis-<name>.md
-            Others: .{platform}/commands/trellis/<name>.md
+            Devin: .devin/workflows/omtre-<name>.md
+            Pi: .pi/prompts/omtre-<name>.md
+            Others: .{platform}/commands/omt/<name>.md
         """
         if self.platform == "cursor":
-            return f".cursor/commands/trellis-{name}.md"
+            return f".cursor/commands/omtre-{name}.md"
         elif self.platform == "codex":
-            # 0.5.0-beta.0 renamed all skill dirs to add the `trellis-` prefix
+            # 0.5.0-beta.0 renamed all skill dirs to add the `omtre-` prefix
             # (see that release's manifest for the 60+ rename entries).
-            return f".agents/skills/trellis-{name}/SKILL.md"
+            return f".agents/skills/omtre-{name}/SKILL.md"
         elif self.platform == "kiro":
-            return f".kiro/skills/trellis-{name}/SKILL.md"
+            return f".kiro/skills/omtre-{name}/SKILL.md"
         elif self.platform == "gemini":
-            return f".gemini/commands/trellis/{name}.toml"
+            return f".gemini/commands/omt/{name}.toml"
         elif self.platform == "antigravity":
             return f".agent/workflows/{name}.md"
         elif self.platform == "devin":
-            return f".devin/workflows/trellis-{name}.md"
+            return f".devin/workflows/omtre-{name}.md"
         elif self.platform == "kilo":
             return f".kilocode/workflows/{name}.md"
         elif self.platform == "copilot":
             return f".github/prompts/{name}.prompt.md"
         elif self.platform == "droid":
-            return f".factory/commands/trellis/{name}.md"
+            return f".factory/commands/omt/{name}.md"
         elif self.platform == "pi":
-            return f".pi/prompts/trellis-{name}.md"
+            return f".pi/prompts/omtre-{name}.md"
         elif self.platform in ("omp", "grok"):
-            return f"{self.config_dir_name}/commands/trellis-{name}.md"
+            return f"{self.config_dir_name}/commands/omtre-{name}.md"
         elif self.platform == "kimi":
-            return f".kimi-code/skills/trellis-{name}/SKILL.md"
+            return f".kimi-code/skills/omtre-{name}/SKILL.md"
         else:
-            return f"{self.config_dir_name}/commands/trellis/{name}.md"
+            return f"{self.config_dir_name}/commands/omt/{name}.md"
 
     # =========================================================================
     # Environment Variables
@@ -773,7 +773,7 @@ def detect_platform(project_root: Path) -> Platform:
     """Auto-detect platform based on existing config directories.
 
     Detection order:
-    1. TRELLIS_PLATFORM environment variable (if set)
+    1. OMTRE_PLATFORM environment variable (if set)
     2. .opencode directory exists → opencode
     3. .iflow directory exists → iflow
     4. .cursor directory exists (without .claude) → cursor
@@ -800,7 +800,7 @@ def detect_platform(project_root: Path) -> Platform:
     import os
 
     # Check environment variable first
-    env_platform = os.environ.get("TRELLIS_PLATFORM", "").lower()
+    env_platform = os.environ.get("OMTRE_PLATFORM", "").lower()
     # Deprecated alias: Windsurf was renamed to Devin.
     if env_platform == "windsurf":
         env_platform = "devin"
@@ -871,7 +871,7 @@ def detect_platform(project_root: Path) -> Platform:
 
     # Check for Devin workflow directory only when no other platform config
     # exists. `.windsurf/workflows` is the legacy pre-rename path (still detected
-    # as devin for back-compat until users migrate via `trellis update --migrate`).
+    # as devin for back-compat until users migrate via `omtre update --migrate`).
     if (
         (project_root / ".devin" / "workflows").is_dir()
         or (project_root / ".windsurf" / "workflows").is_dir()
@@ -917,7 +917,7 @@ def detect_platform(project_root: Path) -> Platform:
         return "kimi"
 
     # Fallback: checkout only has the Codex shared-skills layer
-    # (.agents/skills/trellis-* dirs) and no explicit platform config dir.
+    # (.agents/skills/omtre-* dirs) and no explicit platform config dir.
     # Happens on fresh clones where .codex/ is gitignored/absent but the
     # shared skills were committed to git. Must guard against the case
     # where .claude/ or any other platform dir also exists — .agents/skills/
@@ -929,7 +929,7 @@ def detect_platform(project_root: Path) -> Platform:
     ):
         try:
             for entry in agents_skills.iterdir():
-                if entry.is_dir() and entry.name.startswith("trellis-"):
+                if entry.is_dir() and entry.name.startswith("omtre-"):
                     return "codex"
         except OSError:
             pass

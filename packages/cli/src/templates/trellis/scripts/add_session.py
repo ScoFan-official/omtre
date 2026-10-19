@@ -69,7 +69,7 @@ from common.log import Colors, colored
 from common.safe_commit import (
     print_gitignore_warning,
     safe_git_add,
-    safe_trellis_paths_to_add,
+    safe_omtre_paths_to_add,
 )
 from common.tasks import load_task
 from common.types import TaskInfo
@@ -92,11 +92,11 @@ MAX_SUBJECT_LEN = 500
 
 # Machine-readable record identity. An HTML comment renders as nothing, so the
 # human evidence in the entry is unchanged by its presence.
-MARKER_PREFIX = "<!-- trellis-session:"
+MARKER_PREFIX = "<!-- omtre-session:"
 # Bumped when the fingerprint inputs change. Untagged markers are v1, whose
 # fingerprint mixed in the calendar date; see compute_record_fingerprint.
 MARKER_VERSION = 2
-LEGACY_MARKER_RE = re.compile(r"^<!-- trellis-session: fp=([0-9a-f]{16}) -->$")
+LEGACY_MARKER_RE = re.compile(r"^<!-- omtre-session: fp=([0-9a-f]{16}) -->$")
 ENTRY_DATE_RE = re.compile(r"^\*\*Date\*\*: (\d{4}-\d{2}-\d{2})\s*$")
 SESSION_HEADING_RE = re.compile(r"^## Session (\d+):", re.MULTILINE)
 
@@ -286,7 +286,7 @@ def warn_if_parallel_worktree(repo_root: Path) -> None:
             "journal-*.md files auto-merge via .gitattributes, but index.md "
             "conflicts across parallel worktrees/branches are expected and safe "
             "to resolve by picking either side (task state lives in task.json, "
-            "not index.md). See .trellis/spec/cli/backend/directory-structure.md "
+            "not index.md). See .omtre/spec/cli/backend/directory-structure.md "
             '("Workspace Journal Merge Behavior").',
             Colors.YELLOW,
         ),
@@ -711,7 +711,7 @@ def content_at_head(repo_root: Path, path: Path) -> str | None:
 
     The `./` prefix makes the path cwd-relative. `HEAD:<path>` alone is
     relative to the *git* toplevel, which is not always `repo_root` — the
-    Trellis root is the nearest directory holding `.trellis/`, which can sit
+    Omtre root is the nearest directory holding `.omtre/`, which can sit
     below the git root. Without it, every lookup in that layout fails and a
     committed record looks pending.
     """
@@ -1068,21 +1068,21 @@ def update_index(
 # =============================================================================
 
 def _auto_commit_workspace(repo_root: Path) -> str:
-    """Stage Trellis-owned workspace + current-task paths and commit.
+    """Stage Omtre-owned workspace + current-task paths and commit.
 
     Path scope is restricted to specific products: the current developer's
     journal files + index.md, and ONLY the current task directory (resolved
-    via ``get_current_task``). We never `git add` the whole `.trellis/` tree
+    via ``get_current_task``). We never `git add` the whole `.omtre/` tree
     or iterate over all active task dirs (#303: parallel-window dirty task
     dirs must not be bundled into the session auto-commit). If `.gitignore`
     blocks the specific paths we warn + skip — never retry with ``-f``.
 
-    Honors ``session_auto_commit`` in ``.trellis/config.yaml``: when set to
+    Honors ``session_auto_commit`` in ``.omtre/config.yaml``: when set to
     ``false``, this function returns immediately without touching git
     (journal/index files are still written to disk by the caller).
 
     Returns one of ``COMMIT_DONE`` / ``COMMIT_SKIPPED`` / ``COMMIT_BLOCKED`` /
-    ``COMMIT_FAILED``. ``COMMIT_BLOCKED`` is the gitignored-`.trellis/` case:
+    ``COMMIT_FAILED``. ``COMMIT_BLOCKED`` is the gitignored-`.omtre/` case:
     the user has told git to stay out of this tree, so it is a configured skip
     like ``session_auto_commit: false``, not a failure to retry.
     """
@@ -1107,11 +1107,11 @@ def _auto_commit_workspace(repo_root: Path) -> str:
 
     commit_msg = get_session_commit_message(repo_root)
     # Resolve the current task so staging is scoped to its dir only. The ref
-    # is ``.trellis/tasks/<name>`` (or under archive/) — pass the bare name.
+    # is ``.omtre/tasks/<name>`` (or under archive/) — pass the bare name.
     current = get_current_task(repo_root)
     if current:
         task_name = Path(current).name
-        paths = safe_trellis_paths_to_add(repo_root, task_name=task_name)
+        paths = safe_omtre_paths_to_add(repo_root, task_name=task_name)
     else:
         # Current task unknown (0 or >=2 parallel sessions — exactly the
         # parallel-window case #303 is about). Do NOT fall back to the wide
@@ -1120,7 +1120,7 @@ def _auto_commit_workspace(repo_root: Path) -> str:
         # index and skip every task dir.
         paths = [
             p
-            for p in safe_trellis_paths_to_add(repo_root, task_name=None)
+            for p in safe_omtre_paths_to_add(repo_root, task_name=None)
             if not p.startswith(f"{DIR_WORKFLOW}/{DIR_TASKS}/")
         ]
     if not paths:

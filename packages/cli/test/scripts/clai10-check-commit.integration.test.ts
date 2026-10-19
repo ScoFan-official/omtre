@@ -4,7 +4,7 @@
  * "files you did not edit this session NEVER enter a commit"; board bookkeeping
  * lands in its own close-out commit).
  *
- * Why it lives in Python: `trellis run` asks the same question before staging
+ * Why it lives in Python: `omtre run` asks the same question before staging
  * and again against what the branch actually carries. Keeping a second rule
  * list in TypeScript is the drift this removes — one authority, same answer for
  * a human, an agent and the runner. Real templates are stamped into a throwaway
@@ -16,11 +16,9 @@ import { spawnSync, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 function findPython(): string | null {
   for (const bin of ["python3", "python"]) {
@@ -39,14 +37,14 @@ const PYTHON = findPython();
 let repo = "";
 
 function check(paths: string[], opts: { stdin?: boolean } = {}) {
-  const args = [".trellis/scripts/task.py", "check-commit", "--json"];
+  const args = [".omtre/scripts/task.py", "check-commit", "--json"];
   if (opts.stdin) args.push("--from-stdin");
   else args.push(...paths);
   const r = spawnSync(PYTHON as string, args, {
     cwd: repo,
     encoding: "utf-8",
     input: opts.stdin ? `${paths.join("\n")}\n` : undefined,
-    env: { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" },
+    env: { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" },
   });
   let payload: Record<string, unknown> = {};
   try {
@@ -59,8 +57,8 @@ function check(paths: string[], opts: { stdin?: boolean } = {}) {
 
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "check-commit-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".omtre", "scripts"), {
     recursive: true,
   });
 });
@@ -72,7 +70,7 @@ afterEach(() => {
 describe.skipIf(PYTHON === null)("task.py check-commit", () => {
   it("refuses board files and credential-shaped paths", () => {
     const r = check([
-      ".trellis/domains/deap/README.md",
+      ".omtre/domains/deap/README.md",
       ".env.local",
       "keys/deploy.pem",
       "config/secrets.yaml",
@@ -82,7 +80,7 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
     expect(r.status).toBe(1);
     expect(r.payload.ok).toBe(false);
     expect(r.payload.offending as string[]).toEqual([
-      ".trellis/domains/deap/README.md",
+      ".omtre/domains/deap/README.md",
       ".env.local",
       "keys/deploy.pem",
       "config/secrets.yaml",
@@ -95,7 +93,7 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
     // line: `use-secret-store.ts` is application code and must pass.
     const r = check([
       "src/use-secret-store.ts",
-      ".trellis/tasks/10-09-x/prd.md",
+      ".omtre/tasks/10-09-x/prd.md",
       "a/greeting.ts",
     ]);
 
@@ -106,13 +104,13 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
 
   it("normalises backslash paths so Windows callers get the same answer", () => {
     const r = check([
-      ".trellis\\domains\\deap\\worklog\\me.md",
+      ".omtre\\domains\\deap\\worklog\\me.md",
       "SECRETS.YAML",
     ]);
 
     expect(r.status).toBe(1);
     expect(r.payload.offending as string[]).toEqual([
-      ".trellis\\domains\\deap\\worklog\\me.md",
+      ".omtre\\domains\\deap\\worklog\\me.md",
       "SECRETS.YAML",
     ]);
   });
@@ -126,7 +124,7 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
     const mixed = spawnSync(
       PYTHON as string,
       [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "check-commit",
         "--from-stdin",
         "--json",
@@ -136,7 +134,7 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
         cwd: repo,
         encoding: "utf-8",
         input: "src/app.ts\nkeys/id_rsa\n",
-        env: { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" },
+        env: { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" },
       },
     );
     const payload = JSON.parse(mixed.stdout) as Record<string, unknown>;
@@ -146,11 +144,11 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
   it("refuses to answer nothing, without a stack trace", () => {
     const r = spawnSync(
       PYTHON as string,
-      [".trellis/scripts/task.py", "check-commit", "--json"],
+      [".omtre/scripts/task.py", "check-commit", "--json"],
       {
         cwd: repo,
         encoding: "utf-8",
-        env: { ...process.env, TRELLIS_WRITER: "qoder-TESTHOST-agent" },
+        env: { ...process.env, OMTRE_WRITER: "qoder-TESTHOST-agent" },
       },
     );
 
@@ -163,9 +161,9 @@ describe.skipIf(PYTHON === null)("task.py check-commit", () => {
     const r = spawnSync(
       PYTHON as string,
       [
-        ".trellis/scripts/task.py",
+        ".omtre/scripts/task.py",
         "check-commit",
-        ".trellis/domains/deap/README.md",
+        ".omtre/domains/deap/README.md",
       ],
       { cwd: repo, encoding: "utf-8", env: { ...process.env } },
     );

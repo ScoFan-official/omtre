@@ -225,7 +225,7 @@ def _restore_child_links(unlinked: dict[Path, str | None]) -> None:
         print(
             colored(
                 f"Warning: could not restore the parent link on: {', '.join(broken)}. "
-                "Re-link each one with `python3 .trellis/scripts/task.py "
+                "Re-link each one with `python3 .omtre/scripts/task.py "
                 "add-subtask <parent> <child>`.",
                 Colors.RED,
             ),
@@ -603,7 +603,7 @@ def cmd_create(args: argparse.Namespace) -> int:
     # `task.py validate` and to PR preflight, so the curation instructions go
     # to the console below instead of into the files. Agent-less platforms
     # (Kilo / Antigravity) skip this — they load specs via the
-    # trellis-before-dev skill instead of JSONL.
+    # omtre-before-dev skill instead of JSONL.
     created_jsonl = False
     if _has_subagent_platform(repo_root):
         for jsonl_name in ("implement.jsonl", "check.jsonl"):
@@ -720,10 +720,10 @@ def cmd_create(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         print(
-            "      list available specs: python3 .trellis/scripts/get_context.py --mode packages",
+            "      list available specs: python3 .omtre/scripts/get_context.py --mode packages",
             file=sys.stderr,
         )
-    print("  - Use /trellis:continue or phase context to decide the next step", file=sys.stderr)
+    print("  - Use /omt:continue or phase context to decide the next step", file=sys.stderr)
     print("", file=sys.stderr)
 
     # Output relative path for script chaining
@@ -768,7 +768,7 @@ class _RenamePlan:
     jsonl: list[tuple[Path, list[int], str]] = field(default_factory=list)
     # (other task's task.json, rewritten data, labels of the changed refs)
     backrefs: list[tuple[Path, dict, list[str]]] = field(default_factory=list)
-    # (file, line number) of old-name mentions elsewhere under .trellis/
+    # (file, line number) of old-name mentions elsewhere under .omtre/
     reported: list[tuple[Path, int]] = field(default_factory=list)
     # Task dirs whose task.json could not be read, so back-refs in them are
     # neither rewritten nor ruled out.
@@ -913,7 +913,7 @@ def _plan_backrefs(
 def _plan_reported_refs(
     repo_root: Path, task_dir: Path, rewritten: set[Path], old_name: str
 ) -> list[tuple[Path, int]]:
-    """Find remaining mentions of the old task name elsewhere under .trellis/.
+    """Find remaining mentions of the old task name elsewhere under .omtre/.
 
     These are reported, never rewritten: journal entries and workflow prose
     cite tasks in free text, and a blind substitution there is how a rename
@@ -931,12 +931,12 @@ def _plan_reported_refs(
         r"(?<![0-9A-Za-z_-])" + re.escape(old_name) + r"(?![0-9A-Za-z_-])"
     )
     hits: list[tuple[Path, int]] = []
-    trellis_dir = repo_root / DIR_WORKFLOW
+    omtre_dir = repo_root / DIR_WORKFLOW
     sessions_dir = _runtime_sessions_dir(repo_root)
-    if not trellis_dir.is_dir():
+    if not omtre_dir.is_dir():
         return hits
 
-    for path in sorted(trellis_dir.rglob("*")):
+    for path in sorted(omtre_dir.rglob("*")):
         if not path.is_file() or path in rewritten:
             continue
         if path == task_dir or task_dir in path.parents:
@@ -945,7 +945,7 @@ def _plan_reported_refs(
             continue
         if any(
             part == "__pycache__" or part.startswith(".backup-")
-            for part in path.relative_to(trellis_dir).parts[:-1]
+            for part in path.relative_to(omtre_dir).parts[:-1]
         ):
             continue
         try:
@@ -1308,9 +1308,9 @@ def cmd_archive(args: argparse.Namespace) -> int:
         return 1
 
     # Refuse to archive anything that isn't a real task directly under
-    # .trellis/tasks/. resolve_task_dir keeps the target inside the tasks dir;
+    # .omtre/tasks/. resolve_task_dir keeps the target inside the tasks dir;
     # this narrows it further to a direct child, so an already-archived task
-    # (.trellis/tasks/archive/<month>/<task>) is not archived a second time.
+    # (.omtre/tasks/archive/<month>/<task>) is not archived a second time.
     if not is_within_tasks_dir(task_dir, repo_root):
         print(colored(
             f"Error: refusing to archive '{task_name}': "
@@ -1447,7 +1447,7 @@ def cmd_archive(args: argparse.Namespace) -> int:
                             child_data["parent"] = None
                             if not write_json(child_json, child_data):
                                 # Stop before the move: a child pointing at a
-                                # parent that has left .trellis/tasks/ is a
+                                # parent that has left .omtre/tasks/ is a
                                 # dangling reference nothing repairs later.
                                 # Put back the children already unlinked above —
                                 # their parent is staying, so losing the link the
@@ -1514,7 +1514,7 @@ def _auto_commit_archive(
     repo_root: Path,
     modified_children: list[str] | None = None,
 ) -> bool:
-    """Stage Trellis-owned task paths and commit after archive.
+    """Stage Omtre-owned task paths and commit after archive.
 
     Scoped narrowly to the archived task's source + destination paths
     plus any child task dirs whose ``task.json`` was edited (parent →
@@ -1523,10 +1523,10 @@ def _auto_commit_archive(
 
     If ``.gitignore`` blocks the paths, we warn + skip — we do NOT
     retry with ``git add -f``. The warning explicitly forbids
-    ``git add -f .trellis/`` (which would fan out to caches/backups)
+    ``git add -f .omtre/`` (which would fan out to caches/backups)
     and points users at ``session_auto_commit: false``.
 
-    Honors ``session_auto_commit`` in ``.trellis/config.yaml``: when
+    Honors ``session_auto_commit`` in ``.omtre/config.yaml``: when
     set to ``false``, this function returns immediately without
     touching git (the archive directory move on disk is unaffected).
     """
@@ -1633,7 +1633,7 @@ def _print_index_lock_warning(
     agent reading the log) has to finish by hand.
 
     ``paths`` are the paths the auto-commit would have staged, so the manual
-    command keeps the same narrow scope — a blanket ``git add -A -- .trellis/``
+    command keeps the same narrow scope — a blanket ``git add -A -- .omtre/``
     would sweep dirty changes from other active tasks into the archive commit.
     """
     lock = index_lock_path(repo_root)

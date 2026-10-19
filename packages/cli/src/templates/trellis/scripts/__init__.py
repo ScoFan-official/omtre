@@ -1,5 +1,5 @@
 """
-Trellis Python Scripts
+omtre Python Scripts
 
-This module provides Python implementations of Trellis workflow scripts.
+This module provides Python implementations of omtre workflow scripts.
 """

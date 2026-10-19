@@ -19,15 +19,10 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
-const TEMPLATE_DOMAINS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/domains",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
+const TEMPLATE_DOMAINS = path.join(getOmtreTemplatePath(), "domains");
 
 const DEVELOPER = "tester";
 const FOREIGN_WRITER = "devin-FOREIGN-HOST";
@@ -49,8 +44,8 @@ const PYTHON = findPython();
 function testEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    TRELLIS_WRITER: "qoder-TESTHOST-agent",
-    TRELLIS_CONTEXT_ID: "clai7-itest",
+    OMTRE_WRITER: "qoder-TESTHOST-agent",
+    OMTRE_CONTEXT_ID: "clai7-itest",
   };
 }
 
@@ -65,7 +60,7 @@ function git(cwd: string, ...args: string[]): string {
 let repo = "";
 
 function runTask(...args: string[]) {
-  return spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  return spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
     env: testEnv(),
@@ -74,14 +69,14 @@ function runTask(...args: string[]) {
 
 function dirOf(needle: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(needle));
   if (!dir) throw new Error(`no task dir matching ${needle}`);
   return dir;
 }
 
 function taskDir(dirName: string): string {
-  return path.join(repo, ".trellis", "tasks", dirName);
+  return path.join(repo, ".omtre", "tasks", dirName);
 }
 
 function readTaskJson(dirName: string): Record<string, unknown> {
@@ -133,12 +128,12 @@ function writeImplement(dirName: string, withDesignReview: boolean): void {
 }
 
 function writeConfig(text: string): void {
-  fs.writeFileSync(path.join(repo, ".trellis", "config.yaml"), text, "utf-8");
+  fs.writeFileSync(path.join(repo, ".omtre", "config.yaml"), text, "utf-8");
 }
 
 /** Stamp the shipped domains/ seed and register a bare board. */
 function seedBoard(slug: string): void {
-  const domainsDir = path.join(repo, ".trellis", "domains");
+  const domainsDir = path.join(repo, ".omtre", "domains");
   fs.cpSync(TEMPLATE_DOMAINS, domainsDir, { recursive: true });
   const board = path.join(domainsDir, slug);
   fs.cpSync(path.join(domainsDir, "_scaffold"), board, { recursive: true });
@@ -155,13 +150,13 @@ function isActive(dirName: string): boolean {
 
 beforeEach(() => {
   repo = fs.mkdtempSync(path.join(os.tmpdir(), "clai7-itest-"));
-  fs.mkdirSync(path.join(repo, ".trellis"), { recursive: true });
-  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".trellis", "scripts"), {
+  fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+  fs.cpSync(TEMPLATE_SCRIPTS, path.join(repo, ".omtre", "scripts"), {
     recursive: true,
   });
   const init = spawnSync(
     PYTHON as string,
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: repo, encoding: "utf-8", env: testEnv() },
   );
   if (init.status !== 0)
@@ -187,7 +182,7 @@ describe.skipIf(PYTHON === null)("CLAI-7 start artifact gate", () => {
   it("passes a routed task once prd carries the board-path line", () => {
     seedBoard("deap");
     const dir = createTask("with-domain-line", "--domain", "deap");
-    writePrd(dir, "Domain: .trellis/domains/deap/");
+    writePrd(dir, "Domain: .omtre/domains/deap/");
 
     expect(runTask("start", dir).status).toBe(0);
     expect(readTaskJson(dir).status).toBe("in_progress");
@@ -231,7 +226,7 @@ describe.skipIf(PYTHON === null)("CLAI-7 start artifact gate", () => {
   it("reports a foreign flag before the artifact problem (flag gate precedes)", () => {
     seedBoard("deap");
     fs.writeFileSync(
-      path.join(repo, ".trellis", "domains", "deap", "README.md"),
+      path.join(repo, ".omtre", "domains", "deap", "README.md"),
       `旗: ${FOREIGN_WRITER} · other-task · 自 ${new Date()
         .toISOString()
         .slice(0, 16)
@@ -250,7 +245,7 @@ describe.skipIf(PYTHON === null)("CLAI-7 start artifact gate", () => {
     seedBoard("deap");
     writeConfig("verify_required: true\n");
     const dir = createTask("vr-routed", "--domain", "deap");
-    writePrd(dir, "Domain: .trellis/domains/deap/");
+    writePrd(dir, "Domain: .omtre/domains/deap/");
     writeImplement(dir, false);
 
     const r = runTask("start", dir);
@@ -266,7 +261,7 @@ describe.skipIf(PYTHON === null)("CLAI-7 start artifact gate", () => {
     seedBoard("deap");
     writeConfig("verify_required: true\n");
     const dir = createTask("vr-fixed", "--domain", "deap");
-    writePrd(dir, "Domain: .trellis/domains/deap/");
+    writePrd(dir, "Domain: .omtre/domains/deap/");
 
     expect(runTask("add-verify", dir, "python --version").status).toBe(0);
     expect(runTask("start", dir).status).toBe(0);

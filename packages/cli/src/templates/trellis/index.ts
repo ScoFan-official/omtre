@@ -1,21 +1,21 @@
 /**
- * Trellis workflow templates
+ * Omtre workflow templates
  *
  * These are GENERIC templates for user projects.
- * Do NOT use Trellis project's own .trellis/ directory (which may be customized).
+ * Do NOT use Omtre project's own .omtre/ directory (which may be customized).
  *
  * Directory structure:
- *   trellis/
+ *   omtre/
  *   ├── scripts/
  *   │   ├── __init__.py
  *   │   ├── common/           # Shared utilities (Python)
  *   │   └── *.py              # Main scripts (Python)
  *   ├── agents/                # Channel runtime agent definitions
- *   │   └── *.md               # Loaded by `trellis channel spawn --agent <name>`
+ *   │   └── *.md               # Loaded by `omtre channel spawn --agent <name>`
  *   ├── domains/               # Domain-layer scaffold (seed-once user data)
  *   ├── scripts-shell-archive/ # Archived shell scripts (for reference)
  *   ├── workflow.md           # Workflow guide
- *   ├── config.yaml            # Trellis configuration
+ *   ├── config.yaml            # Omtre configuration
  *   ├── gitignore.txt         # .gitignore content
  *   └── gitattributes.txt     # project-root .gitattributes content
  */
@@ -61,9 +61,7 @@ export const commonPackagesContext = readTemplate(
 export const commonWorkflowPhase = readTemplate(
   "scripts/common/workflow_phase.py",
 );
-export const commonTrellisConfig = readTemplate(
-  "scripts/common/trellis_config.py",
-);
+export const commonOmtreConfig = readTemplate("scripts/common/omtre_config.py");
 export const commonSafeCommit = readTemplate("scripts/common/safe_commit.py");
 export const commonFrontier = readTemplate("scripts/common/frontier.py");
 export const commonRoster = readTemplate("scripts/common/roster.py");
@@ -88,16 +86,16 @@ export const gitignoreTemplate = readTemplate("gitignore.txt");
 export const gitattributesTemplate = readTemplate("gitattributes.txt");
 
 // Channel runtime agent definitions (loaded by
-// `packages/cli/src/commands/channel/agent-loader.ts` from `.trellis/agents/`).
-// These are platform-agnostic Trellis runtime files dispatched at `trellis init`
-// and refreshed by `trellis update`.
+// `packages/cli/src/commands/channel/agent-loader.ts` from `.omtre/agents/`).
+// These are platform-agnostic Omtre runtime files dispatched at `omtre init`
+// and refreshed by `omtre update`.
 export const implementAgentTemplate = readTemplate("agents/implement.md");
 export const checkAgentTemplate = readTemplate("agents/check.md");
 export const researchAgentTemplate = readTemplate("agents/research.md");
 export const orchestratorAgentTemplate = readTemplate("agents/orchestrator.md");
 
-// Domain-layer scaffold files (dispatched under `.trellis/domains/`).
-// `.trellis/domains/**` is a user-data zone: `trellis update` seeds these
+// Domain-layer scaffold files (dispatched under `.omtre/domains/`).
+// `.omtre/domains/**` is a user-data zone: `omtre update` seeds these
 // files only when missing and never manages, overwrites, or prompts on
 // existing domain content (see `update.ts` collectTemplateFiles +
 // PROTECTED_PATHS). `_scaffold/` is the per-domain skeleton agents copy when
@@ -150,7 +148,7 @@ export function getAllScripts(): Map<string, string> {
   scripts.set("common/session_context.py", commonSessionContext);
   scripts.set("common/packages_context.py", commonPackagesContext);
   scripts.set("common/workflow_phase.py", commonWorkflowPhase);
-  scripts.set("common/trellis_config.py", commonTrellisConfig);
+  scripts.set("common/omtre_config.py", commonOmtreConfig);
   scripts.set("common/safe_commit.py", commonSafeCommit);
   scripts.set("common/frontier.py", commonFrontier);
   scripts.set("common/roster.py", commonRoster);
@@ -168,10 +166,10 @@ export function getAllScripts(): Map<string, string> {
 
 /**
  * Get all channel runtime agent definitions as a map of relative path
- * (under `.trellis/agents/`) to content.
+ * (under `.omtre/agents/`) to content.
  *
- * Consumed by `trellis init` (to dispatch on first install) and by
- * `trellis update` (to backfill missing files and surface conflicts on edited
+ * Consumed by `omtre init` (to dispatch on first install) and by
+ * `omtre update` (to backfill missing files and surface conflicts on edited
  * ones via the standard hash machinery).
  */
 export function getAllAgents(): Map<string, string> {
@@ -185,9 +183,9 @@ export function getAllAgents(): Map<string, string> {
 
 /**
  * Get all domain-layer scaffold files as a map of relative path (under
- * `.trellis/domains/`) to content.
+ * `.omtre/domains/`) to content.
  *
- * Consumed by `trellis init` (workflow configurator) and `trellis update`
+ * Consumed by `omtre init` (workflow configurator) and `omtre update`
  * (`collectTemplateFiles`). Both callers apply seed-once semantics: a path
  * that already exists on disk is user data and is never offered for write.
  */

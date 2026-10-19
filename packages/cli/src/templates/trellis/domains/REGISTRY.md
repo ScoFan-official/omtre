@@ -1,6 +1,6 @@
 # 板块登记表（REGISTRY）
 
-板块 = 领域知识的持久归口：需求约定（`NN-*`）、边界判例（`BOUNDARY.md`）、施工事实（`worklog/`）、评审记录（`review/`）统一住进 `.trellis/domains/<slug>/`。本文件是全部板块的索引真源——归口判定、接手读档链、机械对账都从本文件扫起。
+板块 = 领域知识的持久归口：需求约定（`NN-*`）、边界判例（`BOUNDARY.md`）、施工事实（`worklog/`）、评审记录（`review/`）统一住进 `.omtre/domains/<slug>/`。本文件是全部板块的索引真源——归口判定、接手读档链、机械对账都从本文件扫起。
 
 ## 登记规则
 
@@ -12,7 +12,7 @@
 
 ## 归属声明
 
-`.trellis/domains/**` 是用户数据区：`trellis update` 只在文件缺失时补发骨架，域内已有内容永不比较、覆写或提示托管。
+`.omtre/domains/**` 是用户数据区：`omtre update` 只在文件缺失时补发骨架，域内已有内容永不比较、覆写或提示托管。
 
 本文件是多写者 append 面 → `.gitattributes` 配 `merge=union`。
 

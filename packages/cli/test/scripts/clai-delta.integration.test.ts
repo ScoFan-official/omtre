@@ -10,7 +10,7 @@
  *   CLAI-5/6 get_context.py — 当前战线 section + 当前模式 line
  *           (config.yaml autonomy, default hands-off)
  *
- * The tests stamp the real templates into a fresh .trellis/ tree and
+ * The tests stamp the real templates into a fresh .omtre/ tree and
  * exercise the actual CLI paths — no internal mocks.
  */
 
@@ -19,15 +19,10 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
-const TEMPLATE_DOMAINS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/domains",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
+const TEMPLATE_DOMAINS = path.join(getOmtreTemplatePath(), "domains");
 
 const DEVELOPER = "tester";
 // Deterministic writer identity for the flag protocol — mirrors the
@@ -53,20 +48,20 @@ const PYTHON = findPython();
 function testEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    TRELLIS_WRITER: WRITER,
-    TRELLIS_CONTEXT_ID: "clai-delta-itest",
+    OMTRE_WRITER: WRITER,
+    OMTRE_CONTEXT_ID: "clai-delta-itest",
   };
 }
 
 function setupRepo(tmp: string): void {
   fs.mkdirSync(tmp, { recursive: true });
-  const scriptsDest = path.join(tmp, ".trellis", "scripts");
+  const scriptsDest = path.join(tmp, ".omtre", "scripts");
   fs.mkdirSync(scriptsDest, { recursive: true });
   fs.cpSync(TEMPLATE_SCRIPTS, scriptsDest, { recursive: true });
 
   const r = spawnSync(
     PYTHON as string,
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: tmp, encoding: "utf-8", env: testEnv() },
   );
   if (r.status !== 0) {
@@ -76,7 +71,7 @@ function setupRepo(tmp: string): void {
 
 /** Stamp the shipped domains/ seed (REGISTRY + DISCIPLINE + _scaffold). */
 function seedDomains(repo: string): void {
-  fs.cpSync(TEMPLATE_DOMAINS, path.join(repo, ".trellis", "domains"), {
+  fs.cpSync(TEMPLATE_DOMAINS, path.join(repo, ".omtre", "domains"), {
     recursive: true,
   });
 }
@@ -90,7 +85,7 @@ function makeBoard(
   slug: string,
   opts: { flag?: string; register?: boolean } = {},
 ): void {
-  const domainsDir = path.join(repo, ".trellis", "domains");
+  const domainsDir = path.join(repo, ".omtre", "domains");
   const scaffold = path.join(domainsDir, "_scaffold");
   const board = path.join(domainsDir, slug);
   fs.cpSync(scaffold, board, { recursive: true });
@@ -123,7 +118,7 @@ function freshTimestamp(): string {
 const STALE_TIMESTAMP = "2000-01-01 00:00";
 
 function runTask(repo: string, ...args: string[]) {
-  return spawnSync(PYTHON as string, [".trellis/scripts/task.py", ...args], {
+  return spawnSync(PYTHON as string, [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
     env: testEnv(),
@@ -133,7 +128,7 @@ function runTask(repo: string, ...args: string[]) {
 function runContext(repo: string, ...args: string[]) {
   return spawnSync(
     PYTHON as string,
-    [".trellis/scripts/get_context.py", ...args],
+    [".omtre/scripts/get_context.py", ...args],
     {
       cwd: repo,
       encoding: "utf-8",
@@ -145,7 +140,7 @@ function runContext(repo: string, ...args: string[]) {
 function readTaskJson(repo: string, dirName: string): Record<string, unknown> {
   return JSON.parse(
     fs.readFileSync(
-      path.join(repo, ".trellis", "tasks", dirName, "task.json"),
+      path.join(repo, ".omtre", "tasks", dirName, "task.json"),
       "utf-8",
     ),
   );
@@ -153,7 +148,7 @@ function readTaskJson(repo: string, dirName: string): Record<string, unknown> {
 
 function findTaskDir(repo: string, needle: string): string {
   const dir = fs
-    .readdirSync(path.join(repo, ".trellis", "tasks"))
+    .readdirSync(path.join(repo, ".omtre", "tasks"))
     .find((d) => d.includes(needle));
   if (!dir) {
     throw new Error(`no task dir matching ${needle}`);
@@ -182,7 +177,7 @@ function createTask(repo: string, slug: string, ...extra: string[]): string {
 /** Rewrite prd.md with a single `Domain:` line atop the fixture body. */
 function writePrdDomain(repo: string, dirName: string, line: string): void {
   fs.writeFileSync(
-    path.join(repo, ".trellis", "tasks", dirName, "prd.md"),
+    path.join(repo, ".omtre", "tasks", dirName, "prd.md"),
     `# ${dirName}\n\n${line}\n\n## Goal\n\nfixture\n`,
     "utf-8",
   );
@@ -192,7 +187,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-clai-delta-test-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-clai-delta-test-"));
     setupRepo(tmp);
   });
 
@@ -255,7 +250,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
       flag: flagLine(FOREIGN_WRITER, "old-task", STALE_TIMESTAMP),
     });
     const dir = createTask(tmp, "stale-flag-task", "--domain", "deap");
-    writePrdDomain(tmp, dir, "Domain: .trellis/domains/deap/");
+    writePrdDomain(tmp, dir, "Domain: .omtre/domains/deap/");
 
     const r = runTask(tmp, "start", dir);
     expect(r.status).toBe(0);
@@ -267,7 +262,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
       flag: flagLine(WRITER, "self-task", freshTimestamp()),
     });
     const dir = createTask(tmp, "own-flag-task", "--domain", "deap");
-    writePrdDomain(tmp, dir, "Domain: .trellis/domains/deap/");
+    writePrdDomain(tmp, dir, "Domain: .omtre/domains/deap/");
 
     const r = runTask(tmp, "start", dir);
     expect(r.status).toBe(0);
@@ -277,7 +272,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     seedDomains(tmp);
     makeBoard(tmp, "deap");
     const dir = createTask(tmp, "no-flag-task", "--domain", "deap");
-    writePrdDomain(tmp, dir, "Domain: .trellis/domains/deap/");
+    writePrdDomain(tmp, dir, "Domain: .omtre/domains/deap/");
 
     const r = runTask(tmp, "start", dir);
     expect(r.status).toBe(0);
@@ -299,7 +294,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
   it("validate fails when a REGISTRY line has no board dir", () => {
     seedDomains(tmp);
     fs.appendFileSync(
-      path.join(tmp, ".trellis", "domains", "REGISTRY.md"),
+      path.join(tmp, ".omtre", "domains", "REGISTRY.md"),
       "ghost/ — board without a directory\n",
       "utf-8",
     );
@@ -324,7 +319,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     seedDomains(tmp);
     makeBoard(tmp, "deap");
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "domains", "deap", "worklog", "w.md"),
+      path.join(tmp, ".omtre", "domains", "deap", "worklog", "w.md"),
       "# w\n\n## [t-1]-devin-TESTHOST-20261007-1915 [~]\n\n- **状态**：[x] 收工\n",
       "utf-8",
     );
@@ -339,7 +334,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     seedDomains(tmp);
     makeBoard(tmp, "deap");
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "domains", "deap", "worklog", "w.md"),
+      path.join(tmp, ".omtre", "domains", "deap", "worklog", "w.md"),
       "# w\n\n## [t-1]-devin-TESTHOST-20261007-1915 [x]\n\n- **状态**：[x] 收工\n\n## [t-2]-devin-TESTHOST-20261007-2000\n\n- **状态**：✅\n",
       "utf-8",
     );
@@ -356,7 +351,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     const flag = flagLine(WRITER, "self-task", freshTimestamp());
     makeBoard(tmp, "deap", { flag });
     const dir = createTask(tmp, "finish-flag-task", "--domain", "deap");
-    writePrdDomain(tmp, dir, "Domain: .trellis/domains/deap/");
+    writePrdDomain(tmp, dir, "Domain: .omtre/domains/deap/");
     expect(runTask(tmp, "start", dir).status).toBe(0);
 
     const r = runTask(tmp, "finish");
@@ -365,7 +360,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     expect(r.stderr + r.stdout).toContain("旗未拔");
     // The flag line is never auto-deleted — removal is the human's job.
     const readme = fs.readFileSync(
-      path.join(tmp, ".trellis", "domains", "deap", "README.md"),
+      path.join(tmp, ".omtre", "domains", "deap", "README.md"),
       "utf-8",
     );
     expect(readme.startsWith(flag)).toBe(true);
@@ -382,7 +377,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     expect(r.status).toBe(0);
     expect(r.stderr + r.stdout).toContain("旗未拔");
     const readme = fs.readFileSync(
-      path.join(tmp, ".trellis", "domains", "deap", "README.md"),
+      path.join(tmp, ".omtre", "domains", "deap", "README.md"),
       "utf-8",
     );
     expect(readme.startsWith(flag)).toBe(true);
@@ -396,7 +391,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
       flag: flagLine(FOREIGN_WRITER, "ctx-task", freshTimestamp()),
     });
     // Give the board a progress table with two data rows.
-    const readme = path.join(tmp, ".trellis", "domains", "deap", "README.md");
+    const readme = path.join(tmp, ".omtre", "domains", "deap", "README.md");
     fs.appendFileSync(
       readme,
       "\n## 进度\n\n| 条目 | 状态 | 备注 |\n|---|---|---|\n" +
@@ -419,7 +414,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
 
   it("get_context mode line reflects config.yaml autonomy", () => {
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "config.yaml"),
+      path.join(tmp, ".omtre", "config.yaml"),
       "autonomy: gated\n",
       "utf-8",
     );
@@ -457,7 +452,7 @@ describe.skipIf(PYTHON === null)("clai-delta (domains layer CLI)", () => {
     const patch = (dirName: string, blockedBy: string) => {
       const data = readTaskJson(tmp, dirName);
       fs.writeFileSync(
-        path.join(tmp, ".trellis", "tasks", dirName, "task.json"),
+        path.join(tmp, ".omtre", "tasks", dirName, "task.json"),
         JSON.stringify({ ...data, blocked_by: [blockedBy] }, null, 2),
         "utf-8",
       );

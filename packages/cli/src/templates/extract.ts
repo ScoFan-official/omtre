@@ -129,6 +129,20 @@ export function readCommand(filename: string): string {
   return readTemplate("commands", filename);
 }
 
+export const scriptsInit = readScript("__init__.py");
+export const commonInit = readScript("common/__init__.py");
+export const commonPaths = readScript("common/paths.py");
+export const commonDeveloper = readScript("common/developer.py");
+export const commonGitContext = readScript("common/git_context.py");
+export const commonTaskQueue = readScript("common/task_queue.py");
+export const commonTaskUtils = readScript("common/task_utils.py");
+export const commonActiveTask = readScript("common/active_task.py");
+export const commonCliAdapter = readScript("common/cli_adapter.py");
+export const getDeveloperScript = readScript("get_developer.py");
+export const initDeveloperScript = readScript("init_developer.py");
+export const taskScript = readScript("task.py");
+export const getContextScript = readScript("get_context.py");
+export const addSessionScript = readScript("add_session.py");
 export const workflowMdTemplate = readOmtreFile("workflow.md");
 export const ohMyWorkflowMdTemplate = readOmtreFile("workflow-oh-my.md");
 export const configYamlTemplate = readOmtreFile("config.yaml");
@@ -142,6 +156,13 @@ export const agentsMdContent = normalizeLegacyRootTemplate(
   readTemplate("markdown", "agents.md"),
 );
 export const commonRoster = readScript("common/roster.py");
+export const implementAgentTemplate = readOmtreFile("agents/implement.md");
+export const checkAgentTemplate = readOmtreFile("agents/check.md");
+export const domainRegistryTemplate = readOmtreFile("domains/REGISTRY.md");
+export const domainDisciplineTemplate = readOmtreFile("domains/DISCIPLINE.md");
+export const domainWorklogProtocolTemplate = readOmtreFile(
+  "domains/WORKLOG-PROTOCOL.md",
+);
 
 export function getAllScripts(): Map<string, string> {
   const scripts = new Map<string, string>();

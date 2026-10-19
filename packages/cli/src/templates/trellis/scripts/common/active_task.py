@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Session-scoped active task resolution.
 
-The user-facing concept is a single "active task". Trellis stores that pointer
-per AI session/window under `.trellis/.runtime/sessions/`; without a stable
+The user-facing concept is a single "active task". omtre stores that pointer
+per AI session/window under `.omtre/.runtime/sessions/`; without a stable
 session key there is no active task.
 """
 
@@ -20,7 +20,7 @@ from typing import Any
 
 from .io import read_json as _io_read_json, write_json as _io_write_json
 
-DIR_WORKFLOW = ".trellis"
+DIR_WORKFLOW = ".omtre"
 DIR_TASKS = "tasks"
 DIR_RUNTIME = ".runtime"
 DIR_SESSIONS = "sessions"
@@ -64,7 +64,7 @@ _KNOWN_PLATFORMS = {
 # declared names had never existed anywhere — they were pattern-guessed from a
 # `<PLATFORM>_SESSION_ID` shape no vendor agreed to, and the uniformity was the
 # only "evidence" behind them. A platform with no verified name belongs in no
-# table; it resolves through TRELLIS_CONTEXT_ID or its hook/plugin bridge.
+# table; it resolves through OMTRE_CONTEXT_ID or its hook/plugin bridge.
 _ENV_SESSION_KEYS: tuple[tuple[str, tuple[str, ...]], ...] = (
     # REAL (reported 2026-08-13 against DSH 0.1.0-rc.6 by @SajoLuo, from a live
     # run: DSH exports DSH_SESSION_ID plus DSH_SHELL=1 into its managed shell).
@@ -115,7 +115,7 @@ _ENV_SESSION_KEYS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("zcode", ("CLAUDE_CODE_SESSION_ID", "CLAUDE_SESSION_ID")),
     # REAL by vendor design (verified 2026-08-05): Snow's sessionIdentityEnv.ts
     # exports SNOW_SESSION_ID into hook/terminal/sub-agent children and names
-    # Trellis in its source header. TRELLIS_CONTEXT_ID stays the preferred
+    # omtre in its source header. OMTRE_CONTEXT_ID stays the preferred
     # override — Snow sets that too.
     ("snow", ("SNOW_SESSION_ID",)),
 )
@@ -238,7 +238,7 @@ def resolve_task_ref(task_ref: str, repo_root: Path) -> Path | None:
     except ValueError:
         pass
 
-    # `.trellis` may itself be a symlink into a store outside the repo (#567).
+    # `.omtre` may itself be a symlink into a store outside the repo (#567).
     # The workflow dir's own real location is then a second legitimate
     # containment base; a ref that escapes BOTH bases is still refused. Map
     # back to the in-repo (lexical) form so callers store a repo-relative ref.
@@ -296,7 +296,7 @@ def _detect_platform(platform_input: dict[str, Any] | None, platform: str | None
     if platform:
         return _sanitize_key(platform) or "session"
     if platform_input:
-        for key in ("_trellis_platform", "trellis_platform", "platform", "source"):
+        for key in ("_omtre_platform", "omtre_platform", "platform", "source"):
             value = _string_value(platform_input.get(key))
             if value:
                 return _sanitize_key(value) or "session"
@@ -340,7 +340,7 @@ def _env_platform_name(platform_name: str | None) -> str | None:
 def _lookup_env_context_key(platform_name: str | None) -> str | None:
     """Resolve a context key from platform-provided environment variables.
 
-    Hooks pass `TRELLIS_CONTEXT_ID` to subprocesses they launch, but an AI-run
+    Hooks pass `OMTRE_CONTEXT_ID` to subprocesses they launch, but an AI-run
     shell command can only see session identity if the host platform exports it
     in the command environment. These names are best-effort adapters; if none
     are present, there is no session-scoped active task.
@@ -519,11 +519,11 @@ def resolve_context_key(
 ) -> str | None:
     """Resolve a stable session/window context key, if one is available.
 
-    `TRELLIS_CONTEXT_ID` is an explicit context-key override used by CLI
+    `OMTRE_CONTEXT_ID` is an explicit context-key override used by CLI
     scripts and subprocesses. It does not store the task itself.
     """
     if allow_environment_context:
-        override = _string_value(os.environ.get("TRELLIS_CONTEXT_ID"))
+        override = _string_value(os.environ.get("OMTRE_CONTEXT_ID"))
         if override:
             return _sanitize_key(override) or _hash_value(override)
 
@@ -617,7 +617,7 @@ def _relative_task_ref(task_path: str, repo_root: Path) -> str:
     except ValueError:
         pass
     # Same dual-base containment as resolve_task_ref: a path through a
-    # symlinked `.trellis` (#567) maps back to its in-repo form; anything
+    # symlinked `.omtre` (#567) maps back to its in-repo form; anything
     # outside both bases is refused rather than stored as an absolute pointer.
     try:
         rel = resolved.relative_to(workflow_real)

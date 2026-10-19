@@ -36,11 +36,13 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
 const CLI_ROOT = path.resolve(__dirname, "../..");
 const TEMPLATES = path.join(CLI_ROOT, "src/templates");
-const SCRIPTS = path.join(TEMPLATES, "trellis/scripts");
-const CONFIG_YAML = path.join(TEMPLATES, "trellis/config.yaml");
+const OMTRE_TEMPLATES = getOmtreTemplatePath();
+const SCRIPTS = path.join(OMTRE_TEMPLATES, "scripts");
+const CONFIG_YAML = path.join(OMTRE_TEMPLATES, "config.yaml");
 const RUNNER_SRC = path.join(CLI_ROOT, "src/commands");
 
 const read = (p: string): string => fs.readFileSync(p, "utf-8");

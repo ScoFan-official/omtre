@@ -62,11 +62,11 @@ export interface WorkflowOptions {
   /** Package names that use remote templates (skip blank spec for these) */
   remoteSpecPackages?: Set<string>;
   /**
-   * Optional override for `.trellis/workflow.md` content. When omitted the
+   * Optional override for `.omtre/workflow.md` content. When omitted the
    * bundled `oh-my` template (the fork's managed default) is written. Set by
    * `init --workflow` (or `--workflow-source`) after the resolver has fetched
    * the selected content. Caller is still responsible for removing the
-   * `.trellis/workflow.md` hash entry for non-managed workflows so update.ts
+   * `.omtre/workflow.md` hash entry for non-managed workflows so update.ts
    * treats them as user-managed.
    */
   workflowMdOverride?: string;
@@ -83,21 +83,21 @@ export interface WorkflowOptions {
 export const MERGE_UNION_RULES: readonly { pattern: RegExp; line: string }[] = [
   {
     pattern: /journal-\*\.md\s+merge=union/,
-    line: ".trellis/workspace/*/journal-*.md merge=union",
+    line: ".omtre/workspace/*/journal-*.md merge=union",
   },
   {
-    pattern: /\.trellis\/domains\/REGISTRY\.md\s+merge=union/,
-    line: ".trellis/domains/REGISTRY.md merge=union",
+    pattern: /\.omtre\/domains\/REGISTRY\.md\s+merge=union/,
+    line: ".omtre/domains/REGISTRY.md merge=union",
   },
   {
-    pattern: /\.trellis\/domains\/\*\/worklog\/\*\.md\s+merge=union/,
-    line: ".trellis/domains/*/worklog/*.md merge=union",
+    pattern: /\.omtre\/domains\/\*\/worklog\/\*\.md\s+merge=union/,
+    line: ".omtre/domains/*/worklog/*.md merge=union",
   },
 ];
 
 /**
  * Ensure the project-root `.gitattributes` carries every `merge=union` rule
- * Trellis needs, without ever overwriting a user's existing file wholesale.
+ * Omtre needs, without ever overwriting a user's existing file wholesale.
  *
  * - No `.gitattributes` yet: write the bundled template directly.
  * - Existing file missing all rules: append the bundled template content
@@ -138,7 +138,7 @@ export function ensureGitattributes(cwd: string): void {
 /**
  * Create workflow structure based on project type
  *
- * This function creates the .trellis/ directory structure by:
+ * This function creates the .omtre/ directory structure by:
  * 1. Copying scripts/ directory directly (dogfooding)
  * 2. Copying workflow.md and .gitignore (dogfooding)
  * 3. Creating workspace/ with index.md
@@ -160,7 +160,7 @@ export async function createWorkflowStructure(
   // managed default); `workflowMdOverride` carries any other selection.
   const workflowMd = options?.workflowMdOverride ?? ohMyWorkflowMdTemplate;
 
-  // Create base .trellis directory
+  // Create base .omtre directory
   ensureDir(path.join(cwd, DIR_NAMES.WORKFLOW));
 
   // Copy scripts/ directory from templates
@@ -190,8 +190,8 @@ export async function createWorkflowStructure(
   // (additive-only — never overwrites a user's existing file wholesale).
   ensureGitattributes(cwd);
 
-  // Seed the domain-layer scaffold (.trellis/domains/**) — scaffold-once:
-  // only paths missing on disk are written. `.trellis/domains/**` is a
+  // Seed the domain-layer scaffold (.omtre/domains/**) — scaffold-once:
+  // only paths missing on disk are written. `.omtre/domains/**` is a
   // user-data zone (also listed in update's PROTECTED_PATHS); anything
   // already present — boards, worklogs, appended registry lines — is user
   // data that must never be compared, prompted on, or overwritten.
@@ -205,14 +205,14 @@ export async function createWorkflowStructure(
   }
 
   // Dispatch channel runtime agent definitions. These are platform-agnostic
-  // Trellis runtime files consumed by `trellis channel spawn --agent <name>`
+  // Omtre runtime files consumed by `omtre channel spawn --agent <name>`
   // through `packages/cli/src/commands/channel/agent-loader.ts`. They are
   // dispatched on every init regardless of selected workflow because the user
-  // can switch to a channel-driven workflow at any time via `trellis workflow
+  // can switch to a channel-driven workflow at any time via `omtre workflow
   // --template`.
   ensureDir(path.join(cwd, PATHS.AGENTS));
   for (const [agentFile, content] of getAllAgents()) {
-    // Rendered write: `trellis update` treats the rendered bytes as canonical,
+    // Rendered write: `omtre update` treats the rendered bytes as canonical,
     // so init must write the same bytes or the first update flags a spurious
     // change (upstream cards contain no `python3` literals; the oh-my cards do).
     await writeFile(

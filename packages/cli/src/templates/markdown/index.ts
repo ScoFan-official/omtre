@@ -1,5 +1,5 @@
 /**
- * Markdown templates for Trellis workflow
+ * Markdown templates for Omtre workflow
  *
  * These are GENERIC templates for new projects.
  * Structure templates use .md.txt extension as they are generic templates.

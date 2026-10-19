@@ -1,7 +1,7 @@
 """
 Git command execution utility.
 
-Single source of truth for running git commands across all Trellis scripts.
+Single source of truth for running git commands across all omtre scripts.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 # Bounded retry for transient `.git/index.lock` contention. Another process
-# (IDE git integration, status daemon, a concurrent Trellis session) can hold
+# (IDE git integration, status daemon, a concurrent omtre session) can hold
 # the lock for a fraction of a second; three attempts spread over ~1.5s ride
 # that out without making a genuinely stuck lock hang the command. One sleep
 # per retry, so the attempt count follows the backoff tuple.

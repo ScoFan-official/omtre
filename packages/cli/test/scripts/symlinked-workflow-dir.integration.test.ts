@@ -1,5 +1,5 @@
 /**
- * Regression tests for #567: a `.trellis` directory that is a symlink into a
+ * Regression tests for #567: a `.omtre` directory that is a symlink into a
  * shared store outside the repo must keep working.
  *
  * 0.6.15 enforced path containment with physical paths only
@@ -20,11 +20,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 const HOOK_PATH = path.resolve(
   __dirname,
   "../../src/templates/shared-hooks/inject-subagent-context.py",
@@ -47,11 +45,11 @@ function runTask(
 ): { status: number | null; stdout: string; stderr: string } {
   const r = spawnSync(
     "python3",
-    [path.join(".trellis", "scripts", "task.py"), ...args],
+    [path.join(".omtre", "scripts", "task.py"), ...args],
     {
       cwd: repo,
       encoding: "utf-8",
-      env: { ...process.env, TRELLIS_CONTEXT_ID: "test-ctx" },
+      env: { ...process.env, OMTRE_CONTEXT_ID: "test-ctx" },
     },
   );
   return { status: r.status, stdout: r.stdout, stderr: r.stderr };
@@ -78,15 +76,15 @@ ${code}
 }
 
 describe.skipIf(!hasPython() || process.platform === "win32")(
-  "symlinked .trellis workflow dir (#567)",
+  "symlinked .omtre workflow dir (#567)",
   () => {
     let base: string;
-    let store: string; // the real .trellis, outside the repo
-    let repo: string; // the git worktree; repo/.trellis -> store
+    let store: string; // the real .omtre, outside the repo
+    let repo: string; // the git worktree; repo/.omtre -> store
 
     beforeEach(() => {
-      base = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-567-"));
-      store = path.join(base, "shared", ".trellis");
+      base = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-567-"));
+      store = path.join(base, "shared", ".omtre");
       repo = path.join(base, "repo");
 
       fs.mkdirSync(path.join(store, "tasks", TASK), { recursive: true });
@@ -108,7 +106,7 @@ describe.skipIf(!hasPython() || process.platform === "win32")(
 
       fs.mkdirSync(repo, { recursive: true });
       spawnSync("git", ["init", "-q", repo], { encoding: "utf-8" });
-      fs.symlinkSync(store, path.join(repo, ".trellis"), "dir");
+      fs.symlinkSync(store, path.join(repo, ".omtre"), "dir");
     });
 
     afterEach(() => {
@@ -118,13 +116,13 @@ describe.skipIf(!hasPython() || process.platform === "win32")(
     it("task.py start resolves a task by name and stores the in-repo ref", () => {
       const r = runTask(repo, "start", TASK);
       expect(r.status).toBe(0);
-      expect(r.stdout).toContain(`Current task set to: .trellis/tasks/${TASK}`);
+      expect(r.stdout).toContain(`Current task set to: .omtre/tasks/${TASK}`);
     });
 
     it("task.py start resolves the path form too", () => {
-      const r = runTask(repo, "start", `.trellis/tasks/${TASK}`);
+      const r = runTask(repo, "start", `.omtre/tasks/${TASK}`);
       expect(r.status).toBe(0);
-      expect(r.stdout).toContain(`Current task set to: .trellis/tasks/${TASK}`);
+      expect(r.stdout).toContain(`Current task set to: .omtre/tasks/${TASK}`);
     });
 
     it("still refuses `..` traversal in the symlinked layout", () => {
@@ -159,16 +157,16 @@ describe.skipIf(!hasPython() || process.platform === "win32")(
       fs.writeFileSync(
         path.join(store, "tasks", TASK, "implement.jsonl"),
         JSON.stringify({
-          file: `.trellis/tasks/${TASK}/task.json`,
+          file: `.omtre/tasks/${TASK}/task.json`,
           reason: "self",
         }) + "\n",
       );
       const out = runHookProbe(
         repo,
-        `print(mod.get_implement_context(REPO_ROOT, ${JSON.stringify(`.trellis/tasks/${TASK}`)}))`,
+        `print(mod.get_implement_context(REPO_ROOT, ${JSON.stringify(`.omtre/tasks/${TASK}`)}))`,
       );
       expect(out).toContain("PRD THROUGH SYMLINK");
-      expect(out).toContain(`=== .trellis/tasks/${TASK}/task.json ===`);
+      expect(out).toContain(`=== .omtre/tasks/${TASK}/task.json ===`);
     });
 
     it("hook still refuses a jsonl ref outside both containment bases", () => {
@@ -180,7 +178,7 @@ describe.skipIf(!hasPython() || process.platform === "win32")(
       );
       const out = runHookProbe(
         repo,
-        `print(mod.get_implement_context(REPO_ROOT, ${JSON.stringify(`.trellis/tasks/${TASK}`)}))`,
+        `print(mod.get_implement_context(REPO_ROOT, ${JSON.stringify(`.omtre/tasks/${TASK}`)}))`,
       );
       expect(out).not.toContain("TOP SECRET CONTENT");
     });

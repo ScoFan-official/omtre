@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Trellis configuration reader.
+omtre configuration reader.
 
-Reads settings from .trellis/config.yaml with sensible defaults.
+Reads settings from .omtre/config.yaml with sensible defaults.
 """
 
 from __future__ import annotations
@@ -11,9 +11,9 @@ import sys
 from pathlib import Path
 
 from .paths import DIR_WORKFLOW, get_repo_root
-from .trellis_config import parse_simple_yaml
+from .omtre_config import parse_simple_yaml
 
-# The YAML subset parser lives in trellis_config.py — it imports nothing from
+# The YAML subset parser lives in omtre_config.py — it imports nothing from
 # this package, so hooks can load it as a single standalone file. Two byte-
 # equivalent copies is a drift hazard, not a feature.
 
@@ -78,7 +78,7 @@ def _get_config_path(repo_root: Path | None = None) -> Path:
 def _load_config(repo_root: Path | None = None) -> dict:
     """Load and parse config.yaml. Returns empty dict on any error.
 
-    Fail-open, matching ``trellis_config.read_trellis_config``: a malformed
+    Fail-open, matching ``omtre_config.read_omtre_config``: a malformed
     config must not take down ``task.py create``. A parse failure is reported
     once on stderr so it is not invisible.
     """
@@ -122,7 +122,7 @@ def get_session_auto_commit(repo_root: Path | None = None) -> bool:
     ``task_store.py:_auto_commit_archive``.
 
     Default: ``True`` (existing behavior — auto-stage + auto-commit).
-    Set ``session_auto_commit: false`` in ``.trellis/config.yaml`` to skip
+    Set ``session_auto_commit: false`` in ``.omtre/config.yaml`` to skip
     auto-staging entirely; the journal/archive files are still written to
     disk, but the user manages ``git add`` / ``git commit`` themselves.
 
@@ -140,7 +140,7 @@ def get_session_auto_commit(repo_root: Path | None = None) -> bool:
 def get_codex_dispatch_mode(repo_root: Path | None = None) -> str:
     """Return Codex dispatch mode.
 
-    Default is ``auto``, which dispatches Trellis sub-agents and uses native
+    Default is ``auto``, which dispatches omtre sub-agents and uses native
     context injection with a child-side fallback. ``inline`` is an explicit
     opt-out. ``sub-agent`` remains a backwards-compatible alias for ``auto``.
 
@@ -181,7 +181,7 @@ DEFAULT_CONTEXT_INJECTION_MAX_TOTAL_BYTES = 131072
 def get_context_injection_limits(repo_root: Path | None = None) -> dict[str, int]:
     """Return sub-agent context injection byte limits.
 
-    Reads the ``context_injection:`` section of ``.trellis/config.yaml``:
+    Reads the ``context_injection:`` section of ``.omtre/config.yaml``:
 
         context_injection:
           max_file_bytes: 32768
@@ -229,20 +229,20 @@ def get_context_injection_limits(repo_root: Path | None = None) -> dict[str, int
     return result
 
 
-DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD = "no-trellis"
+DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD = "no-omtre"
 
 
 def get_prompt_injection_config(repo_root: Path | None = None) -> dict[str, str]:
     """Return per-turn prompt injection config.
 
-    Reads the ``prompt_injection:`` section of ``.trellis/config.yaml``:
+    Reads the ``prompt_injection:`` section of ``.omtre/config.yaml``:
 
         prompt_injection:
-          skip_keyword: "no-trellis"   # "" disables the escape hatch entirely
+          skip_keyword: "no-omtre"   # "" disables the escape hatch entirely
 
     ``skip_keyword`` is the word-boundary, case-insensitive keyword that, when
     present in the user's prompt, makes the per-turn workflow-state injection
-    emit nothing for that turn. Defaults to ``"no-trellis"``. A non-string
+    emit nothing for that turn. Defaults to ``"no-omtre"``. A non-string
     value falls back to the default.
     """
     defaults = {"skip_keyword": DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD}
@@ -394,7 +394,7 @@ def is_monorepo(repo_root: Path | None = None) -> bool:
 
 
 def get_spec_base(package: str | None = None, repo_root: Path | None = None) -> str:
-    """Get the spec directory base path relative to .trellis/.
+    """Get the spec directory base path relative to .omtre/.
 
     Single-repo: returns "spec"
     Monorepo with package: returns "spec/<package>"

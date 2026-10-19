@@ -3,7 +3,7 @@
  * recording state machine (commit evidence, retry convergence, numbering).
  *
  * The python script lives under
- * `src/templates/trellis/scripts/add_session.py`; this test stamps the real
+ * `scripts/add_session.py`; this test stamps the real
  * templates into a fresh git repo and exercises the actual `python3
  * add_session.py` paths — no source-string assertions.
  *
@@ -19,11 +19,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 const DEVELOPER = "tester";
 
@@ -51,21 +49,21 @@ function setupRepo(tmp: string): void {
   git(tmp, "init", "-q", "-b", "main");
   git(tmp, "config", "user.email", "test@example.com");
   git(tmp, "config", "user.name", "Test");
-  stampTrellis(tmp);
+  stampOmtre(tmp);
 }
 
-/** Create the `.trellis/` tree and developer state at `tmp`, without git. */
-function stampTrellis(tmp: string): void {
+/** Create the `.omtre/` tree and developer state at `tmp`, without git. */
+function stampOmtre(tmp: string): void {
   fs.mkdirSync(tmp, { recursive: true });
 
   // Stamp the real templates into the test repo.
-  const scriptsDest = path.join(tmp, ".trellis", "scripts");
+  const scriptsDest = path.join(tmp, ".omtre", "scripts");
   fs.mkdirSync(scriptsDest, { recursive: true });
   fs.cpSync(TEMPLATE_SCRIPTS, scriptsDest, { recursive: true });
 
   // session_auto_commit must be enabled for the session to commit.
   fs.writeFileSync(
-    path.join(tmp, ".trellis", "config.yaml"),
+    path.join(tmp, ".omtre", "config.yaml"),
     "session_auto_commit: true\n",
   );
 
@@ -73,7 +71,7 @@ function stampTrellis(tmp: string): void {
   // the auto-update markers) via the real init script.
   const r = spawnSync(
     "python3",
-    [".trellis/scripts/init_developer.py", DEVELOPER],
+    [".omtre/scripts/init_developer.py", DEVELOPER],
     { cwd: tmp, encoding: "utf-8" },
   );
   if (r.status !== 0) {
@@ -87,7 +85,7 @@ function makeTask(
   prdBody: string,
   branch?: string,
 ): void {
-  const dir = path.join(repo, ".trellis", "tasks", name);
+  const dir = path.join(repo, ".omtre", "tasks", name);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "prd.md"), prdBody);
   const taskJson: Record<string, unknown> = {
@@ -119,12 +117,12 @@ function makeTask(
  * `get_current_task` returns this task without needing a platform context.
  */
 function setCurrentTask(repo: string, taskName: string): void {
-  const sessionsDir = path.join(repo, ".trellis", ".runtime", "sessions");
+  const sessionsDir = path.join(repo, ".omtre", ".runtime", "sessions");
   fs.mkdirSync(sessionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(sessionsDir, "session.json"),
     JSON.stringify({
-      current_task: `.trellis/tasks/${taskName}`,
+      current_task: `.omtre/tasks/${taskName}`,
       platform: "session",
     }) + "\n",
   );
@@ -144,7 +142,7 @@ function tryAddSession(
 ): RunResult {
   const r = spawnSync(
     "python3",
-    [".trellis/scripts/add_session.py", "--title", title, ...extraArgs],
+    [".omtre/scripts/add_session.py", "--title", title, ...extraArgs],
     { cwd: repo, encoding: "utf-8" },
   );
   return {
@@ -162,11 +160,11 @@ function runAddSession(repo: string, title: string, extraArgs: string[] = []): v
 }
 
 function journalPath(repo: string, num = 1): string {
-  return path.join(repo, ".trellis", "workspace", DEVELOPER, `journal-${num}.md`);
+  return path.join(repo, ".omtre", "workspace", DEVELOPER, `journal-${num}.md`);
 }
 
 function indexPath(repo: string): string {
-  return path.join(repo, ".trellis", "workspace", DEVELOPER, "index.md");
+  return path.join(repo, ".omtre", "workspace", DEVELOPER, "index.md");
 }
 
 function readJournal(repo: string, num = 1): string {
@@ -185,12 +183,12 @@ function sessionNumbers(repo: string, num = 1): number[] {
 }
 
 function countMarkers(repo: string, num = 1): number {
-  return readJournal(repo, num).split("<!-- trellis-session:").length - 1;
+  return readJournal(repo, num).split("<!-- omtre-session:").length - 1;
 }
 
 /** Every distinct record marker present in a journal, in order of appearance. */
 function distinctMarkers(repo: string, num = 1): string[] {
-  const seen = readJournal(repo, num).match(/<!-- trellis-session:[^>]*-->/g) ?? [];
+  const seen = readJournal(repo, num).match(/<!-- omtre-session:[^>]*-->/g) ?? [];
   return [...new Set(seen)];
 }
 
@@ -217,7 +215,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-test-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-test-"));
     setupRepo(tmp);
   });
 
@@ -234,7 +232,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
 
     // Dirty edit in task-b BEFORE recording a session in task-a's context.
     fs.appendFileSync(
-      path.join(tmp, ".trellis", "tasks", "task-b", "prd.md"),
+      path.join(tmp, ".omtre", "tasks", "task-b", "prd.md"),
       "DIRTY EDIT IN TASK-B SHOULD NOT BE COMMITTED\n",
     );
 
@@ -258,7 +256,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
 
     // task-b dirty change still in working tree.
     const status = git(tmp, "status", "--porcelain");
-    expect(status).toMatch(/\.trellis\/tasks\/task-b\/prd\.md/);
+    expect(status).toMatch(/\.omtre\/tasks\/task-b\/prd\.md/);
   });
 
   it("does not sweep pre-staged unrelated files into the session commit (#579)", () => {
@@ -281,9 +279,9 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    // The chore commit contains only Trellis-owned paths.
+    // The chore commit contains only Omtre-owned paths.
     expect(lastFiles).not.toContain("README.md");
-    expect(lastFiles.every((f) => f.startsWith(".trellis/"))).toBe(true);
+    expect(lastFiles.every((f) => f.startsWith(".omtre/"))).toBe(true);
 
     // The developer's file is still staged, ready for their own commit.
     const status = git(tmp, "status", "--porcelain");
@@ -299,7 +297,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
     runAddSession(tmp, "placeholder-free work");
 
     const journal = fs.readFileSync(
-      path.join(tmp, ".trellis", "workspace", DEVELOPER, "journal-1.md"),
+      path.join(tmp, ".omtre", "workspace", DEVELOPER, "journal-1.md"),
       "utf-8",
     );
 
@@ -332,7 +330,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
     ]);
 
     const journal = fs.readFileSync(
-      path.join(tmp, ".trellis", "workspace", DEVELOPER, "journal-1.md"),
+      path.join(tmp, ".omtre", "workspace", DEVELOPER, "journal-1.md"),
       "utf-8",
     );
 
@@ -354,11 +352,11 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
     runAddSession(tmp, "stale branch work");
 
     const journal = fs.readFileSync(
-      path.join(tmp, ".trellis", "workspace", DEVELOPER, "journal-1.md"),
+      path.join(tmp, ".omtre", "workspace", DEVELOPER, "journal-1.md"),
       "utf-8",
     );
     const index = fs.readFileSync(
-      path.join(tmp, ".trellis", "workspace", DEVELOPER, "index.md"),
+      path.join(tmp, ".omtre", "workspace", DEVELOPER, "index.md"),
       "utf-8",
     );
 
@@ -375,11 +373,11 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
     // TWO session files → resolve_active_task refuses to guess and returns
     // None. The guard must stage only journal/index, never the wide scan.
     setCurrentTask(tmp, "task-a");
-    const sessionsDir = path.join(tmp, ".trellis", ".runtime", "sessions");
+    const sessionsDir = path.join(tmp, ".omtre", ".runtime", "sessions");
     fs.writeFileSync(
       path.join(sessionsDir, "session2.json"),
       JSON.stringify({
-        current_task: ".trellis/tasks/task-b",
+        current_task: ".omtre/tasks/task-b",
         platform: "session",
       }) + "\n",
     );
@@ -388,11 +386,11 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
 
     // Both task dirs dirty.
     fs.appendFileSync(
-      path.join(tmp, ".trellis", "tasks", "task-a", "prd.md"),
+      path.join(tmp, ".omtre", "tasks", "task-a", "prd.md"),
       "DIRTY A\n",
     );
     fs.appendFileSync(
-      path.join(tmp, ".trellis", "tasks", "task-b", "prd.md"),
+      path.join(tmp, ".omtre", "tasks", "task-b", "prd.md"),
       "DIRTY B\n",
     );
 
@@ -415,11 +413,11 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
 
     // Both task dirty edits remain in the working tree.
     const status = git(tmp, "status", "--porcelain");
-    expect(status).toMatch(/\.trellis\/tasks\/task-a\/prd\.md/);
-    expect(status).toMatch(/\.trellis\/tasks\/task-b\/prd\.md/);
+    expect(status).toMatch(/\.omtre\/tasks\/task-a\/prd\.md/);
+    expect(status).toMatch(/\.omtre\/tasks\/task-b\/prd\.md/);
   });
 
-  it("stages only Trellis-owned paths in the session auto-commit", () => {
+  it("stages only Omtre-owned paths in the session auto-commit", () => {
     seedTask(tmp);
     fs.writeFileSync(path.join(tmp, "unrelated.txt"), "user work in progress\n");
 
@@ -432,7 +430,7 @@ describe.skipIf(!hasPython())("add_session.py auto-commit", () => {
 
     expect(lastFiles.length).toBeGreaterThan(0);
     for (const f of lastFiles) {
-      expect(f.startsWith(".trellis/"), `unexpected path in commit: ${f}`).toBe(
+      expect(f.startsWith(".omtre/"), `unexpected path in commit: ${f}`).toBe(
         true,
       );
     }
@@ -444,7 +442,7 @@ describe.skipIf(!hasPython())("add_session.py commit evidence (R1)", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-evidence-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-evidence-"));
     setupRepo(tmp);
     seedTask(tmp);
   });
@@ -580,7 +578,7 @@ function markersFor(
 ): { v2: string; v1: string } {
   const harness = [
     "import sys, json",
-    `sys.path.insert(0, ${JSON.stringify(".trellis/scripts")})`,
+    `sys.path.insert(0, ${JSON.stringify(".omtre/scripts")})`,
     "import add_session as a",
     "payload = a._fingerprint_payload(",
     `    ${JSON.stringify(DEVELOPER)}, ${JSON.stringify(title)},`,
@@ -627,7 +625,7 @@ describe.skipIf(!hasPython())("add_session.py fingerprint date rollover", () => 
   const ARGS = ["--summary", SUMMARY, "--branch", BRANCH];
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-rollover-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-rollover-"));
     setupRepo(tmp);
     seedTask(tmp);
   });
@@ -709,7 +707,7 @@ describe.skipIf(!hasPython())("add_session.py fingerprint date rollover", () => 
   it("writes the versioned marker form", () => {
     runAddSession(tmp, TITLE, ARGS);
     expect(readJournal(tmp)).toMatch(
-      /^<!-- trellis-session: v=2 fp=[0-9a-f]{16} -->$/m,
+      /^<!-- omtre-session: v=2 fp=[0-9a-f]{16} -->$/m,
     );
   });
 });
@@ -718,7 +716,7 @@ describe.skipIf(!hasPython())("add_session.py retry convergence (R2-R5)", () => 
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-retry-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-retry-"));
     setupRepo(tmp);
     seedTask(tmp);
   });
@@ -786,7 +784,7 @@ describe.skipIf(!hasPython())("add_session.py retry convergence (R2-R5)", () => 
     const committed = git(
       tmp,
       "show",
-      `HEAD:.trellis/workspace/${DEVELOPER}/journal-1.md`,
+      `HEAD:.omtre/workspace/${DEVELOPER}/journal-1.md`,
     );
     expect(committed).toContain("## Session 1: commit fault");
   });
@@ -872,7 +870,7 @@ describe.skipIf(!hasPython())("add_session.py retry convergence (R2-R5)", () => 
 
   it("stops after a verified journal + index when auto-commit is disabled", () => {
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "config.yaml"),
+      path.join(tmp, ".omtre", "config.yaml"),
       "session_auto_commit: false\n",
     );
     const logBefore = git(tmp, "log", "--oneline");
@@ -900,7 +898,7 @@ describe.skipIf(!hasPython())("add_session.py retry convergence (R2-R5)", () => 
 
   it("rotates to a new journal file and records the entry there", () => {
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "config.yaml"),
+      path.join(tmp, ".omtre", "config.yaml"),
       "session_auto_commit: true\nmax_journal_lines: 12\n",
     );
 
@@ -916,7 +914,7 @@ describe.skipIf(!hasPython())("add_session.py retry convergence (R2-R5)", () => 
 
   it("resumes a rotated entry without appending a second one", () => {
     fs.writeFileSync(
-      path.join(tmp, ".trellis", "config.yaml"),
+      path.join(tmp, ".omtre", "config.yaml"),
       "session_auto_commit: true\nmax_journal_lines: 12\n",
     );
     breakCommits(tmp);
@@ -939,7 +937,7 @@ describe.skipIf(!hasPython())("add_session.py session numbering", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-number-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-number-"));
     setupRepo(tmp);
     seedTask(tmp);
   });
@@ -986,21 +984,21 @@ describe.skipIf(!hasPython())("add_session.py session numbering", () => {
 });
 
 /**
- * `get_repo_root` returns the nearest directory holding `.trellis/`, which is
+ * `get_repo_root` returns the nearest directory holding `.omtre/`, which is
  * not necessarily the git toplevel. Every git path the recorder builds has to
- * be interpreted relative to the Trellis root, not the git root.
+ * be interpreted relative to the Omtre root, not the git root.
  */
-describe.skipIf(!hasPython())("add_session.py with .trellis below the git root", () => {
+describe.skipIf(!hasPython())("add_session.py with .omtre below the git root", () => {
   let outer: string;
   let project: string;
 
   beforeEach(() => {
-    outer = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-nested-"));
+    outer = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-nested-"));
     git(outer, "init", "-q", "-b", "main");
     git(outer, "config", "user.email", "test@example.com");
     git(outer, "config", "user.name", "Test");
     project = path.join(outer, "project");
-    stampTrellis(project);
+    stampOmtre(project);
     seedTask(project);
   });
 
@@ -1035,8 +1033,8 @@ describe.skipIf(!hasPython())("add_session.py outside any git repository", () =>
   let project: string;
 
   beforeEach(() => {
-    project = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-session-nogit-"));
-    stampTrellis(project);
+    project = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-session-nogit-"));
+    stampOmtre(project);
     // seedTask() commits via git; there is no repo here by design.
     makeTask(project, "task-a", "task-a prd\n");
     setCurrentTask(project, "task-a");
@@ -1048,7 +1046,7 @@ describe.skipIf(!hasPython())("add_session.py outside any git repository", () =>
 
   it("records the session and exits 0 — a configured skip, not a retry loop", () => {
     // No git here means auto-commit can never succeed; that must be
-    // COMMIT_BLOCKED (exit 0, like a gitignored .trellis/), not the
+    // COMMIT_BLOCKED (exit 0, like a gitignored .omtre/), not the
     // COMMIT_FAILED checkpoint whose "fix the git error" advice never applies.
     const result = tryAddSession(project, "no git", ["--summary", "no repo"]);
     expect(result.status).toBe(0);

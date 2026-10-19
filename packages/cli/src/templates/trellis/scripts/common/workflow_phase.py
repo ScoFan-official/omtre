@@ -3,7 +3,7 @@
 """
 Workflow Phase Extraction.
 
-Extracts step-level content from .trellis/workflow.md and optionally filters
+Extracts step-level content from .omtre/workflow.md and optionally filters
 platform-specific blocks.
 
 Platform marker syntax in workflow.md:
@@ -165,7 +165,7 @@ def resolve_effective_platform(platform: str, config: dict) -> str:
 
     When ``--platform codex`` is passed, return ``"codex-sub-agent"`` by
     default or ``"codex-inline"`` when explicitly configured in
-    ``.trellis/config.yaml``. ``sub-agent`` remains an alias for ``auto``.
+    ``.omtre/config.yaml``. ``sub-agent`` remains an alias for ``auto``.
     ``filter_platform`` then surfaces blocks whose marker lists include the
     namespaced name (e.g. ``[codex-sub-agent, ...]`` or ``[codex-inline, Kilo,
     Antigravity, Devin]``).

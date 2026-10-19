@@ -2,7 +2,7 @@
  * Integration tests for `task.py list` tree rendering (#402).
  *
  * The python script lives under
- * `src/templates/trellis/scripts/task.py` (+ `common/task_store.py` for
+ * `task.py` (+ `common/task_store.py` for
  * `set-meta`); this test stamps the real templates into a fresh git repo
  * and exercises the actual `python3 task.py list` / `list --json` /
  * `create --meta` / `set-meta` paths.
@@ -13,11 +13,9 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { getOmtreTemplatePath } from "../../src/templates/extract.js";
 
-const TEMPLATE_SCRIPTS = path.resolve(
-  __dirname,
-  "../../src/templates/trellis/scripts",
-);
+const TEMPLATE_SCRIPTS = path.join(getOmtreTemplatePath(), "scripts");
 
 function hasPython(): boolean {
   try {
@@ -30,7 +28,7 @@ function hasPython(): boolean {
 
 function setupRepo(tmp: string): void {
   fs.mkdirSync(tmp, { recursive: true });
-  const scriptsDest = path.join(tmp, ".trellis", "scripts");
+  const scriptsDest = path.join(tmp, ".omtre", "scripts");
   fs.mkdirSync(scriptsDest, { recursive: true });
   fs.cpSync(TEMPLATE_SCRIPTS, scriptsDest, { recursive: true });
 }
@@ -40,7 +38,7 @@ function makeTask(
   name: string,
   overrides: Record<string, unknown> = {},
 ): void {
-  const dir = path.join(repo, ".trellis", "tasks", name);
+  const dir = path.join(repo, ".omtre", "tasks", name);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "prd.md"), `${name} prd\n`);
   const taskJson: Record<string, unknown> = {
@@ -66,7 +64,7 @@ function makeTask(
 }
 
 function runTask(repo: string, ...args: string[]) {
-  return spawnSync("python3", [".trellis/scripts/task.py", ...args], {
+  return spawnSync("python3", [".omtre/scripts/task.py", ...args], {
     cwd: repo,
     encoding: "utf-8",
   });
@@ -76,7 +74,7 @@ describe.skipIf(!hasPython())("task.py list tree view (#402)", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-task-list-test-"));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-task-list-test-"));
     setupRepo(tmp);
   });
 

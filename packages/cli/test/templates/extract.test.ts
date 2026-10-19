@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import {
-  getTrellisTemplatePath,
+  getOmtreTemplatePath,
   getClaudeTemplatePath,
   getOpenCodeTemplatePath,
   getPiTemplatePath,
   getPiSourcePath,
-  getTrellisSourcePath,
-  readTrellisFile,
+  getOmtreSourcePath,
+  readOmtreFile,
   readTemplate,
   readScript,
   readMarkdown,
@@ -18,8 +18,8 @@ import {
 // =============================================================================
 
 describe("template path functions", () => {
-  it("getTrellisTemplatePath returns existing directory", () => {
-    const p = getTrellisTemplatePath();
+  it("getOmtreTemplatePath returns existing directory", () => {
+    const p = getOmtreTemplatePath();
     expect(fs.existsSync(p)).toBe(true);
     expect(fs.statSync(p).isDirectory()).toBe(true);
   });
@@ -48,8 +48,8 @@ describe("template path functions", () => {
 // =============================================================================
 
 describe("deprecated source path aliases", () => {
-  it("getTrellisSourcePath equals getTrellisTemplatePath", () => {
-    expect(getTrellisSourcePath()).toBe(getTrellisTemplatePath());
+  it("getOmtreSourcePath equals getOmtreTemplatePath", () => {
+    expect(getOmtreSourcePath()).toBe(getOmtreTemplatePath());
   });
 
   it("getPiSourcePath equals getPiTemplatePath", () => {
@@ -58,25 +58,25 @@ describe("deprecated source path aliases", () => {
 });
 
 // =============================================================================
-// readTrellisFile — reads files from trellis template directory
+// readOmtreFile — reads files from omtre template directory
 // =============================================================================
 
-describe("readTrellisFile", () => {
-  it("reads workflow.md from trellis templates", () => {
-    const content = readTrellisFile("workflow.md");
+describe("readOmtreFile", () => {
+  it("reads workflow.md from omtre templates", () => {
+    const content = readOmtreFile("workflow.md");
     expect(typeof content).toBe("string");
     expect(content.length).toBeGreaterThan(0);
     expect(content).toContain("#");
   });
 
   it("reads a script file", () => {
-    const content = readTrellisFile("scripts/task.py");
+    const content = readOmtreFile("scripts/task.py");
     expect(typeof content).toBe("string");
     expect(content.length).toBeGreaterThan(0);
   });
 
   it("throws for nonexistent file", () => {
-    expect(() => readTrellisFile("nonexistent.txt")).toThrow();
+    expect(() => readOmtreFile("nonexistent.txt")).toThrow();
   });
 });
 

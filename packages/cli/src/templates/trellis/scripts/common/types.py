@@ -1,5 +1,5 @@
 """
-Core type definitions for Trellis task data.
+Core type definitions for omtre task data.
 
 Provides:
     TaskData     — TypedDict for task.json shape (read-path type hints only)

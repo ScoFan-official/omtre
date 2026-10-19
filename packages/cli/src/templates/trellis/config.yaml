@@ -1,5 +1,5 @@
-# Trellis Configuration
-# Project-level settings for the Trellis workflow system
+# Omtre Configuration
+# Project-level settings for the Omtre workflow system
 #
 # All values have sensible defaults. Only override what you need.
 
@@ -24,7 +24,7 @@ max_journal_lines: 2000
 # - false: scripts do not touch git. Files (journal-*.md, task archive moves)
 #   are still written to disk; you decide whether to git add / commit.
 #
-# Use `false` if your project's .gitignore intentionally excludes `.trellis/`
+# Use `false` if your project's .gitignore intentionally excludes `.omtre/`
 # and you want session data kept local-only, or if you prefer to review
 # staged changes manually before each commit.
 #
@@ -55,7 +55,7 @@ max_journal_lines: 2000
 #-------------------------------------------------------------------------------
 
 # Declare packages for monorepo projects.
-# Trellis auto-detects workspaces during `trellis init`, but you can also
+# Omtre auto-detects workspaces during `omtre init`, but you can also
 # configure them manually here.
 #
 # packages:
@@ -79,24 +79,24 @@ max_journal_lines: 2000
 #-------------------------------------------------------------------------------
 # Channel worker OOM guard
 #-------------------------------------------------------------------------------
-# Default safeguards for `trellis channel spawn` workers. The guard runs
+# Default safeguards for `omtre channel spawn` workers. The guard runs
 # at spawn time (cleans expired idle workers, then enforces the live-worker
 # budget) and inside each supervisor (self-terminates a worker that stays
 # continuously idle past `idle_timeout`).
 #
-# Precedence: CLI flag > env var (TRELLIS_CHANNEL_WORKER_IDLE_TIMEOUT /
-# TRELLIS_CHANNEL_MAX_LIVE_WORKERS) > this config > built-in default.
+# Precedence: CLI flag > env var (OMTRE_CHANNEL_WORKER_IDLE_TIMEOUT /
+# OMTRE_CHANNEL_MAX_LIVE_WORKERS) > this config > built-in default.
 #
 # `idle_timeout: 0` disables idle cleanup (workers can sit idle forever
 # unless explicitly killed or given `--timeout`).
 # `max_live_workers: 0` disables the spawn-time budget check.
 #
 # `trusted_context_dirs` extends the `--file`/`--jsonl`/`--agent` containment
-# check beyond the worker cwd — useful when `.trellis/tasks` or
-# `.trellis/workspace` is a symlink to an external directory. Realpaths under
+# check beyond the worker cwd — useful when `.omtre/tasks` or
+# `.omtre/workspace` is a symlink to an external directory. Realpaths under
 # any listed dir are accepted in addition to cwd.
-# `auto_trust_trellis_symlinks: false` disables the narrow auto-trust of
-# `.trellis/tasks` / `.trellis/workspace` when either is itself a top-level
+# `auto_trust_omtre_symlinks: false` disables the narrow auto-trust of
+# `.omtre/tasks` / `.omtre/workspace` when either is itself a top-level
 # symlink (auto-trust is on by default).
 #
 channel:
@@ -104,14 +104,14 @@ channel:
     idle_timeout: 5m
     max_live_workers: 6
   # trusted_context_dirs:
-  #   - /work/user/trellis_workspace
-  # auto_trust_trellis_symlinks: false
+  #   - /work/user/omtre_workspace
+  # auto_trust_omtre_symlinks: false
 
 #-------------------------------------------------------------------------------
 # Dispatch roster (multi-agent orchestration)
 #-------------------------------------------------------------------------------
 # The unattended runner picks workers by AGENT CARD NAME (files under
-# .trellis/agents/), never by ad-hoc provider strings. Resolution order for a
+# .omtre/agents/), never by ad-hoc provider strings. Resolution order for a
 # ticket's worker:
 #
 #   1. ticket meta.worker (task.py set-meta <dir> worker <card>)
@@ -138,7 +138,7 @@ channel:
 # Codex (dispatch behavior)
 #-------------------------------------------------------------------------------
 # Codex-only knob; other platforms ignore it. Default ("auto") dispatches
-# trellis-implement / trellis-check / trellis-research sub-agents. This does
+# omtre-implement / omtre-check / omtre-research sub-agents. This does
 # not rely on inherited parent transcripts: `fork_turns` remains
 # caller-controlled, while Codex's native SubagentStart hook injects task
 # context when trusted and child-side loading remains the fallback when it is
@@ -149,9 +149,9 @@ channel:
 # In "auto" mode, dispatched sub-agents inherit the main session's model
 # unless you pin one. To use a cheaper/faster model for implement/check/
 # research sub-agent work, edit `model` / `model_reasoning_effort` directly
-# on the generated `.codex/agents/trellis-*.toml` files (see the commented
+# on the generated `.codex/agents/omtre-*.toml` files (see the commented
 # hint lines in those files) — there is no config.yaml knob for this,
-# `trellis update` preserves your edits across regeneration.
+# `omtre update` preserves your edits across regeneration.
 #
 # codex:
 #   dispatch_mode: auto  # or "inline"; legacy alias: "sub-agent"
@@ -177,12 +177,12 @@ channel:
 #-------------------------------------------------------------------------------
 # Escape hatch for the per-turn <workflow-state> breadcrumb. When a user
 # prompt contains the skip keyword as a standalone word (case-insensitive,
-# word-boundary match — "no-trellisfoo" does NOT count), the breadcrumb is
+# word-boundary match — "no-omtre-foo" does NOT count), the breadcrumb is
 # skipped for that turn only. Does not affect SessionStart or sub-agent
 # context injection.
 #
 # prompt_injection:
-#   skip_keyword: "no-trellis"   # "" disables the escape hatch entirely
+#   skip_keyword: "no-omtre"     # "" disables the escape hatch entirely
 
 #-------------------------------------------------------------------------------
 # Autonomy mode for gated workflow steps.
@@ -191,11 +191,11 @@ channel:
 #   hands-off  (C档) auto-pass those gates — the user can veto afterwards
 #   supervised-delivery
 #              (C+档) those gates plus local commits, worktrees and ticket state
-#              transitions run automatically, and `trellis run` may push a ticket
+#              transitions run automatically, and `omtre run` may push a ticket
 #              branch — but only a ref listed in `delivery.auto_push_refs`,
 #              never the default branch, never a tag, and never a merge (that
 #              stays a human click; PR ≠ delivery).
-# The four always-stop rules in .trellis/domains/DISCIPLINE.md apply under
+# The four always-stop rules in .omtre/domains/DISCIPLINE.md apply under
 # every tier, and an explicit verbal stop always wins over hands-off.
 #
 # autonomy: hands-off

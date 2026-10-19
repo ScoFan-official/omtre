@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 def is_within_tasks_dir(task_dir_abs: Path, repo_root: Path | None = None) -> bool:
     """Check that a resolved task directory really is a task under the tasks dir.
 
-    A real task lives directly at ``.trellis/tasks/<name>``. This returns True
+    A real task lives directly at ``.omtre/tasks/<name>``. This returns True
     only when ``task_dir_abs`` is an immediate child of the tasks directory.
 
     Narrows ``resolve_task_dir``'s containment for archive: that chokepoint
@@ -197,17 +197,17 @@ def resolve_task_dir(target_dir: str, repo_root: Path) -> Path | None:
 
     Supports:
     - Absolute path: /path/to/task
-    - Relative path: .trellis/tasks/01-31-my-task
+    - Relative path: .omtre/tasks/01-31-my-task
     - Task name: my-task (uses find_task_by_name for lookup)
 
     This is the containment chokepoint for every command that accepts a task
     directory argument. The candidate is resolved (following symlinks) and must
-    land strictly under ``.trellis/tasks/``; archived tasks under
+    land strictly under ``.omtre/tasks/``; archived tasks under
     ``archive/<YYYY-MM>/`` qualify. Traversal (``../victim``), absolute paths
     outside the repo, a task dir symlinked out of the tasks tree, and the
     tasks directory itself are all rejected here so no caller has to re-check.
     The containment base is the tasks dir's own real location, so a
-    ``.trellis`` that is itself a symlink into a shared store (#567) works.
+    ``.omtre`` that is itself a symlink into a shared store (#567) works.
 
     Args:
         target_dir: Task directory specification.
@@ -230,8 +230,8 @@ def resolve_task_dir(target_dir: str, repo_root: Path) -> Path | None:
 
     if Path(target_dir).is_absolute():
         candidate = Path(target_dir)
-    elif "/" in normalized or normalized.startswith(".trellis"):
-        # Relative path (contains path separator or starts with .trellis)
+    elif "/" in normalized or normalized.startswith(".omtre"):
+        # Relative path (contains path separator or starts with .omtre)
         candidate = repo_root / Path(normalized)
     else:
         # Task name - must resolve inside the tasks directory. The historical
@@ -270,7 +270,7 @@ def resolve_task_dir(target_dir: str, repo_root: Path) -> Path | None:
         return None
 
     # Hand back the path spelled through the repo's own tasks dir rather than
-    # `resolved`: `.trellis` may be a symlink into a store outside the repo
+    # `resolved`: `.omtre` may be a symlink into a store outside the repo
     # (#567), in which case `resolved` sits outside the repo even though the
     # task is legitimate, and callers converting to a repo-relative ref for
     # storage would refuse it.
@@ -381,9 +381,9 @@ def _print_hook_stream(name: str, text: str) -> None:
 def run_task_hooks(event: str, task_json_path: Path, repo_root: Path) -> None:
     """Run lifecycle hooks for a task event.
 
-    Hooks are shell commands read from ``.trellis/config.yaml`` and executed
+    Hooks are shell commands read from ``.omtre/config.yaml`` and executed
     with ``shell=True`` from the repo root — see the trust boundary note in
-    ``.trellis/spec/cli/backend/script-conventions.md``.
+    ``.omtre/spec/cli/backend/script-conventions.md``.
 
     Fail-open by design: a broken hook warns and the lifecycle command
     continues. The warning names the event, command, exit status, and both
@@ -494,5 +494,5 @@ if __name__ == "__main__":
     tasks = get_tasks_dir(repo)
 
     print(f"Tasks dir: {tasks}")
-    print(f"resolve_task_dir('.trellis/tasks/test'): {resolve_task_dir('.trellis/tasks/test', repo)}")
+    print(f"resolve_task_dir('.omtre/tasks/test'): {resolve_task_dir('.omtre/tasks/test', repo)}")
     print(f"resolve_task_dir('../test'): {resolve_task_dir('../test', repo)}")

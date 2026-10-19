@@ -47,7 +47,7 @@ from .paths import (
 # Helpers
 # =============================================================================
 
-_PACKAGE_NAME = "@mindfoldhq/trellis"
+_PACKAGE_NAME = "omtre"
 _UPDATE_CHECK_TIMEOUT_SECONDS = 1.0
 _VERSION_RE = re.compile(
     r"^\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?\s*$"
@@ -221,7 +221,7 @@ def _discover_child_git_repos(repo_root: Path) -> list[tuple[str, str]]:
             "warning: found more than "
             f"{_POLYREPO_SCAN_MAX_REPOS} child Git repositories; "
             "skipping automatic Git status collection. Configure explicit "
-            "packages entries with path and git: true in .trellis/config.yaml.",
+            "packages entries with path and git: true in .omtre/config.yaml.",
             file=sys.stderr,
         )
         return []
@@ -237,7 +237,7 @@ def _collect_package_git_info(
     """Collect Git status for independent package repositories.
 
     Packages marked with ``git: true`` in config.yaml are authoritative.
-    When the Trellis root is not a Git repo and no configured package repos are
+    When the omtre root is not a Git repo and no configured package repos are
     available, optionally fall back to the bounded polyrepo child scan.
 
     Returns:
@@ -329,10 +329,10 @@ def _read_project_version(repo_root: Path) -> str | None:
     return version or None
 
 
-def _fetch_trellis_version_output() -> str | None:
+def _fetch_omtre_version_output() -> str | None:
     try:
         result = subprocess.run(
-            ["trellis", "--version"],
+            ["omtre", "--version"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -350,9 +350,10 @@ def _fetch_trellis_version_output() -> str | None:
 
 def _extract_available_update_version(output: str) -> str | None:
     update_match = re.search(
-        r"Trellis update available:\s*"
+        r"Omtre update available:\s*"
         r"(?P<current>\S+)\s*(?:→|->)\s*(?P<latest>\S+)",
         output,
+        re.IGNORECASE,
     )
     if update_match:
         return update_match.group("latest").strip()
@@ -361,7 +362,7 @@ def _extract_available_update_version(output: str) -> str | None:
 
 
 def _resolve_available_update_version() -> str | None:
-    output = _fetch_trellis_version_output()
+    output = _fetch_omtre_version_output()
     if not output:
         return None
     return _extract_available_update_version(output)
@@ -503,8 +504,8 @@ def get_update_hint(repo_root: Path, context_key: str | None = None) -> str | No
         return None
 
     return (
-        f"Trellis update available: {current_version} -> {latest_version}, "
-        "run trellis update"
+        f"Omtre update available: {current_version} -> {latest_version}, "
+        "run omtre update"
     )
 
 

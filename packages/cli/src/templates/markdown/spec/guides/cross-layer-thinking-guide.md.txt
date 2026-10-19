@@ -125,14 +125,14 @@ After implementation:
 
 ## Cross-Platform Template Consistency
 
-In Trellis, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
+In Omtre, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
 
 ### Checklist: After Modifying Any Command Template
 
-- [ ] Find all platforms with the same command: `find src/templates/*/commands/trellis/ -name "<command>.*"`
+- [ ] Find all platforms with the same command: `find src/templates/*/commands/omtre/ -name "<command>.*"`
 - [ ] Update all platform copies (Markdown `.md` and TOML `.toml`)
 - [ ] For Gemini TOML: adapt line continuations (`\\` vs `\`) and triple-quoted strings
-- [ ] Run `/trellis:check-cross-layer` to verify nothing was missed
+- [ ] Run `/omt:check-cross-layer` to verify nothing was missed
 
 **Real-world example**: Updated `record-session.md` in Claude to use `--mode record`, but forgot iFlow, Kilo, OpenCode, and Gemini — caught by cross-layer check.
 
@@ -140,8 +140,8 @@ In Trellis, command templates (e.g., `record-session.md`) exist in **multiple pl
 
 ## Generated Runtime Template Upgrade Consistency
 
-Some generated files are both documentation and runtime input. In Trellis,
-`.trellis/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
+Some generated files are both documentation and runtime input. In Omtre,
+`.omtre/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
 SessionStart filters, and per-turn hooks. Template changes must be validated
 against both fresh init and upgrade paths.
 
@@ -152,7 +152,7 @@ against both fresh init and upgrade paths.
 - [ ] Check whether relevant syntax lives outside obvious managed regions
       such as tag blocks
 - [ ] Verify fresh `init` output and a versioned `update` scenario that writes
-      the older `.trellis/.version`
+      the older `.omtre/.version`
 - [ ] Add an upgrade regression using an older pristine template fixture, then
       assert the installed file reaches the current packaged shape
 - [ ] Update the backend spec that owns the runtime contract
@@ -187,7 +187,7 @@ audit for beta markers against the root release tree.
 **Real-world example**: Codex inline mode changed workflow platform markers from
 `[Codex]` / `[Kilo, Antigravity, Windsurf]` to `[codex-sub-agent]` /
 `[codex-inline, Kilo, Antigravity, Windsurf]`. Fresh init was correct, but
-`trellis update` only merged `[workflow-state:*]` blocks and preserved stale
+`omtre update` only merged `[workflow-state:*]` blocks and preserved stale
 markers outside those blocks. Result: upgraded projects got new hook scripts
 but old workflow routing, so `get_context.py --mode phase --platform codex`
 could return empty Phase 2.1 detail.
@@ -216,20 +216,20 @@ When a CLI auto-detects a mode by probing a remote resource (e.g., checking if `
 
 **Real-world example**: Custom registry flow had 8 bugs across 3 review rounds: (1) probe only ran in interactive mode, (2) transient errors fell through to wrong mode, (3) giget URI had `#ref` in wrong position, (4) prefetched templates leaked across source switches, (5) `--template` shortcut bypassed probe but `downloadTemplateById` internally used catch-all `fetchTemplateIndex`, turning timeouts into "Template not found".
 
-**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `@mindfoldhq/trellis` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
+**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `omtre` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
 
 ---
 
 ## Cross-Platform Template Consistency
 
-In Trellis, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
+In Omtre, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
 
 ### Checklist: After Modifying Any Command Template
 
-- [ ] Find all platforms with the same command: `find src/templates/*/commands/trellis/ -name "<command>.*"`
+- [ ] Find all platforms with the same command: `find src/templates/*/commands/omtre/ -name "<command>.*"`
 - [ ] Update all platform copies (Markdown `.md` and TOML `.toml`)
 - [ ] For Gemini TOML: adapt line continuations (`\\` vs `\`) and triple-quoted strings
-- [ ] Run `/trellis:check-cross-layer` to verify nothing was missed
+- [ ] Run `/omt:check-cross-layer` to verify nothing was missed
 
 **Real-world example**: Updated `record-session.md` in Claude to use `--mode record`, but forgot iFlow, Kilo, OpenCode, and Gemini — caught by cross-layer check.
 
@@ -237,8 +237,8 @@ In Trellis, command templates (e.g., `record-session.md`) exist in **multiple pl
 
 ## Generated Runtime Template Upgrade Consistency
 
-Some generated files are both documentation and runtime input. In Trellis,
-`.trellis/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
+Some generated files are both documentation and runtime input. In Omtre,
+`.omtre/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
 SessionStart filters, and per-turn hooks. Template changes must be validated
 against both fresh init and upgrade paths.
 
@@ -249,7 +249,7 @@ against both fresh init and upgrade paths.
 - [ ] Check whether relevant syntax lives outside obvious managed regions
   such as tag blocks
 - [ ] Verify fresh `init` output and a versioned `update` scenario that writes
-  the older `.trellis/.version`
+  the older `.omtre/.version`
 - [ ] Add an upgrade regression using an older pristine template fixture, then
   assert the installed file reaches the current packaged shape
 - [ ] Update the backend spec that owns the runtime contract
@@ -257,7 +257,7 @@ against both fresh init and upgrade paths.
 **Real-world example**: Codex inline mode changed workflow platform markers from
 `[Codex]` / `[Kilo, Antigravity, Windsurf]` to `[codex-sub-agent]` /
 `[codex-inline, Kilo, Antigravity, Windsurf]`. Fresh init was correct, but
-`trellis update` only merged `[workflow-state:*]` blocks and preserved stale
+`omtre update` only merged `[workflow-state:*]` blocks and preserved stale
 markers outside those blocks. Result: upgraded projects got new hook scripts
 but old workflow routing, so `get_context.py --mode phase --platform codex`
 could return empty Phase 2.1 detail.
@@ -284,7 +284,7 @@ When a CLI auto-detects a mode by probing a remote resource (e.g., checking if `
 
 **Real-world example**: Custom registry flow had 8 bugs across 3 review rounds: (1) probe only ran in interactive mode, (2) transient errors fell through to wrong mode, (3) giget URI had `#ref` in wrong position, (4) prefetched templates leaked across source switches, (5) `--template` shortcut bypassed probe but `downloadTemplateById` internally used catch-all `fetchTemplateIndex`, turning timeouts into "Template not found".
 
-**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `@mindfoldhq/trellis` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
+**Real-world example**: Agent-session update hints fetched npm `latest` metadata with `response.read(4096)` and then parsed it as complete JSON. The `omtre` package metadata exceeded 4 KB, so the JSON was truncated, parse failed silently, and the first session injection showed no update hint. Fix: read the complete response before parsing, and add a regression where `version` is followed by an 8 KB metadata tail.
 
 ---
 
