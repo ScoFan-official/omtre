@@ -221,19 +221,12 @@ describe("omtre template constants", () => {
         return [];
       }
       const templates = collectPlatformTemplates(id);
-      const legacyPrefix = `${"t"}${"rellis"}`;
-      const legacyTitle = `${"T"}${"rellis"}`;
-      const agentPattern = new RegExp(`(?:omtre|${legacyPrefix})-(implement|check)`);
-      const preludePatterns = [
-        "Required: Load Omtre Context First",
-        `Required: Load ${legacyTitle} Context First`,
-      ];
       const hasPullBasedPrelude =
         templates !== undefined &&
         [...templates.entries()].some(
           ([filePath, content]) =>
-            agentPattern.test(filePath) &&
-            preludePatterns.some((p) => content.includes(p)),
+            /omtre-(implement|check)/.test(filePath) &&
+            content.includes("Required: Load Omtre Context First"),
         );
       if (!hasPullBasedPrelude) {
         return [];

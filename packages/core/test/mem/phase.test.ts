@@ -164,7 +164,7 @@ function ev(
 describe("parseTaskPyCommandsAll (dogfood-driven edge cases)", () => {
   it("strips $(...) closing paren from --slug value", () => {
     const all = parseTaskPyCommandsAll(
-      'TASK_DIR=$(python3 ./.omtre/scripts/task.py create "fix: tl mem --since drops cross-day sessions" --slug mem-since-cross-day-filter)',
+      'TASK_DIR=$(python3 ./.omtre/scripts/task.py create "fix: omt mem --since drops cross-day sessions" --slug mem-since-cross-day-filter)',
     );
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({

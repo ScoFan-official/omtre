@@ -33,7 +33,7 @@ function loadOmpExtension(): OmpExtension {
   const moduleObject: { exports: { default?: OmpExtension } } = { exports: {} };
   const sandboxProcess = Object.create(process) as NodeJS.Process;
   const sandboxEnv = { ...process.env };
-  delete sandboxEnv.TRELLIS_CONTEXT_ID;
+  delete sandboxEnv.OMTRE_CONTEXT_ID;
   Object.defineProperty(sandboxProcess, "env", { value: sandboxEnv });
   const sandbox = vm.createContext({
     Buffer,
@@ -58,15 +58,15 @@ function captureOmpHandlers(): Map<string, OmpEventHandler> {
 }
 
 function makeOmpProject(): { root: string; taskDir: string; sessionId: string } {
-  const root = fs.mkdtempSync(path.join(process.env.TMPDIR ?? "/tmp", "trellis-omp-") );
-  const taskDir = path.join(root, ".trellis", "tasks", "08-13-context-limits");
+  const root = fs.mkdtempSync(path.join(process.env.TMPDIR ?? "/tmp", "omtre-omp-") );
+  const taskDir = path.join(root, ".omtre", "tasks", "08-13-context-limits");
   const sessionId = "context_limits";
-  fs.mkdirSync(path.join(root, ".trellis", ".runtime", "sessions"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".omtre", ".runtime", "sessions"), { recursive: true });
   fs.mkdirSync(taskDir, { recursive: true });
   fs.writeFileSync(path.join(taskDir, "task.json"), JSON.stringify({ status: "in_progress", title: "Context limits" }));
   fs.writeFileSync(
-    path.join(root, ".trellis", ".runtime", "sessions", "omp_context_limits.json"),
-    JSON.stringify({ current_task: ".trellis/tasks/08-13-context-limits" }),
+    path.join(root, ".omtre", ".runtime", "sessions", "omp_context_limits.json"),
+    JSON.stringify({ current_task: ".omtre/tasks/08-13-context-limits" }),
   );
   return { root, taskDir, sessionId };
 }
@@ -87,16 +87,16 @@ async function runSessionStart(root: string, sessionId: string): Promise<string>
     sessionManager: { getSessionId: () => sessionId },
     ui: { notify: () => undefined },
   });
-  return messages.find((message) => message.customType === "trellis-task-context")?.content ?? "";
+  return messages.find((message) => message.customType === "omtre-task-context")?.content ?? "";
 }
 
 describe("omp templates", () => {
-  it("provides the three Trellis sub-agent definitions", () => {
+  it("provides the three Omtre sub-agent definitions", () => {
     const agents = getAllAgents();
     expect(agents.map((agent) => agent.name).sort()).toEqual([
-      "trellis-check",
-      "trellis-implement",
-      "trellis-research",
+      "omtre-check",
+      "omtre-implement",
+      "omtre-research",
     ]);
   });
 
@@ -124,7 +124,7 @@ describe("omp templates", () => {
     const extension = getExtensionTemplate();
 
     expect(extension).not.toContain("pi.setLabel(");
-    expect(extension).not.toContain("process.env.TRELLIS_CONTEXT_ID =");
+    expect(extension).not.toContain("process.env.OMTRE_CONTEXT_ID =");
     expect(extension).toContain('buildContextKey("omp", "session", sessionId)');
     expect(extension).toContain("realpathSync");
     expect(extension).toContain("resolveProjectFile(projectRoot, file, trustedRoots)");
@@ -147,7 +147,7 @@ describe("omp templates", () => {
     const handler = captureOmpHandlers().get("tool_call");
     if (!handler) throw new Error("OMP extension did not register tool_call");
     const params: { command: string; env?: Record<string, string> } = {
-      command: "python3 ./.trellis/scripts/task.py current",
+      command: "python3 ./.omtre/scripts/task.py current",
       env: { EXISTING: "kept" },
     };
 
@@ -156,7 +156,7 @@ describe("omp templates", () => {
       { sessionManager: { getSessionId: () => "session/a" } },
     );
 
-    expect(params.env?.TRELLIS_CONTEXT_ID).toBe("omp_session_a");
+    expect(params.env?.OMTRE_CONTEXT_ID).toBe("omp_session_a");
     expect(params.env?.EXISTING).toBe("kept");
   });
 
@@ -164,10 +164,10 @@ describe("omp templates", () => {
     const handler = captureOmpHandlers().get("tool_call");
     if (!handler) throw new Error("OMP extension did not register tool_call");
     const command =
-      "TRELLIS_CONTEXT_ID=inline python3 ./.trellis/scripts/task.py current";
+      "OMTRE_CONTEXT_ID=inline python3 ./.omtre/scripts/task.py current";
     const params: { command: string; env?: Record<string, string> } = {
       command,
-      env: { TRELLIS_CONTEXT_ID: "explicit" },
+      env: { OMTRE_CONTEXT_ID: "explicit" },
     };
 
     handler(
@@ -176,7 +176,7 @@ describe("omp templates", () => {
     );
 
     expect(params.command).toBe(command);
-    expect(params.env?.TRELLIS_CONTEXT_ID).toBe("explicit");
+    expect(params.env?.OMTRE_CONTEXT_ID).toBe("explicit");
   });
 
   it("does not mutate non-Bash tool params", () => {
@@ -196,7 +196,7 @@ describe("omp templates", () => {
     const extension = getExtensionTemplate();
     // R1: Session start rich injection via get_context.py
     expect(extension).toContain("buildSessionContext");
-    expect(extension).toContain("trellis-session-context");
+    expect(extension).toContain("omtre-session-context");
     expect(extension).toContain("get_context.py");
     expect(extension).toContain("session-context");
   });
@@ -206,9 +206,9 @@ describe("omp templates", () => {
     // R2: Sub-agent detection via PI_BLOCKED_AGENT
     expect(extension).toContain("PI_BLOCKED_AGENT");
     expect(extension).toContain("detectAgentType");
-    expect(extension).toContain("trellis-implement");
-    expect(extension).toContain("trellis-check");
-    expect(extension).toContain("trellis-research");
+    expect(extension).toContain("omtre-implement");
+    expect(extension).toContain("omtre-check");
+    expect(extension).toContain("omtre-research");
     // Agent-type-specific jsonl selection
     expect(extension).toContain("implement.jsonl");
     expect(extension).toContain("check.jsonl");
@@ -216,19 +216,19 @@ describe("omp templates", () => {
 
   it("deduplicates files referenced by both main-session manifests", async () => {
     const projectRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), "trellis-omp-dedupe-"),
+      path.join(os.tmpdir(), "omtre-omp-dedupe-"),
     );
-    const taskDir = path.join(projectRoot, ".trellis", "tasks", "demo-task");
+    const taskDir = path.join(projectRoot, ".omtre", "tasks", "demo-task");
     const sessionDir = path.join(
       projectRoot,
-      ".trellis",
+      ".omtre",
       ".runtime",
       "sessions",
     );
     const sharedFile = path.join(projectRoot, "docs", "shared.md");
     const checkOnlyFile = path.join(projectRoot, "docs", "check-only.md");
     const contextKey = "omp_session_dedupe";
-    const taskRef = ".trellis/tasks/demo-task";
+    const taskRef = ".omtre/tasks/demo-task";
     const messages: { customType?: string; content?: string }[] = [];
 
     try {
@@ -277,7 +277,7 @@ describe("omp templates", () => {
       );
 
       const taskContext = messages.find(
-        (message) => message.customType === "trellis-task-context",
+        (message) => message.customType === "omtre-task-context",
       );
       expect(taskContext?.content).toContain("## implement.jsonl");
       expect(taskContext?.content).toContain("## check.jsonl");
@@ -291,9 +291,9 @@ describe("omp templates", () => {
   });
 
   it("refreshes task context when a referenced file changes mid-session", async () => {
-    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-omp-refresh-"));
-    const taskDir = path.join(projectRoot, ".trellis", "tasks", "demo-task");
-    const sessionsDir = path.join(projectRoot, ".trellis", ".runtime", "sessions");
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-omp-refresh-"));
+    const taskDir = path.join(projectRoot, ".omtre", "tasks", "demo-task");
+    const sessionsDir = path.join(projectRoot, ".omtre", ".runtime", "sessions");
     const referencedFile = path.join(projectRoot, "docs", "changing.md");
     const messages: { customType?: string; content?: string }[] = [];
 
@@ -309,7 +309,7 @@ describe("omp templates", () => {
       );
       fs.writeFileSync(
         path.join(sessionsDir, "omp_session_refresh.json"),
-        JSON.stringify({ current_task: ".trellis/tasks/demo-task" }),
+        JSON.stringify({ current_task: ".omtre/tasks/demo-task" }),
       );
 
       const handlers = new Map<string, OmpEventHandler>();
@@ -327,7 +327,7 @@ describe("omp templates", () => {
       };
 
       await sessionStart({}, ctx);
-      const initial = messages.find((message) => message.customType === "trellis-task-context");
+      const initial = messages.find((message) => message.customType === "omtre-task-context");
       expect(initial?.content).toContain("old context body");
       expect(initial?.content).not.toContain("created later body");
 
@@ -336,15 +336,15 @@ describe("omp templates", () => {
       const result = await context(
         {
           messages: [
-            { role: "custom", customType: "trellis-task-context", content: initial?.content },
-            { role: "custom", customType: "trellis-workflow-state", content: "workflow" },
+            { role: "custom", customType: "omtre-task-context", content: initial?.content },
+            { role: "custom", customType: "omtre-workflow-state", content: "workflow" },
           ],
         },
         ctx,
       ) as { messages?: { customType?: string; content?: string }[] } | undefined;
 
       const refreshed = result?.messages?.filter(
-        (message) => message.customType === "trellis-task-context",
+        (message) => message.customType === "omtre-task-context",
       ) ?? [];
       expect(refreshed).toHaveLength(1);
       expect(refreshed[0]?.content).toContain("new context body with changed size");
@@ -364,7 +364,7 @@ describe("omp templates", () => {
 
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         "context_injection:\n  max_file_bytes: 0\n  max_artifact_bytes: 64\n  max_total_bytes: 900\n",
       );
       const earlierFile = path.join(project.root, "earlier.md");
@@ -396,7 +396,7 @@ describe("omp templates", () => {
 
       await sessionStart({}, ctx);
       const initial = messages.find(
-        (message) => message.customType === "trellis-task-context",
+        (message) => message.customType === "omtre-task-context",
       );
       expect(initial?.content).toContain("earlier.md [inline]");
       expect(initial?.content).toContain("later.md [omitted]");
@@ -407,12 +407,12 @@ describe("omp templates", () => {
           messages: [
             {
               role: "custom",
-              customType: "trellis-task-context",
+              customType: "omtre-task-context",
               content: initial?.content,
             },
             {
               role: "custom",
-              customType: "trellis-workflow-state",
+              customType: "omtre-workflow-state",
               content: "workflow",
             },
           ],
@@ -423,7 +423,7 @@ describe("omp templates", () => {
         | undefined;
 
       const refreshed = result?.messages?.filter(
-        (message) => message.customType === "trellis-task-context",
+        (message) => message.customType === "omtre-task-context",
       );
       expect(refreshed).toHaveLength(1);
       expect(refreshed?.[0]?.content).toContain("short earlier content");
@@ -448,7 +448,7 @@ describe("omp templates", () => {
       const context = await runSessionStart(project.root, project.sessionId);
       expect(context).toContain("large.md [truncated]");
       expect(context).toContain("read large.md for the full content");
-      expect(context).toContain("Context is bounded by .trellis/config.yaml");
+      expect(context).toContain("Context is bounded by .omtre/config.yaml");
       expect(Buffer.byteLength(context, "utf-8")).toBeLessThan(140_000);
     } finally {
       fs.rmSync(project.root, { recursive: true, force: true });
@@ -459,7 +459,7 @@ describe("omp templates", () => {
     const project = makeOmpProject();
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         "context_injection:\n  max_file_bytes: 0\n  max_total_bytes: 500\n",
       );
       fs.writeFileSync(path.join(project.root, "large.md"), "x".repeat(800));
@@ -490,8 +490,8 @@ describe("omp templates", () => {
         " ".repeat(1024 * 1024 + 1),
       );
       const context = await runSessionStart(project.root, project.sessionId);
-      expect(context).toContain(".trellis/tasks/08-13-context-limits/implement.jsonl [omitted]");
-      expect(context).toContain("required_read: .trellis/tasks/08-13-context-limits/implement.jsonl");
+      expect(context).toContain(".omtre/tasks/08-13-context-limits/implement.jsonl [omitted]");
+      expect(context).toContain("required_read: .omtre/tasks/08-13-context-limits/implement.jsonl");
       expect(context).toContain("manifest exceeds 1048576 byte parse limit");
     } finally {
       fs.rmSync(project.root, { recursive: true, force: true });
@@ -502,7 +502,7 @@ describe("omp templates", () => {
     const project = makeOmpProject();
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         "context_injection:\n  max_file_bytes: 3\n  max_artifact_bytes: 64\n  max_total_bytes: 2000\n",
       );
       fs.writeFileSync(path.join(project.root, "invalid.md"), Buffer.from([0x61, 0x62, 0x63, 0x80, 0x64]));
@@ -528,7 +528,7 @@ describe("omp templates", () => {
       const project = makeOmpProject();
       try {
         fs.writeFileSync(
-          path.join(project.root, ".trellis", "config.yaml"),
+          path.join(project.root, ".omtre", "config.yaml"),
           "context_injection:\n  max_file_bytes: 3\n  max_artifact_bytes: 64\n  max_total_bytes: 2000\n",
         );
         fs.writeFileSync(path.join(project.root, name), Buffer.from(bytes));
@@ -550,7 +550,7 @@ describe("omp templates", () => {
     const project = makeOmpProject();
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         "context_injection:\n  max_file_bytes: 3\n  max_artifact_bytes: 64\n  max_total_bytes: 2000\n",
       );
       fs.writeFileSync(path.join(project.root, "unicode.md"), "a€tail");
@@ -561,7 +561,7 @@ describe("omp templates", () => {
 
       const context = await runSessionStart(project.root, project.sessionId);
       expect(context).toContain("unicode.md [truncated]");
-      expect(context).toContain("### unicode.md [truncated]\n\na\n[Trellis: truncated at 3 bytes");
+      expect(context).toContain("### unicode.md [truncated]\n\na\n[Omtre: truncated at 3 bytes");
       expect(context).not.toContain("€");
       expect(context).not.toContain("unicode.md [omitted]");
     } finally {
@@ -573,7 +573,7 @@ describe("omp templates", () => {
     const project = makeOmpProject();
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         "context_injection:\n  max_file_bytes: 4\n  max_artifact_bytes: 64\n  max_total_bytes: 2000\n",
       );
       fs.writeFileSync(path.join(project.root, "unicode-end.md"), "a€tail");
@@ -596,7 +596,7 @@ describe("omp templates", () => {
     const maxTotalBytes = 700;
     try {
       fs.writeFileSync(
-        path.join(project.root, ".trellis", "config.yaml"),
+        path.join(project.root, ".omtre", "config.yaml"),
         `context_injection:\n  max_file_bytes: 0\n  max_artifact_bytes: 64\n  max_total_bytes: ${maxTotalBytes}\n`,
       );
       const rows: string[] = [];
@@ -635,8 +635,8 @@ describe("omp templates", () => {
 describe("omp command frontmatter", () => {
   it("collectOmpTemplates produces commands with YAML frontmatter", () => {
     const templates = collectOmpTemplates();
-    const continueCmd = templates.get(".omp/commands/trellis-continue.md");
-    const finishCmd = templates.get(".omp/commands/trellis-finish-work.md");
+    const continueCmd = templates.get(".omp/commands/omtre-continue.md");
+    const finishCmd = templates.get(".omp/commands/omtre-finish-work.md");
 
     expect(continueCmd).toBeDefined();
     expect(finishCmd).toBeDefined();
@@ -654,6 +654,6 @@ describe("omp command frontmatter", () => {
 
   it("collectOmpTemplates does not emit a start command", () => {
     const templates = collectOmpTemplates();
-    expect(templates.has(".omp/commands/trellis-start.md")).toBe(false);
+    expect(templates.has(".omp/commands/omtre-start.md")).toBe(false);
   });
 });

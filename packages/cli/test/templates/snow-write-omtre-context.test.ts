@@ -1,5 +1,5 @@
 /**
- * Execute Snow's write-trellis-context.py for session / user / subagent modes.
+ * Execute Snow's write-omtre-context.py for session / user / subagent modes.
  *
  * Complements platforms.test.ts (which only scans generated source). These
  * tests spawn the real Python hook against a fixture repo so regressions in
@@ -22,7 +22,7 @@ const HOOK_SCRIPT = path.join(
   "templates",
   "snow",
   "hooks",
-  "write-trellis-context.py",
+  "write-omtre-context.py",
 );
 
 function resolvePython(): string | null {
@@ -47,21 +47,21 @@ interface HookResult {
 }
 
 function writeFixtureRepo(root: string): void {
-  const taskDir = path.join(root, ".trellis", "tasks", "demo-task");
-  fs.mkdirSync(path.join(root, ".trellis", "scripts"), { recursive: true });
+  const taskDir = path.join(root, ".omtre", "tasks", "demo-task");
+  fs.mkdirSync(path.join(root, ".omtre", "scripts"), { recursive: true });
   fs.mkdirSync(taskDir, { recursive: true });
-  fs.mkdirSync(path.join(root, ".trellis", ".runtime", "sessions"), {
+  fs.mkdirSync(path.join(root, ".omtre", ".runtime", "sessions"), {
     recursive: true,
   });
 
   // Minimal task.py: always reports the fixture active task.
   fs.writeFileSync(
-    path.join(root, ".trellis", "scripts", "task.py"),
+    path.join(root, ".omtre", "scripts", "task.py"),
     [
       "#!/usr/bin/env python3",
       "import sys",
       "if \"current\" in sys.argv:",
-      "    print(\"Current task: .trellis/tasks/demo-task\")",
+      "    print(\"Current task: .omtre/tasks/demo-task\")",
       "    print(\"Source: session\")",
       "    raise SystemExit(0)",
       "print(\"unknown\")",
@@ -102,12 +102,12 @@ function writeFixtureRepo(root: string): void {
     "utf-8",
   );
   fs.writeFileSync(
-    path.join(root, ".trellis", "identity.md"),
+    path.join(root, ".omtre", "identity.md"),
     "# Identity\n\nName: Fixture Dev\n",
     "utf-8",
   );
   fs.writeFileSync(
-    path.join(root, ".trellis", "workflow.md"),
+    path.join(root, ".omtre", "workflow.md"),
     "# Workflow\n\nPhase 1 Plan / Phase 2 Execute\n",
     "utf-8",
   );
@@ -128,8 +128,8 @@ function runHook(
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SNOW_CWD: repo,
-    // Avoid leaking host Trellis session identity into fixture runs.
-    TRELLIS_CONTEXT_ID: "",
+    // Avoid leaking host Omtre session identity into fixture runs.
+    OMTRE_CONTEXT_ID: "",
     SNOW_SESSION_ID: opts.env?.SNOW_SESSION_ID ?? "",
     ...opts.env,
   };
@@ -171,7 +171,7 @@ function runHook(
   };
 }
 
-describe("snow write-trellis-context.py execution", () => {
+describe("snow write-omtre-context.py execution", () => {
   const tmpRoots: string[] = [];
 
   afterEach(() => {
@@ -181,7 +181,7 @@ describe("snow write-trellis-context.py execution", () => {
   });
 
   function makeRepo(): string {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "trellis-snow-hook-"));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "omtre-snow-hook-"));
     tmpRoots.push(root);
     writeFixtureRepo(root);
     return root;
@@ -203,16 +203,16 @@ describe("snow write-trellis-context.py execution", () => {
       expect(res.status).toBe(0);
       expect(res.payload).not.toBeNull();
       expect(res.payload?.additionalContext).toContain(
-        "# Trellis context (Snow CLI)",
+        "# Omtre context (Snow CLI)",
       );
       expect(res.payload?.additionalContext).toContain("Mode: session");
       expect(res.payload?.additionalContext).toContain(
-        ".trellis/tasks/demo-task",
+        ".omtre/tasks/demo-task",
       );
       expect(res.payload?.additionalContext).toContain("prd.md summary");
-      expect(res.payload?.display).toContain("Trellis session context injected");
+      expect(res.payload?.display).toContain("Omtre session context injected");
 
-      const logPath = path.join(repo, ".snow", "log", "trellis-context.txt");
+      const logPath = path.join(repo, ".snow", "log", "omtre-context.txt");
       expect(fs.existsSync(logPath)).toBe(true);
       const log = fs.readFileSync(logPath, "utf-8");
       expect(log).toContain("Mode: session");
@@ -239,10 +239,10 @@ describe("snow write-trellis-context.py execution", () => {
       // Compact inject should not embed large prd body.
       expect(res.payload?.additionalContext).not.toContain("prd.md summary");
       expect(res.payload?.additionalContext).toContain("prd.md: present");
-      expect(res.payload?.display).toContain("Trellis compact breadcrumb");
+      expect(res.payload?.display).toContain("Omtre compact breadcrumb");
 
       const log = fs.readFileSync(
-        path.join(repo, ".snow", "log", "trellis-context.txt"),
+        path.join(repo, ".snow", "log", "omtre-context.txt"),
         "utf-8",
       );
       // Log must stay full (session-depth), not the compact inject.
@@ -261,9 +261,9 @@ describe("snow write-trellis-context.py execution", () => {
         stdin: JSON.stringify({
           sessionId: "sess-sub-1",
           cwd: repo,
-          agentId: "trellis-implement",
-          agentName: "trellis-implement",
-          prompt: "Active task: .trellis/tasks/demo-task\nImplement feature",
+          agentId: "omtre-implement",
+          agentName: "omtre-implement",
+          prompt: "Active task: .omtre/tasks/demo-task\nImplement feature",
         }),
         env: { SNOW_SESSION_ID: "sess-sub-1" },
       });
@@ -287,7 +287,7 @@ describe("snow write-trellis-context.py execution", () => {
         stdin: JSON.stringify({
           sessionId: "sess-sub-2",
           cwd: repo,
-          agentName: "trellis-check",
+          agentName: "omtre-check",
           prompt: "review changes",
         }),
         env: { SNOW_SESSION_ID: "sess-sub-2" },
@@ -301,7 +301,7 @@ describe("snow write-trellis-context.py execution", () => {
         stdin: JSON.stringify({
           sessionId: "sess-sub-3",
           cwd: repo,
-          agentName: "trellis-research",
+          agentName: "omtre-research",
           prompt: "research topic",
         }),
         env: { SNOW_SESSION_ID: "sess-sub-3" },
@@ -348,7 +348,7 @@ describe("snow write-trellis-context.py execution", () => {
         }),
         env: {
           SNOW_SESSION_ID: "mine-session",
-          TRELLIS_CONTEXT_ID: "snow-mine-session",
+          OMTRE_CONTEXT_ID: "snow-mine-session",
         },
       });
 
@@ -401,5 +401,5 @@ print(json.dumps({"bytes": len(out.encode("utf-8")), "has_marker": "truncated" i
 });
 
 function rootSessions(repo: string): string {
-  return path.join(repo, ".trellis", ".runtime", "sessions");
+  return path.join(repo, ".omtre", ".runtime", "sessions");
 }

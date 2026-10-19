@@ -15,9 +15,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../..");
 
 const EXPECTED_AGENT_NAMES = [
-  "trellis-check",
-  "trellis-implement",
-  "trellis-research",
+  "omtre-check",
+  "omtre-implement",
+  "omtre-research",
 ];
 
 // Shared skills are sourced from common/ via resolveAllAsSkills (written to
@@ -35,8 +35,8 @@ describe("trae shared skills (from common source)", () => {
   it("does not include platform-specific syntax in resolved output", () => {
     const skills = resolveAllAsSkills(AI_TOOLS.trae.templateContext);
     for (const skill of skills) {
-      // Trae uses /trellis- prefix, not /trellis:
-      expect(skill.content).not.toContain("/trellis:");
+      // Trae uses /omtre- prefix, not /omt:
+      expect(skill.content).not.toContain("/omt:");
       expect(skill.content).not.toContain(".claude/");
       expect(skill.content).not.toContain(".cursor/");
     }
@@ -78,12 +78,12 @@ describe("trae getAllAgents", () => {
 // Trae sub-agent recursion guard (mirrors codex issue #234)
 // =============================================================================
 //
-// trellis-implement / trellis-check agent markdown MUST contain a hard recursion
+// omtre-implement / omtre-check agent markdown MUST contain a hard recursion
 // guard so the dispatched sub-agent does not spawn another
-// trellis-implement / trellis-check sub-agent.
+// omtre-implement / omtre-check sub-agent.
 describe("trae sub-agent recursion guard", () => {
-  for (const name of ["trellis-implement", "trellis-check"] as const) {
-    it(`${name}.md forbids spawning trellis-implement / trellis-check`, () => {
+  for (const name of ["omtre-implement", "omtre-check"] as const) {
+    it(`${name}.md forbids spawning omtre-implement / omtre-check`, () => {
       const mdPath = path.join(
         repoRoot,
         "packages/cli/src/templates/trae/agents",
@@ -93,8 +93,8 @@ describe("trae sub-agent recursion guard", () => {
       // Hard prohibition keyword
       expect(content).toMatch(/Do NOT spawn/i);
       // Mentions both sibling agent kinds explicitly
-      expect(content).toContain("trellis-implement");
-      expect(content).toContain("trellis-check");
+      expect(content).toContain("omtre-implement");
+      expect(content).toContain("omtre-check");
       // Mentions the leakage source so the reader knows why
       expect(content).toMatch(
         /SessionStart|dispatch.*main session|breadcrumb/i,
@@ -221,16 +221,16 @@ describe("trae platform detection in shared session-start.py", () => {
 //
 // Trae is a class-2 (pull-based) platform: hooks cannot mutate sub-agent
 // prompts. The implement/check agents must have a pull-based prelude injected
-// so they load Trellis context themselves.
+// so they load Omtre context themselves.
 describe("trae pull-based prelude injection (class-2)", () => {
   it("applyPullBasedPreludeMarkdown injects context-loading instructions", () => {
     const agents = applyPullBasedPreludeMarkdown(getAllAgents());
     for (const agent of agents) {
       if (
-        agent.name === "trellis-implement" ||
-        agent.name === "trellis-check"
+        agent.name === "omtre-implement" ||
+        agent.name === "omtre-check"
       ) {
-        expect(agent.content).toContain("Load Trellis Context First");
+        expect(agent.content).toContain("Load Omtre Context First");
         expect(agent.content).toContain("task.py current --source");
       }
     }
@@ -238,9 +238,9 @@ describe("trae pull-based prelude injection (class-2)", () => {
 
   it("research agent does not get the prelude (no task context needed)", () => {
     const agents = applyPullBasedPreludeMarkdown(getAllAgents());
-    const research = agents.find((a) => a.name === "trellis-research");
+    const research = agents.find((a) => a.name === "omtre-research");
     expect(research).toBeDefined();
     if (!research) return; // guard for type-safety
-    expect(research.content).not.toContain("Load Trellis Context First");
+    expect(research.content).not.toContain("Load Omtre Context First");
   });
 });

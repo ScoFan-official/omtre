@@ -24,7 +24,7 @@ describe("copilot getAllHooks", () => {
 	});
 
 	it("session-start.py does not emit a misleading 'Copilot ignores' systemMessage", () => {
-		// Regression guard for GitHub #248: the previous Trellis hook hardcoded a
+		// Regression guard for GitHub #248: the previous Omtre hook hardcoded a
 		// user-visible systemMessage claiming Copilot ignores SessionStart output.
 		// Microsoft's VS Code Agent hooks docs (preview, since VS Code 1.110)
 		// document additionalContext as the injection field, so neither the

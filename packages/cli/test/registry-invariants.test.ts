@@ -52,9 +52,9 @@ describe("registry internal consistency", () => {
     }
   });
 
-  it("no configDir collides with .trellis", () => {
+  it("no configDir collides with .omtre", () => {
     for (const id of PLATFORM_IDS) {
-      expect(AI_TOOLS[id].configDir).not.toBe(".trellis");
+      expect(AI_TOOLS[id].configDir).not.toBe(".omtre");
     }
   });
 
@@ -162,9 +162,9 @@ describe("UserPromptSubmit hook wiring", () => {
     });
   }
 
-  it("kiro main `trellis` agent wires userPromptSubmit; sub-agents do not", async () => {
+  it("kiro main `omtre` agent wires userPromptSubmit; sub-agents do not", async () => {
     // Kiro DOES support per-turn hooks (official docs: CLI agent
-    // `hooks.userPromptSubmit`). The main `trellis` agent wires the per-turn
+    // `hooks.userPromptSubmit`). The main `omtre` agent wires the per-turn
     // breadcrumb; the 3 sub-agents only inject sub-agent context on spawn.
     const fs = await import("node:fs");
     const { dirname, join } = await import("node:path");
@@ -184,7 +184,7 @@ describe("UserPromptSubmit hook wiring", () => {
       const parsed = JSON.parse(content) as {
         hooks?: Record<string, unknown>;
       };
-      if (entry === "trellis.json") {
+      if (entry === "omtre.json") {
         expect(Object.keys(parsed.hooks ?? {})).toContain("userPromptSubmit");
         expect(content).toContain("inject-workflow-state.py");
       } else {
@@ -204,7 +204,7 @@ describe("UserPromptSubmit hook wiring", () => {
 // 0.6.14 shipped while the docs still advertised 17 platforms and the registry
 // already had 21: --grok, --kimi, --snow and --trae worked but were documented
 // nowhere, and a user asked in the community whether Grok support was planned.
-// `trellis init --help` was correct that whole time because it is generated
+// `omtre init --help` was correct that whole time because it is generated
 // from AI_TOOLS — only the prose drifted, and nothing failed when it did.
 //
 // docs-site is a submodule, so these skip when it is not checked out. CI clones
@@ -297,13 +297,13 @@ describe("every platform resolves to a marker label workflow.md uses", () => {
     const { fileURLToPath } = await import("node:url");
 
     const testDir = dirname(fileURLToPath(import.meta.url));
-    const scriptsDir = join(testDir, "..", "src", "templates", "trellis", "scripts");
+    const scriptsDir = join(testDir, "..", "src", "templates", "omtre", "scripts");
     const workflowPath = join(
       testDir,
       "..",
       "src",
       "templates",
-      "trellis",
+      "omtre",
       "workflow.md",
     );
     const flags = PLATFORM_IDS.map((id) => AI_TOOLS[id].cliFlag);
@@ -327,7 +327,8 @@ describe("every platform resolves to a marker label workflow.md uses", () => {
     // execFileSync, not execSync: the probe is multi-line, and going through a
     // shell would turn its newlines into literal backslash-n.
     const raw = execFileSync(
-      process.env.PYTHON_CMD || "python3",
+      process.env.PYTHON_CMD ||
+        (process.platform === "win32" ? "python" : "python3"),
       ["-c", probe, JSON.stringify(flags)],
       { encoding: "utf-8" },
     );

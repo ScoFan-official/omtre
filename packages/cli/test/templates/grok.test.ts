@@ -4,9 +4,9 @@ import { applyPullBasedPreludeMarkdown } from "../../src/configurators/shared.js
 import { collectGrokTemplates } from "../../src/configurators/grok.js";
 
 const EXPECTED_AGENT_NAMES = [
-  "trellis-check",
-  "trellis-implement",
-  "trellis-research",
+  "omtre-check",
+  "omtre-implement",
+  "omtre-research",
 ];
 
 describe("grok getAllAgents", () => {
@@ -34,10 +34,10 @@ describe("grok pull-based prelude injection", () => {
     const agents = applyPullBasedPreludeMarkdown(getAllAgents());
     for (const agent of agents) {
       if (
-        agent.name === "trellis-implement" ||
-        agent.name === "trellis-check"
+        agent.name === "omtre-implement" ||
+        agent.name === "omtre-check"
       ) {
-        expect(agent.content).toContain("Load Trellis Context First");
+        expect(agent.content).toContain("Load Omtre Context First");
         expect(agent.content).toContain("task.py current --source");
       }
     }
@@ -45,31 +45,31 @@ describe("grok pull-based prelude injection", () => {
 
   it("does not inject the pull-based prelude into research", () => {
     const agents = applyPullBasedPreludeMarkdown(getAllAgents());
-    const research = agents.find((agent) => agent.name === "trellis-research");
+    const research = agents.find((agent) => agent.name === "omtre-research");
     expect(research).toBeDefined();
     if (!research) return;
-    expect(research.content).not.toContain("Load Trellis Context First");
+    expect(research.content).not.toContain("Load Omtre Context First");
     expect(research.content).toContain("{TASK_DIR}/research/");
   });
 });
 
 describe("grok collectGrokTemplates", () => {
-  it("writes flat trellis-*.md commands and agents under .grok/", () => {
+  it("writes flat omtre-*.md commands and agents under .grok/", () => {
     const files = collectGrokTemplates();
-    expect(files.has(".grok/commands/trellis-start.md")).toBe(true);
-    expect(files.has(".grok/commands/trellis-continue.md")).toBe(true);
-    expect(files.has(".grok/commands/trellis-finish-work.md")).toBe(true);
+    expect(files.has(".grok/commands/omtre-start.md")).toBe(true);
+    expect(files.has(".grok/commands/omtre-continue.md")).toBe(true);
+    expect(files.has(".grok/commands/omtre-finish-work.md")).toBe(true);
     // Nested ZCode-style layout must not be used
-    expect(files.has(".grok/commands/trellis/start.md")).toBe(false);
+    expect(files.has(".grok/commands/omtre/start.md")).toBe(false);
 
-    expect(files.has(".grok/agents/trellis-implement.md")).toBe(true);
-    expect(files.has(".grok/agents/trellis-check.md")).toBe(true);
-    expect(files.has(".grok/agents/trellis-research.md")).toBe(true);
+    expect(files.has(".grok/agents/omtre-implement.md")).toBe(true);
+    expect(files.has(".grok/agents/omtre-check.md")).toBe(true);
+    expect(files.has(".grok/agents/omtre-research.md")).toBe(true);
 
-    const implement = files.get(".grok/agents/trellis-implement.md");
-    expect(implement).toContain("Load Trellis Context First");
-    const research = files.get(".grok/agents/trellis-research.md");
-    expect(research).not.toContain("Load Trellis Context First");
+    const implement = files.get(".grok/agents/omtre-implement.md");
+    expect(implement).toContain("Load Omtre Context First");
+    const research = files.get(".grok/agents/omtre-research.md");
+    expect(research).not.toContain("Load Omtre Context First");
 
     // No shared .agents/skills/ dual-write
     expect(
@@ -79,7 +79,7 @@ describe("grok collectGrokTemplates", () => {
 
   it("includes private skills under .grok/skills/", () => {
     const files = collectGrokTemplates();
-    expect(files.has(".grok/skills/trellis-check/SKILL.md")).toBe(true);
-    expect(files.has(".grok/skills/trellis-before-dev/SKILL.md")).toBe(true);
+    expect(files.has(".grok/skills/omtre-check/SKILL.md")).toBe(true);
+    expect(files.has(".grok/skills/omtre-before-dev/SKILL.md")).toBe(true);
   });
 });

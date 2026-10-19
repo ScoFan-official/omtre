@@ -13,7 +13,7 @@ const repoRoot = path.resolve(__dirname, "../../../..");
 
 // Reasonix ships skills-only; subagent skills carry `runAs: subagent`
 // frontmatter so Reasonix spawns them as isolated subagent loops.
-const EXPECTED_AGENT_NAMES = ["trellis-check", "trellis-implement"];
+const EXPECTED_AGENT_NAMES = ["omtre-check", "omtre-implement"];
 
 describe("reasonix getAllAgents", () => {
   it("returns the expected agent set", () => {
@@ -51,20 +51,20 @@ describe("reasonix agent frontmatter", () => {
 describe("collectReasonixTemplates", () => {
   it("writes both subagent skills under .reasonix/skills/", () => {
     const files = collectReasonixTemplates();
-    expect(files.has(".reasonix/skills/trellis-check/SKILL.md")).toBe(true);
-    expect(files.has(".reasonix/skills/trellis-implement/SKILL.md")).toBe(true);
+    expect(files.has(".reasonix/skills/omtre-check/SKILL.md")).toBe(true);
+    expect(files.has(".reasonix/skills/omtre-implement/SKILL.md")).toBe(true);
   });
 
-  it("does not duplicate trellis-check / trellis-implement as workflow skills", () => {
+  it("does not duplicate omtre-check / omtre-implement as workflow skills", () => {
     // Subagent skills replace their common-skill equivalents — workflow skills
-    // must not also emit a `.reasonix/skills/trellis-check/SKILL.md` from the
+    // must not also emit a `.reasonix/skills/omtre-check/SKILL.md` from the
     // shared resolver, or the bundled subagent variant would be overwritten.
     const files = collectReasonixTemplates();
     const checkPaths = [...files.keys()].filter((p) =>
-      p.endsWith("/trellis-check/SKILL.md"),
+      p.endsWith("/omtre-check/SKILL.md"),
     );
     const implementPaths = [...files.keys()].filter((p) =>
-      p.endsWith("/trellis-implement/SKILL.md"),
+      p.endsWith("/omtre-implement/SKILL.md"),
     );
     expect(checkPaths).toHaveLength(1);
     expect(implementPaths).toHaveLength(1);
@@ -72,9 +72,9 @@ describe("collectReasonixTemplates", () => {
 
   it("subagent SKILL.md content carries runAs: subagent frontmatter", () => {
     const files = collectReasonixTemplates();
-    const checkBody = files.get(".reasonix/skills/trellis-check/SKILL.md");
+    const checkBody = files.get(".reasonix/skills/omtre-check/SKILL.md");
     const implementBody = files.get(
-      ".reasonix/skills/trellis-implement/SKILL.md",
+      ".reasonix/skills/omtre-implement/SKILL.md",
     );
     expect(checkBody).toMatch(/^runAs:\s*subagent\s*$/m);
     expect(implementBody).toMatch(/^runAs:\s*subagent\s*$/m);

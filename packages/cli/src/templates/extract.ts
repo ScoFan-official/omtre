@@ -9,39 +9,13 @@ const __dirname = path.dirname(__filename);
 
 type TemplateCategory = "scripts" | "markdown" | "commands";
 
-const WORKFLOW_TEMPLATE_SUBDIRS = ["omtre", `${"t"}${"rellis"}`] as const;
-const LEGACY_CONFIG_SCRIPT = `common/${"t"}${"rellis"}_config.py`;
-const LEGACY_WORKFLOW_DIR = `.${"t"}${"rellis"}`;
-const LEGACY_WORKFLOW_DIR_PATTERN = new RegExp(
-  `\\.${"t"}${"rellis"}(?![a-zA-Z0-9_])`,
-  "g",
-);
-const LEGACY_ENV_PREFIX = `${"T"}${"RELLIS"}_`;
-const LEGACY_BLOCK_PREFIX = `<!-- ${"T"}${"RELLIS"}:`;
-const LEGACY_TITLE = `# ${"T"}${"rellis"} Instructions`;
-
-function normalizeLegacyScript(content: string): string {
-  return content
-    .replace(LEGACY_WORKFLOW_DIR_PATTERN, ".omtre")
-    .replaceAll(LEGACY_ENV_PREFIX, "OMTRE_");
-}
-
-function normalizeLegacyRootTemplate(content: string): string {
-  return content
-    .replaceAll(LEGACY_WORKFLOW_DIR, ".omtre")
-    .replaceAll(LEGACY_BLOCK_PREFIX, "<!-- OMTRE:")
-    .replaceAll(LEGACY_TITLE, "# Omtre Instructions");
-}
-
 /**
  * Get the path to the omtre templates directory (.omtre/ scaffolding).
  */
 export function getOmtreTemplatePath(): string {
-  for (const subdir of WORKFLOW_TEMPLATE_SUBDIRS) {
-    const templatePath = path.join(__dirname, subdir);
-    if (fs.existsSync(templatePath)) {
-      return templatePath;
-    }
+  const templatePath = path.join(__dirname, "omtre");
+  if (fs.existsSync(templatePath)) {
+    return templatePath;
   }
   throw new Error(
     "Could not find omtre templates directory. Expected at templates/omtre/",
@@ -118,7 +92,7 @@ export function readTemplate(
 }
 
 export function readScript(relativePath: string): string {
-  return normalizeLegacyScript(readOmtreFile(`scripts/${relativePath}`));
+  return readOmtreFile(`scripts/${relativePath}`);
 }
 
 export function readMarkdown(relativePath: string): string {
@@ -146,15 +120,9 @@ export const addSessionScript = readScript("add_session.py");
 export const workflowMdTemplate = readOmtreFile("workflow.md");
 export const ohMyWorkflowMdTemplate = readOmtreFile("workflow-oh-my.md");
 export const configYamlTemplate = readOmtreFile("config.yaml");
-export const gitignoreTemplate = normalizeLegacyRootTemplate(
-  readOmtreFile("gitignore.txt"),
-);
-export const gitattributesTemplate = normalizeLegacyRootTemplate(
-  readOmtreFile("gitattributes.txt"),
-);
-export const agentsMdContent = normalizeLegacyRootTemplate(
-  readTemplate("markdown", "agents.md"),
-);
+export const gitignoreTemplate = readOmtreFile("gitignore.txt");
+export const gitattributesTemplate = readOmtreFile("gitattributes.txt");
+export const agentsMdContent = readTemplate("markdown", "agents.md");
 export const commonRoster = readScript("common/roster.py");
 export const implementAgentTemplate = readOmtreFile("agents/implement.md");
 export const checkAgentTemplate = readOmtreFile("agents/check.md");
@@ -189,7 +157,6 @@ export function getAllScripts(): Map<string, string> {
     "common/packages_context.py",
     "common/workflow_phase.py",
     "common/omtre_config.py",
-    LEGACY_CONFIG_SCRIPT,
     "common/safe_commit.py",
     "common/frontier.py",
     "common/roster.py",
@@ -203,7 +170,7 @@ export function getAllScripts(): Map<string, string> {
   for (const rel of scriptPaths) {
     const full = path.join(getOmtreSourcePath(), "scripts", rel);
     if (fs.existsSync(full)) {
-      scripts.set(rel, normalizeLegacyScript(fs.readFileSync(full, "utf-8")));
+      scripts.set(rel, fs.readFileSync(full, "utf-8"));
     }
   }
   return scripts;
@@ -266,10 +233,7 @@ async function copyDirRecursive(
     if (stat.isDirectory()) {
       await copyDirRecursive(srcPath, destPath, options);
     } else {
-      const rawContent = fs.readFileSync(srcPath, "utf-8");
-      const content = entry.endsWith(".py")
-        ? normalizeLegacyScript(rawContent)
-        : rawContent;
+      const content = fs.readFileSync(srcPath, "utf-8");
       const isExecutable =
         options?.executable && (entry.endsWith(".sh") || entry.endsWith(".py"));
       await writeFile(destPath, replacePythonCommandLiterals(content), {

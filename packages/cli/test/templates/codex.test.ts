@@ -14,9 +14,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../..");
 
 const EXPECTED_AGENT_NAMES = [
-  "trellis-check",
-  "trellis-implement",
-  "trellis-research",
+  "omtre-check",
+  "omtre-implement",
+  "omtre-research",
 ];
 
 const EMPTY_EXCEPT_PASS_RE = /except[^\n]*:\n\s*pass\s*$/m;
@@ -35,8 +35,8 @@ describe("codex shared skills (from common source)", () => {
   it("does not include platform-specific syntax in resolved output", () => {
     const skills = resolveAllAsSkills(AI_TOOLS.codex.templateContext);
     for (const skill of skills) {
-      // Codex uses $ prefix, not /trellis:
-      expect(skill.content).not.toContain("/trellis:");
+      // Codex uses $ prefix, not /omt:
+      expect(skill.content).not.toContain("/omt:");
       expect(skill.content).not.toContain(".claude/");
       expect(skill.content).not.toContain(".cursor/");
     }
@@ -61,7 +61,7 @@ describe("codex getAllAgents", () => {
 });
 
 describe("codex native sub-agent hooks", () => {
-  it("preserves main-session workflow injection and scopes SubagentStart to Trellis roles", () => {
+  it("preserves main-session workflow injection and scopes SubagentStart to Omtre roles", () => {
     const config = JSON.parse(getHooksConfig()) as {
       hooks: Record<
         string,
@@ -77,13 +77,13 @@ describe("codex native sub-agent hooks", () => {
     expect(config.hooks.SubagentStart).toHaveLength(1);
     const subagentStart = config.hooks.SubagentStart[0];
     expect(subagentStart?.matcher).toBe(
-      "^(?:trellis-implement|trellis-check|trellis-research)$",
+      "^(?:omtre-implement|omtre-check|omtre-research)$",
     );
     const matcher = new RegExp(subagentStart?.matcher ?? "");
-    expect(matcher.test("trellis-implement")).toBe(true);
-    expect(matcher.test("trellis-check")).toBe(true);
-    expect(matcher.test("trellis-research")).toBe(true);
-    expect(matcher.test("trellis-implement-extra")).toBe(false);
+    expect(matcher.test("omtre-implement")).toBe(true);
+    expect(matcher.test("omtre-check")).toBe(true);
+    expect(matcher.test("omtre-research")).toBe(true);
+    expect(matcher.test("omtre-implement-extra")).toBe(false);
     expect(subagentStart?.hooks[0]?.command).toContain(
       ".codex/hooks/inject-subagent-context.py",
     );
@@ -101,7 +101,7 @@ describe("codex getConfigTemplate", () => {
   // The structured [features.multi_agent_v2] table form is only accepted by
   // Codex CLI 0.131+. On 0.130 and earlier — including the codex CLI bundled
   // in the Codex desktop app — it aborts the whole config load with
-  // `data did not match any variant of untagged enum FeatureToml`. Trellis
+  // `data did not match any variant of untagged enum FeatureToml`. Omtre
   // no longer writes the block; this test guards against reintroducing it.
   it("does not write a [features.multi_agent_v2] block (Codex 0.130 compat)", () => {
     const config = getConfigTemplate();
@@ -111,7 +111,7 @@ describe("codex getConfigTemplate", () => {
   // #445 removed the per-agent `[features] multi_agent = false` guard (the
   // #240/#241 wait_agent-deadlock structural fix), relying on Codex's default
   // `agents.max_depth = 1`. That key is global/user-level, not settable inside
-  // an individual agent's .toml, so pin it here in the project config Trellis
+  // an individual agent's .toml, so pin it here in the project config Omtre
   // owns — this is the config surface that outranks a user's global override.
   it("pins agents.max_depth = 1 to guard against recursion reopening (#240, #241, #445)", () => {
     const config = getConfigTemplate();
@@ -123,14 +123,14 @@ describe("codex getConfigTemplate", () => {
 // Issue #234 — Codex sub-agent recursion guard
 // =============================================================================
 //
-// trellis-implement / trellis-check agent toml MUST contain a hard recursion
+// omtre-implement / omtre-check agent toml MUST contain a hard recursion
 // guard that tells the sub-agent it is already the dispatched agent and must
-// not spawn another trellis-implement / trellis-check sub-agent. Without this,
-// SessionStart's "dispatch trellis-implement" guidance leaks into sub-agent
+// not spawn another omtre-implement / omtre-check sub-agent. Without this,
+// SessionStart's "dispatch omtre-implement" guidance leaks into sub-agent
 // sessions and causes infinite recursion (see PRD).
 describe("codex sub-agent recursion guard (issue #234)", () => {
-  for (const name of ["trellis-implement", "trellis-check"] as const) {
-    it(`${name}.toml developer_instructions forbids spawning trellis-implement / trellis-check`, () => {
+  for (const name of ["omtre-implement", "omtre-check"] as const) {
+    it(`${name}.toml developer_instructions forbids spawning omtre-implement / omtre-check`, () => {
       const tomlPath = path.join(
         repoRoot,
         "packages/cli/src/templates/codex/agents",
@@ -140,8 +140,8 @@ describe("codex sub-agent recursion guard (issue #234)", () => {
       // Hard prohibition keyword
       expect(content).toMatch(/MUST NOT spawn/i);
       // Mentions both sibling agent kinds explicitly
-      expect(content).toContain("trellis-implement");
-      expect(content).toContain("trellis-check");
+      expect(content).toContain("omtre-implement");
+      expect(content).toContain("omtre-check");
       // Mentions the leakage source so the reader knows why
       expect(content).toMatch(/SessionStart|dispatch.*main session|breadcrumb/i);
     });
@@ -150,9 +150,9 @@ describe("codex sub-agent recursion guard (issue #234)", () => {
 
 describe("codex two-channel sub-agent context (native SubagentStart)", () => {
   for (const name of [
-    "trellis-implement",
-    "trellis-check",
-    "trellis-research",
+    "omtre-implement",
+    "omtre-check",
+    "omtre-research",
   ] as const) {
     it(`${name}.toml uses a marker-gated active-task fallback without legacy collaboration disables`, () => {
       const tomlPath = path.join(
@@ -166,7 +166,7 @@ describe("codex two-channel sub-agent context (native SubagentStart)", () => {
         "Full hook output saved to: <path>",
       );
       const injectionMarker = content.indexOf(
-        "<!-- trellis-hook-injected -->",
+        "<!-- omtre-hook-injected -->",
       );
 
       expect(savedOutputNotice).toBeGreaterThan(-1);
@@ -174,7 +174,7 @@ describe("codex two-channel sub-agent context (native SubagentStart)", () => {
       expect(content).toMatch(/read the referenced\s+file/i);
       expect(content).toMatch(/referenced file cannot be read/i);
       expect(content).toMatch(/marker is absent/i);
-      expect(content).toContain("<!-- trellis-hook-injected -->");
+      expect(content).toContain("<!-- omtre-hook-injected -->");
       expect(content).toContain("Active task: <path>");
       expect(content).not.toContain("[features]");
       expect(content).not.toContain("multi_agent = false");
@@ -184,8 +184,8 @@ describe("codex two-channel sub-agent context (native SubagentStart)", () => {
 
   it("keeps implement and check pull fallbacks role-specific", () => {
     for (const [name, manifest] of [
-      ["trellis-implement", "implement.jsonl"],
-      ["trellis-check", "check.jsonl"],
+      ["omtre-implement", "implement.jsonl"],
+      ["omtre-check", "check.jsonl"],
     ] as const) {
       const tomlPath = path.join(
         repoRoot,
@@ -204,13 +204,13 @@ describe("codex two-channel sub-agent context (native SubagentStart)", () => {
   it("keeps research task resolution role-isolated from implement/check manifests", () => {
     const researchPath = path.join(
       repoRoot,
-      "packages/cli/src/templates/codex/agents/trellis-research.toml",
+      "packages/cli/src/templates/codex/agents/omtre-research.toml",
     );
     const content = fs.readFileSync(researchPath, "utf-8");
 
     expect(content).toContain("Do not load `implement.jsonl` or `check.jsonl`");
     expect(content).not.toContain(
-      "Run `python3 ./.trellis/scripts/task.py current --source`",
+      "Run `python3 ./.omtre/scripts/task.py current --source`",
     );
   });
 });
@@ -223,7 +223,7 @@ describe("codex session-start.py compact SessionStart context", () => {
 
   it("uses compact task artifact guidance instead of sub-agent dispatch prose", () => {
     const content = fs.readFileSync(hookPath, "utf-8");
-    expect(content).toContain("Trellis compact SessionStart context");
+    expect(content).toContain("Omtre compact SessionStart context");
     expect(content).toContain("Task context order for implementation/check");
     expect(content).toContain("design.md if present");
     expect(content).not.toContain("<sub-agent-notice>");

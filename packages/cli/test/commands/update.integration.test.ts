@@ -78,20 +78,11 @@ import { AI_TOOLS } from "../../src/types/ai-tools.js";
 
 // A managed template file that update always handles (Python script)
 const MANAGED_FILE = `${PATHS.SCRIPTS}/get_context.py`;
-const LEGACY_BRAND = `${"t"}${"rellis"}`;
-const LEGACY_BRAND_TITLE = `${"T"}${"rellis"}`;
-const LEGACY_QUIET_ENV = `${"T"}${"RELLIS"}_QUIET`;
-
-function toPreR5RelativePath(relativePath: string): string {
-  return relativePath
-    .replaceAll("/commands/omt/", `/commands/${LEGACY_BRAND}/`)
-    .replaceAll("/skills/omtre-", `/skills/${LEGACY_BRAND}-`)
-    .replaceAll("/agents/omtre-", `/agents/${LEGACY_BRAND}-`)
-    .replaceAll("/workflows/omtre-", `/workflows/${LEGACY_BRAND}-`)
-    .replaceAll("/prompts/omtre-", `/prompts/${LEGACY_BRAND}-`)
-    .replaceAll("/extensions/omtre/", `/extensions/${LEGACY_BRAND}/`)
-    .replaceAll("/hooks/omtre.json", `/hooks/${LEGACY_BRAND}.json`);
-}
+// Historical migration manifest tests (#18, #20, #21 for 0.4.0-beta.1.json and
+// #22-#26 for 0.5.0-beta.0.json) exercise immutable historical JSON manifests
+// under src/migrations/manifests/ that reference pre-rename paths and SHA-256
+// hashes computed over pre-rename content.
+const HISTORICAL_MANIFEST_BRAND = "trellis"; // historical-manifest-fixture: 0.4.0-beta.1.json & 0.5.0-beta.0.json
 
 /** Remove a key from a hash object (avoids eslint no-dynamic-delete) */
 function removeHashEntry(
@@ -139,14 +130,7 @@ describe("update() integration", () => {
   }
 
   function projectFile(relativePath: string): string {
-    const primary = path.join(tmpDir, relativePath);
-    if (fs.existsSync(primary)) return primary;
-    const fallbackRelative = toPreR5RelativePath(relativePath);
-    if (fallbackRelative !== relativePath) {
-      const fallback = path.join(tmpDir, fallbackRelative);
-      if (fs.existsSync(fallback)) return fallback;
-    }
-    return primary;
+    return path.join(tmpDir, relativePath);
   }
 
   function hashFilePath(): string {
@@ -338,7 +322,6 @@ describe("update() integration", () => {
 
     const originalVitest = process.env.VITEST;
     const originalQuiet = process.env.OMTRE_QUIET;
-    const originalLegacyQuiet = process.env[LEGACY_QUIET_ENV];
     const originalWrite = process.stderr.write.bind(process.stderr);
     const stderr: string[] = [];
     process.stderr.write = ((chunk: string) => {
@@ -347,7 +330,6 @@ describe("update() integration", () => {
     }) as typeof process.stderr.write;
     delete process.env.VITEST;
     delete process.env.OMTRE_QUIET;
-    Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
 
     try {
       await update({});
@@ -357,8 +339,6 @@ describe("update() integration", () => {
       else process.env.VITEST = originalVitest;
       if (originalQuiet === undefined) delete process.env.OMTRE_QUIET;
       else process.env.OMTRE_QUIET = originalQuiet;
-      if (originalLegacyQuiet === undefined) Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
-      else process.env[LEGACY_QUIET_ENV] = originalLegacyQuiet;
     }
 
     expect(stderr.join("")).toBe(
@@ -374,7 +354,6 @@ describe("update() integration", () => {
 
     const originalVitest = process.env.VITEST;
     const originalQuiet = process.env.OMTRE_QUIET;
-    const originalLegacyQuiet = process.env[LEGACY_QUIET_ENV];
     const originalWrite = process.stderr.write.bind(process.stderr);
     const stderr: string[] = [];
     process.stderr.write = ((chunk: string) => {
@@ -383,7 +362,6 @@ describe("update() integration", () => {
     }) as typeof process.stderr.write;
     delete process.env.VITEST;
     delete process.env.OMTRE_QUIET;
-    Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
 
     try {
       await update({ force: true });
@@ -393,8 +371,6 @@ describe("update() integration", () => {
       else process.env.VITEST = originalVitest;
       if (originalQuiet === undefined) delete process.env.OMTRE_QUIET;
       else process.env.OMTRE_QUIET = originalQuiet;
-      if (originalLegacyQuiet === undefined) Reflect.deleteProperty(process.env, LEGACY_QUIET_ENV);
-      else process.env[LEGACY_QUIET_ENV] = originalLegacyQuiet;
     }
 
     expect(stderr.join("")).toBe(
@@ -433,11 +409,9 @@ describe("update() integration", () => {
       resolveBundledSkills(piCtx),
     );
 
-    const legacyContent =
-      legacyPiSkillFiles.get(".pi/skills/omtre-update-spec/SKILL.md") ??
-      legacyPiSkillFiles.get(
-        toPreR5RelativePath(".pi/skills/omtre-update-spec/SKILL.md"),
-      );
+    const legacyContent = legacyPiSkillFiles.get(
+      ".pi/skills/omtre-update-spec/SKILL.md",
+    );
     expect(legacyContent).toBeDefined();
     // Sanity: the Pi-flavored bytes actually differ from the shared neutral
     // bytes already on disk (otherwise this test wouldn't be exercising the
@@ -681,9 +655,7 @@ describe("update() integration", () => {
     expect(result).toContain("Review app code first.");
     expect(result).toContain(COPILOT_INSTRUCTIONS_BLOCK_START);
     expect(result).toContain(COPILOT_INSTRUCTIONS_BLOCK_END);
-    expect(result).toMatch(
-      new RegExp(`(?:Omtre|${LEGACY_BRAND_TITLE})-generated runtime`),
-    );
+    expect(result).toContain("Omtre-generated runtime");
     expect(result.indexOf("# Repo Copilot Instructions")).toBeLessThan(
       result.indexOf(COPILOT_INSTRUCTIONS_BLOCK_START),
     );
@@ -1308,7 +1280,7 @@ describe("update() integration", () => {
 
     // Create a deprecated file that exists in the 0.4.0-beta.1 safe-file-delete manifest
     // but with user-modified content (hash won't match allowed_hashes)
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", HISTORICAL_MANIFEST_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "before-backend-dev.md");
     const userContent =
@@ -1345,13 +1317,13 @@ describe("update() integration", () => {
     "",
     "Execute these steps:",
     "1. Run `git status` to see modified files",
-    `2. Read \`.${LEGACY_BRAND}/spec/backend/index.md\` to understand which guidelines apply`,
+    `2. Read \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/index.md\` to understand which guidelines apply`,
     "3. Based on what you changed, read the relevant guideline files:",
-    `   - Database changes → \`.${LEGACY_BRAND}/spec/backend/database-guidelines.md\``,
-    `   - Error handling → \`.${LEGACY_BRAND}/spec/backend/error-handling.md\``,
-    `   - Logging changes → \`.${LEGACY_BRAND}/spec/backend/logging-guidelines.md\``,
-    `   - Type changes → \`.${LEGACY_BRAND}/spec/backend/type-safety.md\``,
-    `   - Any changes → \`.${LEGACY_BRAND}/spec/backend/quality-guidelines.md\``,
+    `   - Database changes → \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/database-guidelines.md\``,
+    `   - Error handling → \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/error-handling.md\``,
+    `   - Logging changes → \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/logging-guidelines.md\``,
+    `   - Type changes → \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/type-safety.md\``,
+    `   - Any changes → \`.${HISTORICAL_MANIFEST_BRAND}/spec/backend/quality-guidelines.md\``,
     "4. Review your code against the guidelines",
     "5. Report any violations and fix them if found",
     "",
@@ -1367,7 +1339,7 @@ describe("update() integration", () => {
 
     // Create a deprecated file with original content (hash matches allowed_hashes)
     // Without update.skip, collectSafeFileDeletes() would delete this file.
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", HISTORICAL_MANIFEST_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "check-backend.md");
     fs.writeFileSync(deprecatedFile, ORIGINAL_CHECK_BACKEND_CONTENT);
@@ -1377,7 +1349,7 @@ describe("update() integration", () => {
     const configContent = fs.readFileSync(configPath, "utf-8");
     fs.writeFileSync(
       configPath,
-      configContent + `\nupdate:\n  skip:\n    - .claude/commands/${LEGACY_BRAND}/\n`,
+      configContent + `\nupdate:\n  skip:\n    - .claude/commands/${HISTORICAL_MANIFEST_BRAND}/\n`,
     );
 
     await update({ force: true });
@@ -1398,7 +1370,7 @@ describe("update() integration", () => {
     );
 
     // Create deprecated file with original content (hash matches allowed_hashes)
-    const deprecatedDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
+    const deprecatedDir = path.join(tmpDir, ".claude", "commands", HISTORICAL_MANIFEST_BRAND);
     fs.mkdirSync(deprecatedDir, { recursive: true });
     const deprecatedFile = path.join(deprecatedDir, "check-backend.md");
     fs.writeFileSync(deprecatedFile, ORIGINAL_CHECK_BACKEND_CONTENT);
@@ -1504,7 +1476,7 @@ describe("update() integration", () => {
     fs.writeFileSync(versionPath, "0.4.0");
     // Create one legacy file that matches a `rename` entry in 0.5.0-beta.0 manifest.
     // Without this, classifyMigrations finds no work → early-exit before gate.
-    const legacyDir = path.join(tmpDir, ".claude", "commands", LEGACY_BRAND);
+    const legacyDir = path.join(tmpDir, ".claude", "commands", HISTORICAL_MANIFEST_BRAND);
     fs.mkdirSync(legacyDir, { recursive: true });
     fs.writeFileSync(path.join(legacyDir, "before-dev.md"), "legacy content");
   }
@@ -1512,7 +1484,7 @@ describe("update() integration", () => {
   /** Delete the post-init target so classifyMigrations hits the "new doesn't exist"
    *  branch and respects `isTemplateModified` on the source (→ confirm bucket). */
   function clearMigrationTarget(): void {
-    fs.rmSync(path.join(tmpDir, `.claude/skills/${LEGACY_BRAND}-before-dev`), {
+    fs.rmSync(path.join(tmpDir, `.claude/skills/${HISTORICAL_MANIFEST_BRAND}-before-dev`), {
       recursive: true,
       force: true,
     });
@@ -1593,7 +1565,7 @@ describe("update() integration", () => {
     // User-modified content that differs from the 0.5 template (forces confirm)
     const legacyPath = path.join(
       tmpDir,
-      `.claude/commands/${LEGACY_BRAND}/before-dev.md`,
+      `.claude/commands/${HISTORICAL_MANIFEST_BRAND}/before-dev.md`,
     );
     const userContent = "## My custom before-dev notes\nEdited by user.\n";
     fs.writeFileSync(legacyPath, userContent);
@@ -1608,7 +1580,7 @@ describe("update() integration", () => {
     //   - old-path is gone
     const newPath = path.join(
       tmpDir,
-      `.claude/skills/${LEGACY_BRAND}-before-dev/SKILL.md`,
+      `.claude/skills/${HISTORICAL_MANIFEST_BRAND}-before-dev/SKILL.md`,
     );
     expect(fs.existsSync(newPath)).toBe(true);
     expect(fs.existsSync(newPath + ".backup")).toBe(true);
@@ -1623,7 +1595,7 @@ describe("update() integration", () => {
 
     const legacyPath = path.join(
       tmpDir,
-      `.claude/commands/${LEGACY_BRAND}/before-dev.md`,
+      `.claude/commands/${HISTORICAL_MANIFEST_BRAND}/before-dev.md`,
     );
     fs.writeFileSync(legacyPath, "## user edits\n");
 
@@ -1633,7 +1605,7 @@ describe("update() integration", () => {
 
     const newPath = path.join(
       tmpDir,
-      `.claude/skills/${LEGACY_BRAND}-before-dev/SKILL.md`,
+      `.claude/skills/${HISTORICAL_MANIFEST_BRAND}-before-dev/SKILL.md`,
     );
     expect(fs.existsSync(newPath)).toBe(true);
     // No inline .backup — the full-project snapshot under .omtre/.backup-*
