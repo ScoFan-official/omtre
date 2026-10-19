@@ -1,7 +1,7 @@
 # pstack /correct 在 omtre 中的落地形态
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: .trellis/tasks/10-19-pstack-research, .trellis/tasks/10-19-absorption-mechanism
 Map: .trellis/tasks/10-19-omtre-standalone/map.md
 

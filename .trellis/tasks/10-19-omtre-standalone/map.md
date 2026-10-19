@@ -27,6 +27,7 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 - [新仓库组装](10-19-repo-assembly): 技能包带历史并入根目录；marketplace 由子模块改成带历史的目录，docs-site 删除；`ScoFan-official/omtre` 公开仓已推送 main `713509c9`；发布流水线和 `TEMPLATE_INDEX_URL` 留给后续票。
 - [migrate 合约](10-19-migrate-contract): 受管文件重新生成（改过的留 `.backup`），用户数据整搬并改写路径，运行时缓存丢弃；仓库外文件只报告不改；工作区须干净；迁到一半拒绝执行；回滚只靠 git；`~/.trellis/channels` 不迁；结束时自检 4 项。
 - [吸收机制](10-19-absorption-mechanism): 每个候选开 research 票（挂在"吸收"父任务下），按 5 条标准判为原样拷贝、改写吸收或拒绝；落地形态按修正阶梯取最高可行档；原样拷贝先过许可证闸并由 CI 检查；出处统一登记在 `ATTRIBUTION.md`；流程做成技能 `skills/absorb/`，检查写成脚本；改写吸收的不跟踪上游。
+- [/correct 落地](10-19-correct-landing): 改写成原生技能 `omtre-correct`（`/omt:correct`），另加一个配对表检查脚本接入 CI；读 git fix/revert、check 结论、mem 纠正对话、PR 评审、注释；配对表放在 `.omtre/spec/rules.md`，按需加载；新检查要在历史出错提交上跑红；与 break-loop、rules-audit 并存分工；手动或用户纠正时触发；按三档自主权限执行，默认 gated。
 
 ## Not yet specified
 
