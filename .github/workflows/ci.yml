@@ -10,6 +10,10 @@ on:
       - 'pnpm-workspace.yaml'
       - 'package.json'
       - 'marketplace/**'
+      - 'skills/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - '**/*.md'
       - '**/*.py'
       - '.github/workflows/ci.yml'
   pull_request:
@@ -21,6 +25,10 @@ on:
       - 'pnpm-workspace.yaml'
       - 'package.json'
       - 'marketplace/**'
+      - 'skills/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - '**/*.md'
       - '**/*.py'
       - '.github/workflows/ci.yml'
 
@@ -64,6 +72,9 @@ jobs:
 
       - name: Lint (core + cli)
         run: pnpm lint
+
+      - name: Check legacy names
+        run: pnpm check:legacy-names
 
       # Build before test: integration tests spawn the real CLI via
       # bin/omtre.js, which imports dist/ and needs build output to exist.

@@ -9360,7 +9360,7 @@ describe("regression: cli_adapter platform support (beta.9, beta.13, beta.16)", 
     expect(manifest.aiInstructions.length).toBeGreaterThan(200);
     // Sanity: guide references the actual 0.5 breaking themes in the
     // historical src/migrations/manifests/0.5.0-beta.0.json fixture:
-    expect(manifest.migrationGuide).toMatch(/trellis-/); // skill renames
+    expect(manifest.migrationGuide).toMatch(/trellis-/); // historical-manifest-fixture: skill renames
     expect(manifest.migrationGuide).toMatch(/record-session|finish-work/);
   });
 
@@ -9546,8 +9546,8 @@ describe("regression: migration manifest consistency", () => {
     expect(shellArchives.length).toBe(19);
     for (const m of shellArchives) {
       expect(m.type).toBe("rename");
-      expect(m.from).toMatch(/\.trellis\/scripts\/.*\.sh$/);
-      expect(m.to).toMatch(/\.trellis\/scripts-shell-archive\/.*\.sh$/);
+      expect(m.from).toMatch(/\.trellis\/scripts\/.*\.sh$/); // historical-manifest-fixture
+      expect(m.to).toMatch(/\.trellis\/scripts-shell-archive\/.*\.sh$/); // historical-manifest-fixture
       // The filename should be preserved
       const fromFile = m.from.split("/").pop();
       const toFile = (m.to as string).split("/").pop();
@@ -9596,6 +9596,7 @@ describe("regression: migration manifest consistency", () => {
 
     type PathFn = (name: string) => string;
     // Intentional historical migration fixture asserting src/migrations/manifests/0.5.0-beta.0.json:
+    // historical-manifest-fixture:start
     const PLATFORMS: { id: string; from: PathFn; to: PathFn }[] = [
       {
         id: "claude",
@@ -9676,6 +9677,7 @@ describe("regression: migration manifest consistency", () => {
         PLATFORMS.length * COMMANDS.length,
       );
     });
+    // historical-manifest-fixture:end
 
     it("every platform × command pair has a matching rename entry", () => {
       const migrations = getMigrationsForVersion("0.4.0", "0.5.0-beta.0");
@@ -11104,7 +11106,7 @@ describe("regression: configSectionsAdded (issue-codex-dispatch-mode)", () => {
     expect(manifest.configSectionsAdded).toBeDefined();
     const entry = manifest.configSectionsAdded?.[0];
     // Intentional historical migration fixture asserting src/migrations/manifests/0.5.7.json:
-    expect(entry?.file).toBe(".trellis/config.yaml");
+    expect(entry?.file).toBe(".trellis/config.yaml"); // historical-manifest-fixture
     expect(entry?.sentinel).toBe("codex:");
     expect(entry?.sectionHeading).toBe("Codex (dispatch behavior)");
   });
