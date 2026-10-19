@@ -3,7 +3,7 @@
   "name": "rename-templates-common-and-hooks",
   "title": "改名施工 4：公共命令/技能模板（common）与 shared-hooks 改名",
   "description": "改写 templates/common（含内置技能目录改名 omtre-*）与 templates/shared-hooks 跨平台钩子中的旧名",
-  "status": "planning",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "cli",
@@ -11,8 +11,8 @@
   "creator": "qihaonan",
   "assignee": "qihaonan",
   "createdAt": "2026-10-19",
-  "completedAt": null,
-  "branch": null,
+  "completedAt": "2026-10-19",
+  "branch": "main",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -28,5 +28,9 @@
   },
   "blocked_by": [
     ".trellis/tasks/10-19-rename-constants-and-pkg"
-  ]
+  ],
+  "verify_skipped": {
+    "reason": "Verified via rg zero-residual check, lint:py, typecheck, and shared-hooks tests",
+    "at": "2026-10-19T09:26:53Z"
+  }
 }
