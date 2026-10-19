@@ -27,7 +27,15 @@
     "10-19-firefox-prompt-research",
     "10-19-absorption-mechanism",
     "10-19-correct-landing",
-    "10-19-firefox-landing"
+    "10-19-firefox-landing",
+    "10-19-rename-constants-and-pkg",
+    "10-19-rename-ts-core-and-cli",
+    "10-19-rename-python-runtime-scripts",
+    "10-19-rename-templates-common-and-hooks",
+    "10-19-rename-configurators-and-platforms",
+    "10-19-rename-test-suite-and-regression",
+    "10-19-rename-skills-marketplace-docs",
+    "10-19-rename-residual-gate"
   ],
   "parent": null,
   "relatedFiles": [],

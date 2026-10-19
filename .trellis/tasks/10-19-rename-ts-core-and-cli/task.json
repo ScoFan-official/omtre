@@ -1,0 +1,32 @@
+{
+  "id": "rename-ts-core-and-cli",
+  "name": "rename-ts-core-and-cli",
+  "title": "改名施工 2：TS 核心库与 CLI 命令、工具层改名",
+  "description": "改写 packages/core 与 packages/cli 命令、工具、模板提取及构建脚本中的旧名，并将 template-fetcher 默认 URL 指向 ScoFan-official/omtre",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".trellis/tasks/10-19-rename-constants-and-pkg"
+  ]
+}

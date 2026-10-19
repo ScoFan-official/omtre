@@ -1,0 +1,32 @@
+{
+  "id": "rename-python-runtime-scripts",
+  "name": "rename-python-runtime-scripts",
+  "title": "改名施工 3：Python 工作流脚本与核心骨架模板改名",
+  "description": "改写 templates/trellis 与 templates/markdown 下的 Python 运行时脚本、工作流文档、配置与领域骨架模板及对应单测",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".trellis/tasks/10-19-rename-constants-and-pkg"
+  ]
+}

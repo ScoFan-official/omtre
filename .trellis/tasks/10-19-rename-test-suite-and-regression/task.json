@@ -1,0 +1,35 @@
+{
+  "id": "rename-test-suite-and-regression",
+  "name": "rename-test-suite-and-regression",
+  "title": "改名施工 6：测试套件收尾与 regression.test.ts 迁移",
+  "description": "迁移 regression.test.ts、registry-invariants.test.ts 及跨模块测试夹具，清零测试套件旧名残留",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".trellis/tasks/10-19-rename-ts-core-and-cli",
+    ".trellis/tasks/10-19-rename-python-runtime-scripts",
+    ".trellis/tasks/10-19-rename-templates-common-and-hooks",
+    ".trellis/tasks/10-19-rename-configurators-and-platforms"
+  ]
+}
