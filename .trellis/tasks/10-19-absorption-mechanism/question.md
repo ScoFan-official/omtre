@@ -1,7 +1,7 @@
 # 吸收机制：外部框架的优点怎么进门、评估、落地并留出处
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: .trellis/tasks/10-19-pstack-research, .trellis/tasks/10-19-firefox-prompt-research
 Map: .trellis/tasks/10-19-omtre-standalone/map.md
 

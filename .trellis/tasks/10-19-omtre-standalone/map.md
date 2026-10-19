@@ -26,6 +26,7 @@ omtre 首版可从 GitHub Release（`ScoFan-official/omtre`）安装：`.omtre/`
 - [改名规则](10-19-rename-rules): 只改根目录（`.omtre/`、`~/.omtre/`）；`TRELLIS_*`→`OMTRE_*` 无过渡；标记→`OMTRE:*`；前缀→`omtre-*`；斜杠命令→`/omt:*`；子命令与内部子目录不变；保留版权、许可证与出处。
 - [新仓库组装](10-19-repo-assembly): 技能包带历史并入根目录；marketplace 由子模块改成带历史的目录，docs-site 删除；`ScoFan-official/omtre` 公开仓已推送 main `713509c9`；发布流水线和 `TEMPLATE_INDEX_URL` 留给后续票。
 - [migrate 合约](10-19-migrate-contract): 受管文件重新生成（改过的留 `.backup`），用户数据整搬并改写路径，运行时缓存丢弃；仓库外文件只报告不改；工作区须干净；迁到一半拒绝执行；回滚只靠 git；`~/.trellis/channels` 不迁；结束时自检 4 项。
+- [吸收机制](10-19-absorption-mechanism): 每个候选开 research 票（挂在"吸收"父任务下），按 5 条标准判为原样拷贝、改写吸收或拒绝；落地形态按修正阶梯取最高可行档；原样拷贝先过许可证闸并由 CI 检查；出处统一登记在 `ATTRIBUTION.md`；流程做成技能 `skills/absorb/`，检查写成脚本；改写吸收的不跟踪上游。
 
 ## Not yet specified
 
