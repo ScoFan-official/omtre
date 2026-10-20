@@ -39,7 +39,8 @@ def desc_of(a):
 def table(assets):
     rows = ["| Component | When to use |", "| --- | --- |"]
     for a in assets:
-        rows.append(f'| `{a["name"]}` | {desc_of(a).replace("|", "\\|")} |')
+        escaped_desc = desc_of(a).replace("|", "\\|")
+        rows.append(f'| `{a["name"]}` | {escaped_desc} |')
     return "\n".join(rows)
 
 def main():
