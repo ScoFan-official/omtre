@@ -7,6 +7,12 @@
 
 export { VERSION } from "./constants/version.js";
 export { init } from "./commands/init.js";
+export {
+  migrate,
+  type MigrateOptions,
+  type MigrateResult,
+  type MigrationPlan,
+} from "./commands/migrate.js";
 
 // Single-ticket runner + dispatch resolution — the orchestrator's embed seam.
 export {

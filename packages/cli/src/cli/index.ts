@@ -7,6 +7,7 @@ import { update } from "../commands/update.js";
 import { upgrade } from "../commands/upgrade.js";
 import { uninstall } from "../commands/uninstall.js";
 import { ablate, restore } from "../commands/ablate.js";
+import { migrate } from "../commands/migrate.js";
 import { runMem } from "../commands/mem.js";
 import {
   runWorkflowCommand,
@@ -273,6 +274,43 @@ program
       await restore({
         yes: options.yes as boolean,
         dryRun: options.dryRun as boolean,
+      });
+    } catch (error) {
+      console.error(
+        chalk.red("Error:"),
+        error instanceof Error ? error.message : error,
+      );
+      if (process.env.DEBUG || process.env.OMTRE_DEBUG) {
+        console.error(error instanceof Error ? error.stack : error);
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command("migrate")
+  .description(
+    "One-time migration of an existing Trellis (0.6.x) project to .omtre/",
+  )
+  .option("--dry-run", "Preview the migration plan without modifying any files")
+  .option("-y, --yes", "Skip interactive confirmation prompt")
+  .option("--force", "Alias for --yes")
+  .option(
+    "--json",
+    "Output machine-readable JSON migration report (implies non-interactive)",
+  )
+  .option(
+    "--allow-dirty",
+    "Allow migration when the Git working tree has uncommitted changes",
+  )
+  .action(async (options: Record<string, unknown>) => {
+    try {
+      await migrate({
+        dryRun: options.dryRun as boolean | undefined,
+        yes: Boolean(options.yes ?? options.force),
+        force: options.force as boolean | undefined,
+        json: options.json as boolean | undefined,
+        allowDirty: options.allowDirty as boolean | undefined,
       });
     } catch (error) {
       console.error(
