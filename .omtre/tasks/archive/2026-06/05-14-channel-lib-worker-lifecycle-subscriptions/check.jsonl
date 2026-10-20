@@ -1,0 +1,13 @@
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/prd.md","reason":"Task requirements and brainstorm ledger."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/research/issue-intake.md","reason":"Original global issue intake and requirement list."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/research/evidence-pass.md","reason":"Facts the review must validate or challenge."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/research/architect-review.md","reason":"Prior architect findings."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/research/planning-review-2.md","reason":"Second planning review findings."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/design.md","reason":"Draft design to review."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/implement.md","reason":"Draft implementation sequence to review."}
+{"file":".omtre/spec/cli/backend/omtre-core-sdk.md","reason":"Core/CLI boundary requirements."}
+{"file":".omtre/spec/cli/backend/commands-channel.md","reason":"Existing channel contracts."}
+{"file":"packages/core/src/channel/index.ts","reason":"Current core public API surface."}
+{"file":"packages/cli/src/commands/channel/supervisor.ts","reason":"Runtime lifecycle implementation to factor."}
+{"file":"packages/cli/src/commands/channel/supervisor/inbox.ts","reason":"Inbox delivery behavior to factor."}
+{"file":".omtre/tasks/05-14-channel-lib-worker-lifecycle-subscriptions/research/architect-review-3.md","reason":"Third architect review findings."}

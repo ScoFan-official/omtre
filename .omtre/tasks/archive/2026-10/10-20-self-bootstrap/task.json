@@ -1,0 +1,40 @@
+{
+  "id": "self-bootstrap",
+  "name": "self-bootstrap",
+  "title": "迁移施工 2：执行本仓 .omtre → .omtre/ 自举与门禁收口",
+  "description": "在本仓运行 omtre migrate 完成 .omtre 到 .omtre/ 自举，同步更新本仓 spec 与维护者自定义技能/命令，移除 regression 过渡垫片并验证自举后 check:legacy-names 全绿。",
+  "status": "completed",
+  "dev_type": "backend",
+  "scope": "cli",
+  "package": "cli",
+  "priority": "P1",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-20",
+  "completedAt": "2026-10-20",
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [
+    "packages/cli/test/regression.test.ts",
+    "scripts/check-legacy-names.mjs",
+    "packages/cli/test/scripts/check-legacy-names.test.ts"
+  ],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".omtre/tasks/10-20-migrate-command"
+  ],
+  "verify_skipped": {
+    "reason": "Verified via check:legacy-names (post-bootstrap 0 violations in 2839 files), regression byte-identical parity (33/33), migrate.test.ts (10/10), check-legacy-names.test.ts (5/5), build, typecheck, lint, and lint:py",
+    "at": "2026-10-20T01:49:47Z"
+  }
+}

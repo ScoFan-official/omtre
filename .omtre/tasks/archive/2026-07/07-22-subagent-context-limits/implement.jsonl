@@ -1,0 +1,2 @@
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Platform/hook integration contract; injection hook changes must stay consistent with it"}
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "Conventions for .omtre python scripts; validate-warning changes in task_context.py must follow them"}

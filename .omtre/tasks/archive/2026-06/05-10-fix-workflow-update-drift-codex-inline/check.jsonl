@@ -1,0 +1,5 @@
+{"file": ".omtre/tasks/05-10-fix-workflow-update-drift-codex-inline/prd.md", "reason": "Check implementation against the accepted requirements."}
+{"file": ".omtre/spec/cli/backend/migrations.md", "reason": "Verify update behavior matches migration/update contract."}
+{"file": ".omtre/spec/cli/backend/workflow-state-contract.md", "reason": "Verify workflow.md runtime contract remains coherent."}
+{"file": ".omtre/spec/cli/unit-test/conventions.md", "reason": "Verify regression tests follow project testing conventions."}
+{"file": ".omtre/spec/cli/unit-test/integration-patterns.md", "reason": "Verify update tests exercise the real filesystem flow."}

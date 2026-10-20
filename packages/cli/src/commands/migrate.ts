@@ -173,6 +173,7 @@ export function toLegacyTemplatePath(newRelPath: string): string {
     .replace(/\/commands\/omt\//g, "/commands/trellis/")
     .replace(/\/extensions\/omtre\//g, "/extensions/trellis/")
     .replace(/\/omtre\.json$/g, "/trellis.json")
+    .replace(/\/omtre_config\.py$/g, "/trellis_config.py")
     .replace(/\/omtre-/g, "/trellis-");
 }
 
@@ -185,6 +186,7 @@ export function toNewTemplatePath(legacyRelPath: string): string {
     .replace(/\/commands\/trellis\//g, "/commands/omt/")
     .replace(/\/extensions\/trellis\//g, "/extensions/omtre/")
     .replace(/\/trellis\.json$/g, "/omtre.json")
+    .replace(/\/trellis_config\.py$/g, "/omtre_config.py")
     .replace(/\/trellis-/g, "/omtre-");
 }
 
@@ -1201,8 +1203,15 @@ export async function migrate(
   // Step 3: Rename `.trellis/` -> `.omtre/`
   moveDirectory(trellisDir, omtreDir);
 
-  // Rename any `trellis-*` spec files inside `.omtre/spec/` to `omtre-*`
+  // Remove legacy `.trellis/scripts/common/trellis_config.py` (superseded by `omtre_config.py`)
+  fs.rmSync(path.join(omtreDir, "scripts", "common", "trellis_config.py"), {
+    force: true,
+  });
+
+  // Rename any `trellis-*` files/dirs inside `.omtre/spec/` and non-task-slug `trellis-*`
+  // artifacts inside `.omtre/tasks/` to `omtre-*`
   renameTrellisPrefixedSpecFiles(path.join(omtreDir, "spec"));
+  renameTrellisPrefixedSpecFiles(path.join(omtreDir, "tasks"));
 
   // Step 4: Relocate custom commands, custom skills, custom agents, and legacy `.backup` files
   for (const move of [...customMoves, ...legacyBackupsToMove]) {
@@ -1574,8 +1583,19 @@ function renameTrellisPrefixedSpecFiles(specDir: string): void {
     const full = path.join(specDir, entry.name);
     if (entry.isDirectory()) {
       renameTrellisPrefixedSpecFiles(full);
-    } else if (entry.isFile() && entry.name.startsWith("trellis-")) {
-      const newName = `omtre-${entry.name.slice("trellis-".length)}`;
+      if (/trellis-/i.test(entry.name) && !/^\d{2}-\d{2}-/.test(entry.name)) {
+        const newDirName = entry.name.replace(/trellis-/gi, "omtre-");
+        const targetDir = path.join(specDir, newDirName);
+        if (!fs.existsSync(targetDir)) {
+          fs.renameSync(full, targetDir);
+        }
+      }
+    } else if (
+      entry.isFile() &&
+      /trellis-/i.test(entry.name) &&
+      !/^\d{2}-\d{2}-/.test(entry.name)
+    ) {
+      const newName = entry.name.replace(/trellis-/gi, "omtre-");
       const targetPath = path.join(specDir, newName);
       if (!fs.existsSync(targetPath)) {
         fs.renameSync(full, targetPath);

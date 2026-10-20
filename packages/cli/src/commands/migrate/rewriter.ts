@@ -106,8 +106,8 @@ export function rewriteTextContent(
     addHits(ruleName, count);
   };
 
-  applyRule("~/.trellis -> ~/.omtre", /~\/\.trellis\b/g, "~/.omtre");
-  applyRule(".trellis -> .omtre", /\.trellis\b/g, ".omtre");
+  applyRule("~/.trellis -> ~/.omtre", /~\/\.trellis/g, "~/.omtre");
+  applyRule(".trellis -> .omtre", /\.trellis/g, ".omtre");
   applyRule(
     "TRELLIS:COPILOT-GUIDANCE -> OMTRE:COPILOT-GUIDANCE",
     /TRELLIS:COPILOT-GUIDANCE/g,
@@ -117,7 +117,7 @@ export function rewriteTextContent(
   applyRule("TRELLIS:END -> OMTRE:END", /TRELLIS:END/g, "OMTRE:END");
   applyRule(
     "TRELLIS_* -> OMTRE_*",
-    /\bTRELLIS_([A-Za-z0-9_]*)/g,
+    /TRELLIS_([A-Za-z0-9_]*)/g,
     (_m, suffix: string) => `OMTRE_${suffix}`,
   );
   applyRule(
@@ -132,7 +132,7 @@ export function rewriteTextContent(
   );
   applyRule(
     "/trellis:* -> /omt:*",
-    /\/trellis:([A-Za-z0-9_-]+)/g,
+    /\/trellis:([A-Za-z0-9_-]*)/g,
     (_m, cmd: string) => `/omt:${cmd}`,
   );
   applyRule(
@@ -160,7 +160,7 @@ export function rewriteTextContent(
   // 5. Rewrite remaining `trellis-<slug>` -> `omtre-<slug>`
   applyRule(
     "trellis-* -> omtre-*",
-    /\btrellis-([A-Za-z0-9_-]+)/g,
+    /trellis-([A-Za-z0-9_-]*)/g,
     (_m, slug: string) => `omtre-${slug}`,
   );
 

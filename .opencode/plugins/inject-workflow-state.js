@@ -1,6 +1,6 @@
 /* global process */
 /**
- * Trellis Workflow State Injection Plugin
+ * Omtre Workflow State Injection Plugin
  *
  * Per-turn UserPromptSubmit equivalent for OpenCode.
  *
@@ -16,7 +16,7 @@
  * the broken state instead of the plugin silently masking it.
  *
  * Silently skips when:
- *   - No .trellis/ directory
+ *   - No .omtre/ directory
  *   - No active task in the session runtime context
  *   - task.json malformed or missing status
  */
@@ -29,7 +29,7 @@ import {
   platformInputFromMessages,
   prependEphemeralText,
 } from "../lib/context-visibility.js"
-import { TrellisContext, debugLog, isTrellisSubagent } from "../lib/trellis-context.js"
+import { OmtreContext, debugLog, isOmtreSubagent } from "../lib/omtre-context.js"
 
 // Supports STATUS values with letters, digits, underscores, hyphens
 // (so "in-review" / "blocked-by-team" work alongside "in_progress").
@@ -38,7 +38,7 @@ const TAG_RE = /\[workflow-state:([A-Za-z0-9_-]+)\]\s*\n([\s\S]*?)\n\s*\[\/workf
 // Escape hatch for the per-turn breadcrumb (issue #427). Mirrors
 // `common.config.get_prompt_injection_config()` / the shared Python hook's
 // `_resolve_skip_keyword()` + `prompt_has_skip_keyword()`.
-const DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD = "no-trellis"
+const DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD = "no-omtre"
 
 function stripInlineComment(value) {
   let inQuote = null
@@ -64,12 +64,12 @@ function unquoteYaml(s) {
 
 /**
  * Line-based parser for ONLY the `prompt_injection:` block of
- * `.trellis/config.yaml`. Not a general YAML parser — mirrors
+ * `.omtre/config.yaml`. Not a general YAML parser — mirrors
  * `common.config.get_prompt_injection_config()` semantics for this section
  * only (missing key keeps the default; non-string value keeps the default).
  */
 function readSkipKeyword(directory) {
-  const path = join(directory, ".trellis", "config.yaml")
+  const path = join(directory, ".omtre", "config.yaml")
   if (!existsSync(path)) return DEFAULT_PROMPT_INJECTION_SKIP_KEYWORD
   let text
   try {
@@ -101,7 +101,7 @@ function readSkipKeyword(directory) {
 
 /**
  * Case-insensitive, word-boundary match of `keyword` in `text`. Hyphen
- * counts as a word char so "no-trellisx" / "xno-trellis" don't match, but
+ * counts as a word char so "no-omtrex" / "xno-omtre" don't match, but
  * punctuation/whitespace boundaries do. Empty keyword never matches.
  */
 function promptHasSkipKeyword(text, keyword) {
@@ -121,7 +121,7 @@ function promptHasSkipKeyword(text, keyword) {
  * rather than the plugin silently masking it.
  */
 function loadBreadcrumbs(directory) {
-  const workflowPath = join(directory, ".trellis", "workflow.md")
+  const workflowPath = join(directory, ".omtre", "workflow.md")
   if (!existsSync(workflowPath)) return {}
   let content
   try {
@@ -180,7 +180,7 @@ function buildBreadcrumb(id, status, templates) {
 
 // OpenCode 1.2.x expects plugins to be factory functions (see inject-subagent-context.js comment).
 export default async ({ directory }) => {
-  const ctx = new TrellisContext(directory)
+  const ctx = new OmtreContext(directory)
   debugLog("workflow-state", "Plugin loaded, directory:", directory)
 
   return {
@@ -188,20 +188,20 @@ export default async ({ directory }) => {
         try {
           const messages = output?.messages
           const platformInput = platformInputFromMessages(messages)
-          // Skip Trellis sub-agent turns — the per-turn breadcrumb is for the
+          // Skip Omtre sub-agent turns — the per-turn breadcrumb is for the
           // main session only; sub-agent context comes from the parent's
           // tool.execute.before injection.
-          if (isTrellisSubagent(platformInput)) {
-            debugLog("workflow-state", "Skipping trellis subagent turn:", platformInput?.agent)
+          if (isOmtreSubagent(platformInput)) {
+            debugLog("workflow-state", "Skipping omtre subagent turn:", platformInput?.agent)
             return
           }
-          if (process.env.TRELLIS_HOOKS === "0" || process.env.TRELLIS_DISABLE_HOOKS === "1") {
+          if (process.env.OMTRE_HOOKS === "0" || process.env.OMTRE_DISABLE_HOOKS === "1") {
             return
           }
           if (process.env.OPENCODE_NON_INTERACTIVE === "1") {
             return
           }
-          if (!ctx.isTrellisProject()) {
+          if (!ctx.isOmtreProject()) {
             return
           }
 

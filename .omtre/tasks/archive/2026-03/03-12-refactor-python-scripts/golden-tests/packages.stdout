@@ -1,0 +1,16 @@
+## PACKAGES
+
+### cli (default)
+Path: packages/cli
+Spec layers: backend, unit-test
+  - .omtre/spec/cli/backend/index.md
+  - .omtre/spec/cli/unit-test/index.md
+
+### docs-site [submodule]
+Path: docs-site
+Spec layers: docs
+  - .omtre/spec/docs-site/docs/index.md
+
+### Shared Guides (always included)
+Path: .omtre/spec/guides/index.md
+

@@ -11820,26 +11820,11 @@ print(json.dumps({
 describe("regression: .omtre/scripts stays byte-identical to templates/omtre/scripts", () => {
   // `.omtre/scripts/` is Omtre's own dogfood copy;
   // `packages/cli/src/templates/omtre/scripts/` is what ships to users.
-  // Once R8 self-bootstrap creates `.omtre/scripts/`, this test enforces strict
-  // byte-for-byte parity between `.omtre/scripts/` and `templates/omtre/scripts/`.
-  // During the R6 pre-bootstrap transition (when only the legacy dogfood scripts
-  // tree exists), it applies the known R1-R5 rename mapping before comparing.
+  // Enforces strict byte-for-byte parity between `.omtre/scripts/` and
+  // `templates/omtre/scripts/`.
   const __dirnameParity = path.dirname(fileURLToPath(import.meta.url));
   const parityRepoRoot = path.resolve(__dirnameParity, "../../..");
-  const omtreDogfoodRoot = path.join(parityRepoRoot, ".omtre", "scripts");
-  // Intentional pre-bootstrap transition fixture (R6 -> R8 self-bootstrap):
-  const PRE_BOOTSTRAP_BRAND = "trellis"; // pre-bootstrap-exempt: removed once .omtre/scripts exists
-  const PRE_BOOTSTRAP_BRAND_UPPER = "TRELLIS"; // pre-bootstrap-exempt: removed once .omtre/scripts exists
-  const PRE_BOOTSTRAP_BRAND_TITLE = "Trellis"; // pre-bootstrap-exempt: removed once .omtre/scripts exists
-  const legacyDogfoodRoot = path.join(
-    parityRepoRoot,
-    `.${PRE_BOOTSTRAP_BRAND}`,
-    "scripts",
-  );
-  const isBootstrapped = fs.existsSync(omtreDogfoodRoot);
-  const dogfoodScriptsRoot = isBootstrapped
-    ? omtreDogfoodRoot
-    : legacyDogfoodRoot;
+  const dogfoodScriptsRoot = path.join(parityRepoRoot, ".omtre", "scripts");
   const templateScriptsRoot = path.join(
     parityRepoRoot,
     "packages/cli/src/templates/omtre/scripts",
@@ -11861,53 +11846,10 @@ describe("regression: .omtre/scripts stays byte-identical to templates/omtre/scr
     return found.sort();
   }
 
-  // Intentional pre-bootstrap rename mapping (R6 -> R8 transition):
-  function mapLegacyRelPath(rel: string): string {
-    return rel === `common/${PRE_BOOTSTRAP_BRAND}_config.py`
-      ? "common/omtre_config.py"
-      : rel;
-  }
-
-  function mapToLegacyRelPath(rel: string): string {
-    return rel === "common/omtre_config.py"
-      ? `common/${PRE_BOOTSTRAP_BRAND}_config.py`
-      : rel;
-  }
-
-  function normalizePreBootstrapContent(content: string): string {
-    return content
-      .replaceAll(`commands/${PRE_BOOTSTRAP_BRAND}/`, "commands/omt/")
-      .replaceAll(`parts[0] == "${PRE_BOOTSTRAP_BRAND}"`, 'parts[0] == "omt"')
-      .replaceAll(
-        `Convert ${PRE_BOOTSTRAP_BRAND}/<name>.md`,
-        "Convert omt/<name>.md",
-      )
-      .replaceAll(
-        `'${PRE_BOOTSTRAP_BRAND}', 'finish-work.md'`,
-        "'omt', 'finish-work.md'",
-      )
-      .replaceAll(`/${PRE_BOOTSTRAP_BRAND}:continue`, "/omt:continue")
-      .replaceAll(`@mindfoldhq/${PRE_BOOTSTRAP_BRAND}`, "omtre")
-      .replaceAll(`upstream ${PRE_BOOTSTRAP_BRAND_TITLE}`, "upstream")
-      .replaceAll(`a \`${PRE_BOOTSTRAP_BRAND} update\``, "an `omtre update`")
-      .replace(
-        new RegExp(`a ${PRE_BOOTSTRAP_BRAND} command file`, "gi"),
-        "an omtre command file",
-      )
-      .replace(/^\s*re\.IGNORECASE,\n/gm, "")
-      .replaceAll(PRE_BOOTSTRAP_BRAND_UPPER, "OMTRE")
-      .replaceAll(PRE_BOOTSTRAP_BRAND_TITLE, "Omtre")
-      .replaceAll(PRE_BOOTSTRAP_BRAND, "omtre")
-      .replaceAll("Omtre", "omtre");
-  }
-
   const templateFiles = listPyFiles(templateScriptsRoot);
 
   it("both trees hold the same set of .py files", () => {
-    const rawDogfoodFiles = listPyFiles(dogfoodScriptsRoot);
-    const dogfoodFiles = isBootstrapped
-      ? rawDogfoodFiles
-      : rawDogfoodFiles.map(mapLegacyRelPath).sort();
+    const dogfoodFiles = listPyFiles(dogfoodScriptsRoot);
     expect(
       dogfoodFiles,
       "`.omtre/scripts/` and `packages/cli/src/templates/omtre/scripts/` " +
@@ -11918,38 +11860,21 @@ describe("regression: .omtre/scripts stays byte-identical to templates/omtre/scr
 
   for (const relativePath of templateFiles) {
     it(`${relativePath} is byte-identical in both trees`, () => {
-      const dogfoodRel = isBootstrapped
-        ? relativePath
-        : mapToLegacyRelPath(relativePath);
-      const dogfoodPath = path.join(dogfoodScriptsRoot, dogfoodRel);
+      const dogfoodPath = path.join(dogfoodScriptsRoot, relativePath);
       expect(
         fs.existsSync(dogfoodPath),
         `.omtre/scripts/${relativePath} is missing (template has it)`,
       ).toBe(true);
-      if (isBootstrapped) {
-        const dogfoodBytes = fs.readFileSync(dogfoodPath);
-        const templateBytes = fs.readFileSync(
-          path.join(templateScriptsRoot, relativePath),
-        );
-        expect(
-          dogfoodBytes.equals(templateBytes),
-          `.omtre/scripts/${relativePath} has drifted from ` +
-            `packages/cli/src/templates/omtre/scripts/${relativePath}. ` +
-            `Edit both copies, never one.`,
-        ).toBe(true);
-      } else {
-        const dogfoodContent = fs.readFileSync(dogfoodPath, "utf-8");
-        const templateContent = fs.readFileSync(
-          path.join(templateScriptsRoot, relativePath),
-          "utf-8",
-        );
-        expect(
-          normalizePreBootstrapContent(dogfoodContent),
-          `Pre-bootstrap dogfood ${dogfoodRel} has drifted from ` +
-            `packages/cli/src/templates/omtre/scripts/${relativePath}. ` +
-            `Edit both copies, never one.`,
-        ).toBe(normalizePreBootstrapContent(templateContent));
-      }
+      const dogfoodBytes = fs.readFileSync(dogfoodPath);
+      const templateBytes = fs.readFileSync(
+        path.join(templateScriptsRoot, relativePath),
+      );
+      expect(
+        dogfoodBytes.equals(templateBytes),
+        `.omtre/scripts/${relativePath} has drifted from ` +
+          `packages/cli/src/templates/omtre/scripts/${relativePath}. ` +
+          `Edit both copies, never one.`,
+      ).toBe(true);
     });
   }
 });

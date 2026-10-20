@@ -1,0 +1,4 @@
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "CLI backend package entry point and pre-development checklist."}
+{"file": ".omtre/spec/cli/backend/commands-upgrade.md", "reason": "Contract for trellis upgrade command behavior."}
+{"file": ".omtre/spec/cli/backend/commands-update.md", "reason": "Boundary between trellis upgrade and trellis update hints."}
+{"file": ".omtre/tasks/05-11-upgrade-command-hardening/research/npm-self-upgrade-pitfalls.md", "reason": "Research notes for npm-backed self-upgrade failure modes."}

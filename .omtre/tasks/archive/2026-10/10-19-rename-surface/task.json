@@ -1,0 +1,28 @@
+{
+  "id": "rename-surface",
+  "name": "rename-surface",
+  "title": "改名面盘点：.omtre 及 trellis 品牌在代码、模板、技能中的全部出现",
+  "description": "改名面盘点：.omtre 及 trellis 品牌在代码、模板、技能中的全部出现",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-19",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "research"
+  }
+}

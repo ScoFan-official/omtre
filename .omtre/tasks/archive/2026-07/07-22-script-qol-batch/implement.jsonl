@@ -1,0 +1,2 @@
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "Conventions for .omtre python scripts (arg parsing, colored output, exit codes)"}
+{"file": ".omtre/spec/cli/backend/directory-structure.md", "reason": "Task directory and task.json layout contract"}

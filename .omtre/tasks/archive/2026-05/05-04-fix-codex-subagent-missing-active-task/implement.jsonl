@@ -1,0 +1,3 @@
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "Python script standards for .omtre/scripts/ — relevant to active_task.py changes"}
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Pull-based prelude design (class-2 platforms: codex/copilot/gemini/qoder)"}
+{"file": ".omtre/spec/cli/backend/workflow-state-contract.md", "reason": "workflow.md [workflow-state:STATUS] breadcrumb editing rules"}

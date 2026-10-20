@@ -1,0 +1,3 @@
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "CLI backend quality checklist and relevant spec routing."}
+{"file": ".omtre/spec/cli/backend/commands-upgrade.md", "reason": "Expected upgrade command tests, failure behavior, and user-facing contract."}
+{"file": ".omtre/tasks/05-11-upgrade-command-hardening/research/npm-self-upgrade-pitfalls.md", "reason": "Known platform failure modes to verify against."}

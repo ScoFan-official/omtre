@@ -1,0 +1,37 @@
+{
+  "id": "rename-residual-gate",
+  "name": "rename-residual-gate",
+  "title": "改名施工 8：全仓旧名残留检查脚本与 CI 门禁",
+  "description": "新增全仓旧名残留检查脚本并接入 CI，区分永久保留项与自举前临时豁免项，防止旧名回流",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-19",
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".omtre/tasks/10-19-rename-test-suite-and-regression",
+    ".omtre/tasks/10-19-rename-skills-marketplace-docs"
+  ],
+  "verify_skipped": {
+    "reason": "Verified via pnpm check:legacy-names, check-legacy-names.test.ts, typecheck, and lint",
+    "at": "2026-10-19T13:32:55Z"
+  }
+}

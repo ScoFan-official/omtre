@@ -1,0 +1,7 @@
+{"file": ".omtre/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".omtre/spec/shared/index.md", "reason": "Shared coding standards"}
+{"file": ".omtre/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".omtre/spec/backend/api-module.md", "reason": "API module conventions"}
+{"file": ".omtre/spec/backend/quality.md", "reason": "Code quality requirements"}
+{"file": ".omtre/tasks/02-06-platform-registry-refactor/prd.md", "reason": "Task requirements and technical approach"}
+{"file": ".omtre/spec/backend/platform-integration.md", "reason": "Platform integration checklist"}

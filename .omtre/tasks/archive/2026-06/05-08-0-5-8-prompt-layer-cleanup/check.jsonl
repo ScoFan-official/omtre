@@ -1,0 +1,4 @@
+{"file": ".omtre/tasks/05-08-0-5-8-prompt-layer-cleanup/prd.md", "reason": "Acceptance criteria checklist."}
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Verify Sub-agent dispatch protocol description stays consistent with workflow.md after edit."}
+{"file": ".omtre/spec/cli/backend/quality-guidelines.md", "reason": "Lint / typecheck / test bar."}
+{"file": ".omtre/spec/cli/unit-test/conventions.md", "reason": "Test conventions (anti-patterns)."}

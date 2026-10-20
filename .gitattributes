@@ -5,8 +5,8 @@
 # Do NOT add a rule for workspace/*/index.md here — it is fully regenerated
 # every session, so a real conflict there is expected and safe to resolve by
 # picking either side (task state lives in task.json, not index.md). See
-# .trellis/spec/cli/backend/directory-structure.md for details.
-.trellis/workspace/*/journal-*.md merge=union
+# .omtre/spec/cli/backend/directory-structure.md for details.
+.omtre/workspace/*/journal-*.md merge=union
 
 # Normalize line endings on checkin. Windows contributors save with CRLF by
 # default, and without this git records the whole file as rewritten: #555
@@ -20,3 +20,6 @@
 *.ico binary
 *.webp binary
 *.zstd binary
+
+.omtre/domains/REGISTRY.md merge=union
+.omtre/domains/*/worklog/*.md merge=union

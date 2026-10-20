@@ -1,0 +1,4 @@
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Required checklist for adding a new AI CLI platform"}
+{"file": ".omtre/tasks/04-24-pi-agent-trellis-support/research/pi-agent-capabilities.md", "reason": "Pi official docs research and MVP capability classification"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "CLI backend guidelines for platform registry and init changes"}
+{"file": ".omtre/spec/guides/cross-platform-thinking-guide.md", "reason": "Pi support touches paths, commands, CLI wrappers, and cross-platform assumptions"}

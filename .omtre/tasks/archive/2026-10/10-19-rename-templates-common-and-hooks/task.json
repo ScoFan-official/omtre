@@ -1,0 +1,36 @@
+{
+  "id": "rename-templates-common-and-hooks",
+  "name": "rename-templates-common-and-hooks",
+  "title": "改名施工 4：公共命令/技能模板（common）与 shared-hooks 改名",
+  "description": "改写 templates/common（含内置技能目录改名 omtre-*）与 templates/shared-hooks 跨平台钩子中的旧名",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-19",
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "task",
+    "triage": "ready-for-agent"
+  },
+  "blocked_by": [
+    ".omtre/tasks/10-19-rename-constants-and-pkg"
+  ],
+  "verify_skipped": {
+    "reason": "Verified via rg zero-residual check, lint:py, typecheck, and shared-hooks tests",
+    "at": "2026-10-19T09:26:53Z"
+  }
+}

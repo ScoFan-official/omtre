@@ -1,6 +1,6 @@
 /* global process */
 /**
- * Trellis Context Injection Plugin
+ * Omtre Context Injection Plugin
  *
  * Injects context when Task tool is called with supported subagent types.
  * Uses OpenCode's tool.execute.before hook.
@@ -9,12 +9,12 @@
 import { existsSync, readdirSync } from "fs"
 import { join } from "path"
 import {
-  TrellisContext,
+  OmtreContext,
   debugLog,
   readContextInjectionLimits,
   ContextBudget,
   materializeArtifact,
-} from "../lib/trellis-context.js"
+} from "../lib/omtre-context.js"
 
 // Supported subagent types
 const AGENTS_ALL = ["implement", "check", "research"]
@@ -33,7 +33,7 @@ function extractActiveTaskHint(prompt) {
 
 /**
  * Get context for implement agent. `taskDir` may be relative
- * (`.trellis/tasks/foo`) or absolute; both are resolved via
+ * (`.omtre/tasks/foo`) or absolute; both are resolved via
  * `ctx.resolveTaskDir`.
  *
  * Read order (mirrors Python `get_implement_context`):
@@ -161,7 +161,7 @@ function getResearchContext(ctx) {
   const parts = []
 
   // Dynamic project structure (scan actual spec directory)
-  const specPath = ".trellis/spec"
+  const specPath = ".omtre/spec"
   const specFull = join(ctx.directory, specPath)
 
   const structureLines = [`## Project Spec Directory Structure\n\n\`\`\`\n${specPath}/`]
@@ -201,8 +201,8 @@ function getResearchContext(ctx) {
 
 ## Search Tips
 
-- Spec files: \`.trellis/spec/**/*.md\`
-- Known issues: \`.trellis/big-question/\`
+- Spec files: \`.omtre/spec/**/*.md\`
+- Known issues: \`.omtre/big-question/\`
 - Code search: Use Glob and Grep tools
 - Tech solutions: Use mcp__exa__web_search_exa or mcp__exa__get_code_context_exa`)
 
@@ -214,7 +214,7 @@ function getResearchContext(ctx) {
  */
 function buildPrompt(agentType, originalPrompt, context, isFinish = false) {
   const templates = {
-    implement: `<!-- trellis-hook-injected -->
+    implement: `<!-- omtre-hook-injected -->
 # Implement Agent Task
 
 You are the Implement Agent in the Multi-Agent Pipeline.
@@ -244,7 +244,7 @@ ${originalPrompt}
 - Follow all dev specs injected above
 - Report list of modified/created files when done`,
 
-    check: isFinish ? `<!-- trellis-hook-injected -->
+    check: isFinish ? `<!-- omtre-hook-injected -->
 # Finish Agent Task
 
 You are performing the final check before creating a PR.
@@ -280,7 +280,7 @@ ${originalPrompt}
 - If critical CODE issues found, report them clearly (fix specs, not code)
 - Verify all acceptance criteria in prd.md are met
 - Verify design.md and implement.md constraints when those files are present` :
-      `<!-- trellis-hook-injected -->
+      `<!-- omtre-hook-injected -->
 # Check Agent Task
 
 You are the Check Agent in the Multi-Agent Pipeline.
@@ -309,7 +309,7 @@ ${originalPrompt}
 - Fix issues yourself, don't just report
 - Must execute complete checklist`,
 
-    research: `<!-- trellis-hook-injected -->
+    research: `<!-- omtre-hook-injected -->
 # Research Agent Task
 
 You are the Research Agent in the Multi-Agent Pipeline.
@@ -376,12 +376,12 @@ function isWindowsPosixShell(env = process.env) {
   return /^(bash|sh|zsh)(\.exe)?$/.test(shell)
 }
 
-function buildTrellisContextPrefix(contextKey, hostPlatform = process.platform, env = process.env) {
+function buildOmtreContextPrefix(contextKey, hostPlatform = process.platform, env = process.env) {
   if (hostPlatform === "win32" && !isWindowsPosixShell(env)) {
-    return `$env:TRELLIS_CONTEXT_ID = ${powershellQuote(contextKey)}; `
+    return `$env:OMTRE_CONTEXT_ID = ${powershellQuote(contextKey)}; `
   }
 
-  return `export TRELLIS_CONTEXT_ID=${shellQuote(contextKey)}; `
+  return `export OMTRE_CONTEXT_ID=${shellQuote(contextKey)}; `
 }
 
 function getBashCommandKey(args) {
@@ -391,13 +391,13 @@ function getBashCommandKey(args) {
   return null
 }
 
-function commandStartsWithTrellisContext(command) {
+function commandStartsWithOmtreContext(command) {
   const firstCommand = command.trimStart().split(/[;&|]/, 1)[0].trimStart()
   return (
-    /^TRELLIS_CONTEXT_ID\s*=/.test(firstCommand) ||
-    /^export\s+TRELLIS_CONTEXT_ID\s*=/.test(firstCommand) ||
-    /^env\s+(?:(?:-\S+|[A-Za-z_][A-Za-z0-9_]*=\S*)\s+)*TRELLIS_CONTEXT_ID\s*=/.test(firstCommand) ||
-    /^\$env:TRELLIS_CONTEXT_ID\s*=/i.test(firstCommand)
+    /^OMTRE_CONTEXT_ID\s*=/.test(firstCommand) ||
+    /^export\s+OMTRE_CONTEXT_ID\s*=/.test(firstCommand) ||
+    /^env\s+(?:(?:-\S+|[A-Za-z_][A-Za-z0-9_]*=\S*)\s+)*OMTRE_CONTEXT_ID\s*=/.test(firstCommand) ||
+    /^\$env:OMTRE_CONTEXT_ID\s*=/i.test(firstCommand)
   )
 }
 
@@ -407,19 +407,19 @@ function commandStartsWithTrellisContext(command) {
  * commands before execution; that prefix is the only channel by which an
  * AI-run `task.py` sees the OpenCode session.
  */
-function injectTrellisContextIntoBash(ctx, input, output, hostPlatform, env) {
+function injectOmtreContextIntoBash(ctx, input, output, hostPlatform, env) {
   const args = output?.args
   const commandKey = getBashCommandKey(args)
   if (!commandKey) return false
 
   const command = args[commandKey]
   if (!command.trim()) return false
-  if (commandStartsWithTrellisContext(command)) return false
+  if (commandStartsWithOmtreContext(command)) return false
 
   const contextKey = ctx.getContextKey(input)
   if (!contextKey) return false
 
-  args[commandKey] = `${buildTrellisContextPrefix(contextKey, hostPlatform, env)}${command}`
+  args[commandKey] = `${buildOmtreContextPrefix(contextKey, hostPlatform, env)}${command}`
   return true
 }
 
@@ -429,21 +429,21 @@ function injectTrellisContextIntoBash(ctx, input, output, hostPlatform, env) {
 // the previous `{ id, server }` object shape failed with
 // `TypeError: fn is not a function` in 1.2.x.
 export default async ({ directory, platform: hostPlatform = process.platform, env = process.env }) => {
-  const ctx = new TrellisContext(directory)
+  const ctx = new OmtreContext(directory)
   debugLog("inject", "Plugin loaded, directory:", directory)
 
   return {
       "tool.execute.before": async (input, output) => {
         try {
-          if (process.env.TRELLIS_HOOKS === "0" || process.env.TRELLIS_DISABLE_HOOKS === "1") {
+          if (process.env.OMTRE_HOOKS === "0" || process.env.OMTRE_DISABLE_HOOKS === "1") {
             return
           }
           debugLog("inject", "tool.execute.before called, tool:", input?.tool)
 
           const toolName = input?.tool?.toLowerCase()
           if (toolName === "bash") {
-            if (injectTrellisContextIntoBash(ctx, input, output, hostPlatform, env)) {
-              debugLog("inject", "Injected TRELLIS_CONTEXT_ID into Bash command")
+            if (injectOmtreContextIntoBash(ctx, input, output, hostPlatform, env)) {
+              debugLog("inject", "Injected OMTRE_CONTEXT_ID into Bash command")
             }
             return
           }
@@ -456,8 +456,8 @@ export default async ({ directory, platform: hostPlatform = process.platform, en
           if (!args) return
 
           const rawSubagentType = args.subagent_type
-          // Strip "trellis-" prefix added by v0.5.0-beta.5 agent rename migration
-          const subagentType = (rawSubagentType || "").replace(/^trellis-/, "")
+          // Strip "omtre-" prefix added by v0.5.0-beta.5 agent rename migration
+          const subagentType = (rawSubagentType || "").replace(/^omtre-/, "")
           const originalPrompt = args.prompt || ""
 
           debugLog("inject", "Task tool called, subagent_type:", rawSubagentType)
@@ -517,7 +517,7 @@ export default async ({ directory, platform: hostPlatform = process.platform, en
 
           // Agents requiring task directory
           if (AGENTS_REQUIRE_TASK.includes(subagentType)) {
-            // subagentType is already stripped of "trellis-" prefix above
+            // subagentType is already stripped of "omtre-" prefix above
             if (!taskDir) {
               debugLog("inject", "Skipping - no current task")
               return

@@ -1,0 +1,32 @@
+{
+  "id": "firefox-landing",
+  "name": "firefox-landing",
+  "title": "Firefox 提示词放置原则在 omtre 中的落地形态",
+  "description": "Firefox 提示词放置原则在 omtre 中的落地形态",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "cli",
+  "priority": "P2",
+  "creator": "qihaonan",
+  "assignee": "qihaonan",
+  "createdAt": "2026-10-19",
+  "completedAt": "2026-10-19",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-19-omtre-standalone",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "ticket_type": "grilling"
+  },
+  "blocked_by": [
+    ".omtre/tasks/10-19-firefox-prompt-research",
+    ".omtre/tasks/10-19-absorption-mechanism"
+  ]
+}

@@ -674,7 +674,7 @@ export function collectTaskInventory(workflowDir: string): TaskInventory {
  * `mindfold-ai/trellis` attribution URLs).
  */
 const RESIDUAL_CHECK_REGEX =
-  /(~\/\.trellis\b|\.trellis\b|TRELLIS:COPILOT-GUIDANCE|TRELLIS:START|TRELLIS:END|TRELLIS_[A-Za-z0-9_]*|trellis-hook-injected|trellis-emitted|\/trellis:[A-Za-z0-9_-]*|@mindfoldhq\/trellis(?:-core)?\b|\boh-my-trellis\b|\btrellis-[A-Za-z0-9_-]+)/g;
+  /(~\/\.trellis|\.trellis|TRELLIS:COPILOT-GUIDANCE|TRELLIS:START|TRELLIS:END|TRELLIS_[A-Za-z0-9_]*|trellis-hook-injected|trellis-emitted|\/trellis:[A-Za-z0-9_-]*|@mindfoldhq\/trellis(?:-core)?\b|\boh-my-trellis\b|trellis-[A-Za-z0-9_-]*)/g;
 
 export function runPostMigrationSelfChecks(
   cwd: string,

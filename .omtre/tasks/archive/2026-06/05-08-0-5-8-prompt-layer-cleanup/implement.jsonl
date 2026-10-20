@@ -1,0 +1,3 @@
+{"file": ".omtre/tasks/05-08-0-5-8-prompt-layer-cleanup/prd.md", "reason": "Design doc: file-by-file delete list + acceptance criteria."}
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Sub-agent dispatch protocol spec; needs re-read to ensure workflow.md simplification (drop EXCEPT omtre-research carve-out) is consistent."}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "Entry point for cli backend specs."}

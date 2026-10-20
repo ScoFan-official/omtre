@@ -1,0 +1,4 @@
+{"file": ".omtre/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "Backend development guide"}
+{"file": ".omtre/spec/cli/backend/quality-guidelines.md", "reason": "Code quality standards"}
+{"file": ".omtre/spec/cli/unit-test/conventions.md", "reason": "Test conventions"}

@@ -1,0 +1,4 @@
+{"file": ".omtre/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".omtre/spec/shared/index.md", "reason": "Shared coding standards"}
+{"file": ".omtre/spec/frontend/index.md", "reason": "Frontend development guide"}
+{"file": ".omtre/spec/frontend/components.md", "reason": "Component conventions"}

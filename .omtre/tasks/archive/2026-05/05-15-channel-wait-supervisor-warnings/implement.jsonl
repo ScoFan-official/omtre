@@ -1,0 +1,5 @@
+{"file": ".omtre/spec/cli/backend/commands-channel.md", "reason": "Channel command contract and runtime behavior conventions."}
+{"file": ".omtre/spec/cli/backend/omtre-core-sdk.md", "reason": "Core/CLI package boundary and public substrate API guidance."}
+{"file": ".omtre/spec/cli/backend/quality-guidelines.md", "reason": "Code quality expectations for shared CLI/runtime changes."}
+{"file": ".omtre/spec/cli/unit-test/index.md", "reason": "Unit test entrypoint and standards for CLI/core behavior changes."}
+{"file": ".omtre/spec/cli/unit-test/conventions.md", "reason": "Test structure, mocking, and environment isolation conventions."}

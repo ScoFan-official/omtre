@@ -1,0 +1,4 @@
+{"file": ".omtre/tasks/archive/2026-10/10-19-migrate-contract/answer.md", "reason": "T4 authoritative contract for omtre migrate"}
+{"file": ".omtre/tasks/archive/2026-10/10-19-rename-rules/answer.md", "reason": "T3 authoritative rename rules"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "CLI backend conventions"}
+{"file": ".omtre/spec/cli/unit-test/index.md", "reason": "CLI unit and integration test conventions"}

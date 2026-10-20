@@ -1,0 +1,6 @@
+{"file": ".omtre/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".omtre/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "bootstrap task creation is part of init platform flow"}
+{"file": ".omtre/spec/cli/backend/error-handling.md", "reason": "fixing silent try/catch around bootstrap creation"}
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "init_developer.py semantics + potential slug helpers"}
+{"file": ".omtre/spec/cli/backend/directory-structure.md", "reason": ".omtre/ layout + FILE_NAMES.DEVELOPER location"}

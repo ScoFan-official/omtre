@@ -1,0 +1,4 @@
+{"file":".omtre/spec/cli/backend/omtre-core-sdk.md","reason":"Verify core/CLI boundary and SDK contract remain consistent."}
+{"file":".omtre/spec/cli/backend/commands-channel.md","reason":"Verify event-log protocol and idempotency behavior are documented."}
+{"file":".omtre/spec/cli/backend/quality-guidelines.md","reason":"Verify TypeScript code follows project quality rules."}
+{"file":".omtre/spec/cli/unit-test/conventions.md","reason":"Verify regression tests cover the changed behavior."}

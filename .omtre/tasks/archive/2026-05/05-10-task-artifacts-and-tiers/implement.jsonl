@@ -1,0 +1,9 @@
+{"file": ".omtre/spec/cli/backend/workflow-state-contract.md", "reason": "workflow-state breadcrumb and task status contract affected by no-task routing"}
+{"file": ".omtre/spec/guides/cross-layer-thinking-guide.md", "reason": "map artifact and workflow data flow across task scripts, hooks, commands, and templates"}
+{"file": ".omtre/spec/guides/code-reuse-thinking-guide.md", "reason": "avoid duplicated routing and artifact validation logic across command, skill, and script layers"}
+{"file": ".omtre/spec/guides/cross-platform-thinking-guide.md", "reason": "keep command and template changes portable across generated platforms"}
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "platform hook, command, skill, and template synchronization rules"}
+{"file": ".omtre/spec/cli/backend/configurator-shared.md", "reason": "shared command/skill rendering and init/update byte-for-byte invariants"}
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "Python script conventions for task.py and .omtre/scripts changes"}
+{"file": ".omtre/spec/cli/backend/quality-guidelines.md", "reason": "quality and test expectations for CLI/backend changes"}
+{"file": ".omtre/tasks/05-10-task-artifacts-and-tiers/research/local-context.md", "reason": "local code and historical task findings for artifact/context design"}

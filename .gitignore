@@ -142,13 +142,13 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # Ralph Loop state file
-.trellis/.ralph-state.json
+.omtre/.ralph-state.json
 
 # Trellis local state (should not be committed)
-.trellis/.current-task
-.trellis/.runtime/
-.trellis/.developer
-.trellis/hooks.local.json
+.omtre/.current-task
+.omtre/.runtime/
+.omtre/.developer
+.omtre/hooks.local.json
 .gitnexus/
 
 # Multi-agent temp files
@@ -169,13 +169,13 @@ __pycache__/
 
 .reference
 
-.trellis/tasks/01-23-eng-blog-research
+.omtre/tasks/01-23-eng-blog-research
 
 # External reference code
 third/
 
 # Test scripts (development only)
-.trellis/scripts/test/
+.omtre/scripts/test/
 
 doc/
 smoke_test/
@@ -192,7 +192,7 @@ tmp1/
 .gitnexus
 .codegraph/
 
-# Skill pack (merged from oh-my-trellis)
+# Skill pack (merged from omtre)
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

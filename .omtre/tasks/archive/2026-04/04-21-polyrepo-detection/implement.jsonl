@@ -1,0 +1,6 @@
+{"file": ".omtre/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".omtre/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".omtre/spec/cli/backend/index.md", "reason": "CLI backend conventions"}
+{"file": ".omtre/spec/cli/backend/quality-guidelines.md", "reason": "quality bar for CLI changes"}
+{"file": ".omtre/spec/cli/unit-test/conventions.md", "reason": "test conventions, anti-patterns"}
+{"file": ".omtre/spec/cli/unit-test/integration-patterns.md", "reason": "init integration test pattern (used for polyrepo fixture)"}

@@ -1,0 +1,2 @@
+{"file": ".omtre/spec/cli/backend/platform-integration.md", "reason": "Workflow-state per-turn injection contract (see Workflow State Injection section) — the skip must slot into it without breaking the breadcrumb protocol"}
+{"file": ".omtre/spec/cli/backend/script-conventions.md", "reason": "Conventions for hook python scripts"}

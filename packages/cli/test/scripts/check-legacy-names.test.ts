@@ -68,6 +68,9 @@ describe("scripts/check-legacy-names.mjs", () => {
     const res = runGate(REPO_ROOT);
     expect(res.status, `stderr:\n${res.stderr}`).toBe(0);
     expect(res.stdout).toContain("Legacy name check passed: 0 violations");
+    expect(res.stdout).toContain(
+      "mode: post-bootstrap (tier-2 temporary allowlist inactive)",
+    );
   });
 
   it("fails with exit code 1 and prints <file>:<line>: <match> when forbidden tokens are injected into scanned directories", () => {
@@ -205,5 +208,33 @@ describe("scripts/check-legacy-names.mjs", () => {
     const failRes = runGate(root);
     expect(failRes.status).toBe(1);
     expect(failRes.stderr).toContain(`README.md:1: ${DOT_LEGACY}`);
+  });
+
+  it("allows historical task directory slugs under .omtre/tasks/ while still scanning their file contents", () => {
+    const root = makeTempRoot();
+    const histSlug = `01-22-${LEGACY}-agents-gui`;
+    writeFile(
+      root,
+      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md`,
+      `# Historical task ${histSlug}\nClean content under .omtre/\n`,
+    );
+
+    const passRes = runGate(root);
+    expect(passRes.status, `stderr:\n${passRes.stderr}`).toBe(0);
+
+    // Forbidden tokens inside .omtre/tasks/ file content must still be caught
+    writeFile(
+      root,
+      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md`,
+      `# Historical task ${histSlug}\nLeaked ${DOT_LEGACY}/config.yaml and ${ENV_LEGACY}\n`,
+    );
+    const failRes = runGate(root);
+    expect(failRes.status).toBe(1);
+    expect(failRes.stderr).toContain(
+      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md:2: ${DOT_LEGACY}`,
+    );
+    expect(failRes.stderr).toContain(
+      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md:2: ${ENV_LEGACY}`,
+    );
   });
 });

@@ -1,0 +1,4 @@
+{"file":".omtre/spec/cli/backend/omtre-core-sdk.md","reason":"Core package boundary and public API contract for channel storage/mutation behavior."}
+{"file":".omtre/spec/cli/backend/commands-channel.md","reason":"Channel event log, appendEvent, and events.jsonl protocol contract."}
+{"file":".omtre/spec/cli/backend/quality-guidelines.md","reason":"TypeScript lint/type-safety rules for backend/core code."}
+{"file":".omtre/spec/cli/unit-test/conventions.md","reason":"Unit test coverage requirements and Vitest conventions."}

@@ -52,6 +52,14 @@ export const FORBIDDEN_REGEX = new RegExp(`(${FORBIDDEN_TOKEN_SOURCE})`, "g");
 const ATTRIBUTION_URL_REGEX =
   /https?:\/\/[^\s)"'>\]]*mindfold-ai\/trellis[^\s)"'>\]]*|\bmindfold-ai\/trellis(?:-[A-Za-z0-9_.-]+)?/gi;
 
+/**
+ * Date-prefixed historical task directory identifier (e.g. `01-22-trellis-agents-gui`).
+ * Preserved by `omtre migrate` so historical task directory names and references
+ * inside `.omtre/` remain resolvable without masking other forbidden tokens.
+ */
+export const HISTORICAL_TASK_SLUG_REGEX =
+  /\b\d{2}-\d{2}-[A-Za-z0-9_-]*trellis-[A-Za-z0-9_-]*/gi;
+
 const IGNORED_DIRS = new Set([
   ".git",
   "node_modules",
@@ -248,7 +256,10 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
       }
     }
 
-    const sanitizedLine = stripAttributionUrls(line);
+    let sanitizedLine = stripAttributionUrls(line);
+    if (norm.startsWith(".omtre/")) {
+      sanitizedLine = sanitizedLine.replace(HISTORICAL_TASK_SLUG_REGEX, "");
+    }
     FORBIDDEN_REGEX.lastIndex = 0;
     let match;
     while ((match = FORBIDDEN_REGEX.exec(sanitizedLine)) !== null) {
@@ -324,8 +335,11 @@ export function checkLegacyNames({
     const fileViolations = scanFileContent(normRel, content, {
       isBootstrapped,
     });
+    const pathForCheck = normRel.startsWith(".omtre/tasks/")
+      ? normRel.replace(HISTORICAL_TASK_SLUG_REGEX, "")
+      : normRel;
     FORBIDDEN_REGEX.lastIndex = 0;
-    const pathMatch = FORBIDDEN_REGEX.exec(normRel);
+    const pathMatch = FORBIDDEN_REGEX.exec(pathForCheck);
     if (pathMatch) {
       fileViolations.push({
         file: normRel,
@@ -391,7 +405,7 @@ function main() {
     ? "post-bootstrap (tier-2 temporary allowlist inactive)"
     : "pre-bootstrap (tier-2 temporary allowlist active until .omtre/ exists)";
   console.log(
-    `Legacy name check passed: 0 violations in ${result.scannedFiles} scanned file(s) [${modeLabel}].`,
+    `Legacy name check passed: 0 violations in ${result.scannedFiles} scanned file(s) [mode: ${modeLabel}].`,
   );
 }
 
