@@ -4613,7 +4613,7 @@ print(json.dumps({
   function contextIdExports(envFile: string): string[] {
     return fs
       .readFileSync(envFile, "utf-8")
-      .split("\n")
+      .split(/\r?\n/)
       .filter((line) => line.startsWith("export OMTRE_CONTEXT_ID="));
   }
 
@@ -7680,10 +7680,11 @@ print(len(entries))
       "result = {'M': mod._strip_breadcrumb_tag_blocks(matched), 'X': mod._strip_breadcrumb_tag_blocks(mismatched), 'N': mod._strip_breadcrumb_tag_blocks(nested_orphan)}",
       "print(json.dumps(result))",
     ].join("; ");
-    const output = execSync(`${pythonCmd} -c ${JSON.stringify(probe)}`, {
-      cwd: tmpDir,
-      encoding: "utf-8",
-    });
+    const output =
+      spawnSync(pythonCmd, ["-c", probe], {
+        cwd: tmpDir,
+        encoding: "utf-8",
+      }).stdout ?? "";
     const lastLine = output
       .split("\n")
       .filter((l) => l.startsWith("{"))
@@ -8507,6 +8508,7 @@ print(len(entries))
     // Simulate a bare "origin" remote whose default branch is main, while
     // the local checkout stays on a feature branch (#399 item 1 repro).
     const remotePath = path.join(tmpDir, "..", "origin-bare.git");
+    fs.rmSync(remotePath, { recursive: true, force: true });
     execSync(`git init -q --bare ${JSON.stringify(remotePath)}`, {
       cwd: tmpDir,
     });

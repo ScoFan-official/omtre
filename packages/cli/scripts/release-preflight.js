@@ -72,10 +72,13 @@ function readVersions() {
 }
 
 function tagVersionFromEnv() {
-  // GITHUB_REF for `push: tags: v*` looks like `refs/tags/v0.6.0-beta.12`.
-  // GITHUB_REF_NAME on `release.published` is the tag name.
+  // GITHUB_REF for `push: tags: v*` or `cli-v*` looks like `refs/tags/v0.6.0-beta.12`
+  // or `refs/tags/cli-v0.6.18-ohmy.5`.
+  // GITHUB_REF_NAME on `release.published` or tag push is the tag name.
   const ref = process.env.GITHUB_REF_NAME || process.env.GITHUB_REF || "";
-  const m = ref.match(/(?:refs\/tags\/)?v(\d+\.\d+\.\d+(?:-[A-Za-z0-9.+-]+)?)$/);
+  const m = ref.match(
+    /(?:refs\/tags\/)?(?:cli-)?v(\d+\.\d+\.\d+(?:-[A-Za-z0-9.+-]+)?)$/,
+  );
   return m ? m[1] : null;
 }
 
@@ -227,25 +230,49 @@ function verifyPackedCli() {
   const tmp = fs.mkdtempSync(path.join(REPO_ROOT, ".pack-verify-"));
   let packed;
   try {
-    const out = execSync(`pnpm pack --pack-destination ${tmp}`, {
+    const out = execSync(`pnpm pack --pack-destination "${tmp}"`, {
       cwd: path.join(REPO_ROOT, "packages/cli"),
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
     });
     // pnpm prints the resulting tarball path on its last non-empty line.
-    const last = out.trim().split("\n").filter(Boolean).pop() || "";
-    packed = last.startsWith("/") ? last : path.join(tmp, last);
+    const last = out.trim().split("\n").filter(Boolean).pop()?.trim() || "";
+    packed = path.isAbsolute(last) ? last : path.join(tmp, last);
     if (!fs.existsSync(packed)) {
       // Fall back to scanning the tmp dir.
       const tgz = fs.readdirSync(tmp).find((f) => f.endsWith(".tgz"));
       if (!tgz) fail(`pnpm pack did not produce a tarball in ${tmp}`);
       packed = path.join(tmp, tgz);
     }
+    const tarName = path.basename(packed);
+    const entries = execSync(`tar -tzf "${tarName}"`, {
+      cwd: tmp,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const requiredEntries = [
+      "package/node_modules/@omtre/core/dist/index.js",
+      "package/node_modules/@omtre/core/package.json",
+    ];
+    for (const reqEntry of requiredEntries) {
+      if (!entries.includes(reqEntry)) {
+        fail(`packed CLI tarball is missing bundled entry "${reqEntry}".`);
+      }
+    }
+
     const extractDir = path.join(tmp, "extract");
     fs.mkdirSync(extractDir);
-    execSync(`tar -xzf ${packed} -C ${extractDir} package/package.json`, {
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+    execSync(
+      `tar -xzf "${tarName}" -C extract package/package.json package/node_modules/@omtre/core/package.json`,
+      {
+        cwd: tmp,
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    );
     const packedPkg = readJSON(path.join(extractDir, "package/package.json"));
     const dep = packedPkg.dependencies?.["@omtre/core"];
     if (!dep) {
@@ -257,8 +284,23 @@ function verifyPackedCli() {
           `pnpm should rewrite workspace:* to the exact published version; got "${dep}" instead.`,
       );
     }
+    const bundled =
+      packedPkg.bundleDependencies ?? packedPkg.bundledDependencies ?? [];
+    if (!Array.isArray(bundled) || !bundled.includes("@omtre/core")) {
+      fail(
+        `packed CLI package.json is missing "@omtre/core" in bundleDependencies.`,
+      );
+    }
+    const bundledCorePkg = readJSON(
+      path.join(extractDir, "package/node_modules/@omtre/core/package.json"),
+    );
+    if (bundledCorePkg.version !== v.cliVersion) {
+      fail(
+        `bundled @omtre/core version "${bundledCorePkg.version}" does not match CLI version "${v.cliVersion}".`,
+      );
+    }
     console.log(
-      `${GREEN}ok${RESET} packed CLI pins @omtre/core to exact ${v.cliVersion}.`,
+      `${GREEN}ok${RESET} packed CLI pins and bundles @omtre/core@${v.cliVersion}.`,
     );
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

@@ -38,6 +38,7 @@ describe("writeFileAtomic", () => {
     fs.mkdirSync(roDir);
     const target = path.join(roDir, "x.json");
     writeFileAtomic(target, "first");
+    fs.chmodSync(target, 0o400);
     fs.chmodSync(roDir, 0o500); // read+execute only, no write
     try {
       expect(() => writeFileAtomic(target, "second")).toThrow();
@@ -46,6 +47,7 @@ describe("writeFileAtomic", () => {
       expect(fs.readdirSync(roDir)).toEqual(["x.json"]);
     } finally {
       fs.chmodSync(roDir, 0o700);
+      fs.chmodSync(target, 0o600);
     }
   });
 });

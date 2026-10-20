@@ -37,7 +37,8 @@
     "10-19-rename-skills-marketplace-docs",
     "10-19-rename-residual-gate",
     "10-20-migrate-command",
-    "10-20-self-bootstrap"
+    "10-20-self-bootstrap",
+    "10-20-release-and-framework-closure"
   ],
   "parent": null,
   "relatedFiles": [],

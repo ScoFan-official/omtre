@@ -1611,10 +1611,10 @@ describe("opencode context injection limits (issue #441)", () => {
       const prompt = await runImplementHook();
 
       expect(prompt).toContain(
-        "[Omtre: truncated at 10 bytes — read refdir/a.md for the full content]",
+        `[Omtre: truncated at 10 bytes — read ${join("refdir", "a.md")} for the full content]`,
       );
       expect(prompt).toContain(
-        "[Omtre: truncated at 10 bytes — read refdir/b.md for the full content]",
+        `[Omtre: truncated at 10 bytes — read ${join("refdir", "b.md")} for the full content]`,
       );
       expect(prompt).not.toContain("IGNORED_TXT_CONTENT");
     });

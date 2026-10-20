@@ -1,9 +1,9 @@
 {
-  "id": "opencode-shell-env",
-  "name": "opencode-shell-env",
-  "title": "OpenCode: bridge session identity via shell.env plugin",
+  "id": "session-identity-hardening",
+  "name": "session-identity-hardening",
+  "title": "Session identity: structural hardening",
   "description": "",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "cli",
@@ -11,7 +11,7 @@
   "creator": "taosu",
   "assignee": "taosu",
   "createdAt": "2026-08-05",
-  "completedAt": null,
+  "completedAt": "2026-10-20",
   "branch": null,
   "base_branch": "main",
   "worktree_path": null,
@@ -22,5 +22,9 @@
   "parent": "08-05-session-identity-propagation",
   "relatedFiles": [],
   "notes": "",
-  "meta": {}
+  "meta": {},
+  "verify_skipped": {
+    "reason": "Inherited upstream task archived during omtre standalone framework closure",
+    "at": "2026-10-20T03:07:42Z"
+  }
 }

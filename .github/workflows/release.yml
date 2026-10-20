@@ -23,7 +23,8 @@ jobs:
           node-version: "20"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter omtre build
+      - run: pnpm build
+      - run: node packages/cli/scripts/release-preflight.js verify-packed-cli
       - name: Pack CLI
         id: pack
         working-directory: packages/cli

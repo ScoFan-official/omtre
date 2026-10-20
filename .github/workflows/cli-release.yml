@@ -16,15 +16,7 @@ jobs:
   cli-tarball:
     runs-on: ubuntu-latest
     steps:
-      - name: Derive fork tag
-        id: fork
-        # cli-v0.6.17-ohmy.2 -> v0.6.17-ohmy.2
-        run: echo "tag=${GITHUB_REF_NAME#cli-}" >> "$GITHUB_OUTPUT"
-
-      - name: Clone fork at the matching tag
-        run: |
-          git clone --depth 1 --branch "${{ steps.fork.outputs.tag }}" \
-            https://github.com/ScoFan-official/omtre.git fork
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
@@ -34,16 +26,16 @@ jobs:
         with:
           node-version: "20"
           cache: pnpm
-          cache-dependency-path: fork/pnpm-lock.yaml
 
       - name: Install + build
-        working-directory: fork
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter omtre... build
+          pnpm build
+          node packages/cli/scripts/release-preflight.js check-versions --require-tag
+          node packages/cli/scripts/release-preflight.js verify-packed-cli
 
       - name: Pack CLI
-        working-directory: fork/packages/cli
+        working-directory: packages/cli
         run: pnpm pack --pack-destination "$GITHUB_WORKSPACE"
 
       - name: Create release with asset

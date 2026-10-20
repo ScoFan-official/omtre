@@ -1,6 +1,6 @@
 {
   "name": "@omtre/core",
-  "version": "0.6.17",
+  "version": "0.6.18-ohmy.5",
   "description": "omtre core SDK — channel and task domain primitives consumed by the omtre CLI and downstream Node services",
   "type": "module",
   "main": "./dist/index.js",

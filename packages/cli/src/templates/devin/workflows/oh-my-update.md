@@ -54,7 +54,7 @@ npx skills add ScoFan-official/omtre --agent devin --copy -y
 omtre init -r gh:ScoFan-official/omtre -t agent-workflow --append --devin --monorepo   # monorepo repos only; omit --monorepo otherwise
 ```
 
-**Publishing a release (maintainers)**: never chain `git commit && git tag && git push` — a failed commit (e.g. a red local test suite) silently leaves the tag pointing at the previous tree. Commit, verify `git log -1` is the intended commit, then tag and push. The pack repo's `cli-v<ver>` tag must name the same version the fork's `v<ver>` tag carries in `packages/cli/package.json`.
+**Publishing a release (maintainers)**: never chain `git commit && git tag && git push` — a failed commit (e.g. a red local test suite) silently leaves the tag pointing at the previous tree. Commit, verify `git log -1` is the intended commit, then tag and push. In the unified `ScoFan-official/omtre` repository, tag `cli-v<ver>` (matching `packages/cli/package.json` and `packages/core/package.json` version) and push the tag to trigger `cli-release.yml`, which builds and publishes `omtre-<ver>.tgz`.
 
 ## Step 5: Report
 
