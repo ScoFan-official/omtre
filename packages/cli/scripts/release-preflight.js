@@ -260,6 +260,8 @@ function verifyPackedCli() {
       "package/README.md",
       "package/LICENSE",
       "package/NOTICE",
+      "package/assets/hero.svg",
+      "package/assets/workflow.svg",
     ];
     for (const reqEntry of requiredEntries) {
       if (!entries.includes(reqEntry)) {

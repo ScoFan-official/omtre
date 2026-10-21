@@ -16,3 +16,14 @@ const REPO_ROOT = path.resolve(CLI_DIR, "../..");
 for (const file of ["README.md", "LICENSE", "NOTICE"]) {
   fs.copyFileSync(path.join(REPO_ROOT, file), path.join(CLI_DIR, file));
 }
+
+// The README references these SVGs with relative paths; include them so the
+// npm package page renders the same hero and workflow artwork.
+const packageAssetsDir = path.join(CLI_DIR, "assets");
+fs.mkdirSync(packageAssetsDir, { recursive: true });
+for (const file of ["hero.svg", "workflow.svg"]) {
+  fs.copyFileSync(
+    path.join(REPO_ROOT, "assets", file),
+    path.join(packageAssetsDir, file),
+  );
+}

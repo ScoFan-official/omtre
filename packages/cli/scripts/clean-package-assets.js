@@ -14,3 +14,4 @@ const CLI_DIR = path.resolve(__dirname, "..");
 for (const file of ["README.md", "LICENSE", "NOTICE"]) {
   fs.rmSync(path.join(CLI_DIR, file), { force: true });
 }
+fs.rmSync(path.join(CLI_DIR, "assets"), { recursive: true, force: true });
