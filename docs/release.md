@@ -63,6 +63,9 @@ optional and does not gate the CLI install.
 
 - omtre uses independent semantic versioning. Do not copy upstream version
   numbers into `packages/*/package.json` or release tags.
+- The root `VERSION` file is the frozen legacy skills-pack line (`1.3.0`); it
+  is not the omtre product version. The product version lives in
+  `packages/cli/package.json` and `packages/core/package.json`.
 - Tag format: `cli-v<version>`. The `cli-` prefix identifies the release
   channel; the number belongs to omtre.
 - Lineage, baseline tags, and the sync policy are documented in
