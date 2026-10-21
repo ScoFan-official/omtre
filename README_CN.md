@@ -146,10 +146,6 @@ omtre 管理的全部项目级表面。请新开一个 agent 会话进行对比�
 
 </details>
 
-## Star 历史
-
-[![Star History Chart](https://star-history.dera.page/svg?repos=mindfold-ai/Trellis&type=Date)](https://star-history.dera.page/#mindfold-ai/Trellis&Date)
-
 ## 社区与资源
 
 - [技能包与工作流指南](./README.zh-CN.md)

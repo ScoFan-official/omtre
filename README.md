@@ -150,10 +150,6 @@ writes until the conflict is resolved.
 
 </details>
 
-## Star History
-
-[![Star History Chart](https://star-history.dera.page/svg?repos=mindfold-ai/Trellis&type=Date)](https://star-history.dera.page/#mindfold-ai/Trellis&Date)
-
 ## Community & Resources
 
 - [Pack & Workflow Guide](./README.pack.md)
