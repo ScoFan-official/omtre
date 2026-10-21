@@ -86,7 +86,6 @@ const BINARY_EXTENSIONS = new Set([
   ".jpeg",
   ".webp",
   ".ico",
-  ".svg",
   ".pdf",
   ".woff",
   ".woff2",
@@ -236,6 +235,7 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
   let inHistoricalManifestBlock = false;
   let inPreBootstrapBlock = false;
   let inAttributionBlock = false;
+  let attributionStartLine = 0;
 
   const lines = content.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
@@ -246,6 +246,7 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
     // where the upstream name is allowed to appear in an active surface.
     if (line.includes("omtre:upstream-attribution:start")) {
       inAttributionBlock = true;
+      attributionStartLine = lineNumber;
       continue;
     }
     if (line.includes("omtre:upstream-attribution:end")) {
@@ -301,6 +302,15 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
         text: line.trim(),
       });
     }
+  }
+
+  if (inAttributionBlock) {
+    violations.push({
+      file: norm,
+      line: attributionStartLine,
+      match: "omtre:upstream-attribution:start",
+      text: "Unclosed omtre:upstream-attribution block",
+    });
   }
 
   return violations;

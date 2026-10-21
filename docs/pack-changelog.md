@@ -8,6 +8,11 @@ skills/assets/templates added, **patch** = fixes to existing content.
 `VERSION` at the repo root is the source of truth; each release is tagged
 `vX.Y.Z`.
 
+> **Status:** this file records the legacy skills-pack line, last released as
+> `1.3.0`. The product line is `omtre` `1.0.0` in `packages/cli/package.json`.
+> The root `VERSION` stays at `1.3.0` for pack tooling compatibility; new
+> product work ships through the `cli-v*` release line.
+
 ## Unreleased
 
 Repository-hygiene pipeline: scoped read-only audit, rules-file

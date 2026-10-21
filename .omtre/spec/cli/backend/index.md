@@ -26,7 +26,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Platform Integration](./platform-integration.md) | How to add support for new AI CLI platforms | Done |
 | [Workflow-State Contract](./workflow-state-contract.md) | Per-turn breadcrumb subsystem: marker syntax, status writers, lifecycle events, reachability | Done |
 | [Configurator Shared Helpers](./configurator-shared.md) | `configurators/shared.ts` public surface: placeholder substitution, write helpers, pull-based prelude, cross-configurator invariants | Done |
-| [`tl mem` Command](./commands-mem.md) | Cross-platform AI session memory: subcommands, schemas, indexing, cleaning pipeline, search relevance | Done |
+| [`omt mem` Command](./commands-mem.md) | Cross-platform AI session memory: subcommands, schemas, indexing, cleaning pipeline, search relevance | Done |
 | [`omtre upgrade` Command](./commands-upgrade.md) | Global CLI self-upgrade wrapper: channel inference, npm invocation, failure behavior | Done |
 | [`omtre update` Command](./commands-update.md) | Update pipeline: flags, plan composition, migration trigger semantics, apply phase, idempotency, boundaries with `migrations.md` | Done |
 | [`omtre workflow` Command](./commands-workflow.md) | Workflow marketplace templates, project-local workflow switching, hash ownership contract, and parser compatibility | Done |

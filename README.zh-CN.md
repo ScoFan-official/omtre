@@ -45,7 +45,7 @@ AI 编码代理写得很快，但每次新会话都从零开始。omtre 把项�
 | **合约，不是建议** | 规范与闸门放在 `.omtre/spec/`，工作流不能跳过。 |
 | **一条主轴，任意代理** | 同一套 `.omtre/` 布局，适配 22 个编码代理与 IDE。 |
 | **状态留在仓库** | 任务、决策与记忆都在仓库里；没有隐藏服务，也没有供应商锁定。 |
-| **开箱即用** | 43 个一线技能、一个市场、1,700+ 目录资产。 |
+| **开箱即用** | 43 个默认技能、一个市场、1,700+ 目录资产。 |
 | **独立节奏** | omtre 有自己的版本线与设计原则；上游变更是输入，不是路线图。 |
 
 ## 快速开始
@@ -95,7 +95,7 @@ omtre 为 22 个编码代理与 IDE 提供适配，包括 Claude Code、Cursor�
 
 ## 技能与市场
 
-- **43 个一线技能** —— 包括 `omtre-run`、`omtre-domains`、`dispatch-roster`、`hygiene-sweep`、`rules-audit`、`code-review`、`tdd`，以及 `omtre-meta` 指南。
+- **43 个默认技能** —— 包括 `omtre-run`、`omtre-domains`、`dispatch-roster`、`hygiene-sweep`、`rules-audit`、`code-review`、`tdd`，以及 `omtre-meta` 指南。
 - **1,700+ 目录资产** —— 以 vendored 方式引入并保留出处；见[模板市场](./marketplace/README.md)。
 
 安装推荐技能集：

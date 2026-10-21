@@ -103,7 +103,7 @@ one of these must hold. Pick by operation:
 | Move a dir that may be user-owned (rename-dir) | Ownership check (`dirHasManifestEntries`); unowned + target-absent → **skip** (safe even under `--force`, since skip never executes). |
 | Overwrite a dir from a remote source | Download to a temp dir; `rm` + copy the old dir **only after** the download succeeds (`downloadWithStrategy` `overwrite`). Never delete-then-download. |
 | Rename onto a possibly-existing target | `fs.existsSync(newPath)` first; skip/renumber instead of clobbering (`renameTracesToJournal`). Especially when the dir is excluded from backup. |
-| `rm -rf` a tree with user data (`uninstall`) | `collectUncommittedomtreData(cwd)` (git status over `spec/tasks/workspace`); scripted `--yes` fails closed unless `OMTRE_ALLOW_DIRTY_UNINSTALL=1`. Disclosure must name what user data is deleted. |
+| `rm -rf` a tree with user data (`uninstall`) | `collectUncommittedOmtreData(cwd)` (git status over `spec/tasks/workspace`); scripted `--yes` fails closed unless `OMTRE_ALLOW_DIRTY_UNINSTALL=1`. Disclosure must name what user data is deleted. |
 
 **Env override precedent**: a fail-closed guard on a `--yes`/`--force` path gets
 an explicit env bypass, mirroring `OMTRE_ALLOW_HOMEDIR`

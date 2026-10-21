@@ -45,7 +45,8 @@
     "provenance": true
   },
   "scripts": {
-    "prepublishOnly": "cp ../../LICENSE ../../NOTICE .",
+    "prepack": "node scripts/copy-package-assets.js",
+    "postpack": "node scripts/clean-package-assets.js",
     "build": "pnpm run clean && tsc",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "dev": "tsc --watch",

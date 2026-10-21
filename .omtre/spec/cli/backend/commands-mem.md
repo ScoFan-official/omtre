@@ -1,4 +1,4 @@
-# `tl mem` — Cross-Platform AI Session Memory
+# `omt mem` — Cross-Platform AI Session Memory
 
 How omtre indexes, searches, and extracts dialogue from on-disk session files
 written by Claude Code, Codex, Devin CLI, OpenCode, Pi Agent, and ZCode.
@@ -11,7 +11,7 @@ boundary" below before "Subcommand surface".
 
 ## Overview
 
-`tl mem` is an offline reader over **local AI session stores**. It does not
+`omt mem` is an offline reader over **local AI session stores**. It does not
 attach to running CLIs or talk to any remote service — it parses the files those
 CLIs already drop on disk:
 
@@ -34,7 +34,7 @@ The retrieval domain does **not** depend on the rest of the omtre runtime (no
 `configurators/`, no Python scripts) and does **not** depend on the CLI: it uses
 only `node:fs / node:path / node:os` and is free of `zod`, `console.*`, and
 `process.exit`. The CLI exposes it through a single `runMem(args)` entry point
-invoked from the `tl` Commander wire.
+invoked from the `omt` Commander wire.
 
 > **Audience for this spec**: contributors extending `mem` — adding new
 > platforms, new subcommands, or new flags. The goal is to keep the cleaning
@@ -603,7 +603,7 @@ excluded from the search index:
 
 **User-visible consequence**: queries phrased in terms of _what tool / skill /
 agent was invoked_ return false-negatives even when the conversation used that
-tool heavily. For example, `tl mem search "Skill"` against a session that
+tool heavily. For example, `omt mem search "Skill"` against a session that
 called `Skill` 40 times will return 0 hits — the tool name lives in
 `tool_use.name`, which is dropped at extraction time.
 
@@ -623,14 +623,14 @@ grep -hoE '"skill":"[a-z0-9-]+"' \
   ~/.claude/projects/-Users-…-omtre/*.jsonl | sort | uniq -c
 ```
 
-**Decision rule** for choosing between `tl mem` and raw `grep`:
+**Decision rule** for choosing between `omt mem` and raw `grep`:
 
 | Searching for                                                       | Tool                     |
 | ------------------------------------------------------------------- | ------------------------ |
-| User/assistant said something / discussed a topic / made a decision | `tl mem search`          |
+| User/assistant said something / discussed a topic / made a decision | `omt mem search`          |
 | What tool / skill / agent / sub-agent was used                      | `grep` over JSONL        |
 | Tool call frequency / parameters                                    | `grep` + `jq` over JSONL |
-| Cross-session topic recall (concepts in dialogue)                   | `tl mem search`          |
+| Cross-session topic recall (concepts in dialogue)                   | `omt mem search`          |
 
 A future enhancement could add an opt-in `--include-tools` flag to
 `extractDialogue` that emits synthetic `[tool: <name>]` turns or surfaces
@@ -642,7 +642,7 @@ relevance quality on the conversational path.
 
 ## Phase slicing (`--phase`)
 
-`tl mem extract <id> --phase <brainstorm|implement|all>` slices the cleaned
+`omt mem extract <id> --phase <brainstorm|implement|all>` slices the cleaned
 dialogue by omtre brainstorm windows, allowing the high-density discussion
 turns (user thinking, AI proposals being rejected, decision rationale) to be
 extracted independently from implementation work.
@@ -732,7 +732,7 @@ returned 0 windows on a session that contained 6 tasks.
 
 When extending the parser:
 
-- New surface forms (e.g., `tl task create` if omtre ever ships a wrapper)
+- New surface forms (e.g., `omt task create` if omtre ever ships a wrapper)
   must be added to `parseTaskPyCommand`'s regex AND must round-trip through
   the same shell-token cleanup; do not handle quoting separately.
 - Token edge-stripping (`;|&()`) is the canonical place for shell metacharacter
@@ -935,8 +935,8 @@ Measured impact on a 36 MB Claude session (omtre dogfood):
 
 | Operation                           | Before (full read + split) | After (chunked + 0x7b skip) |
 | ----------------------------------- | -------------------------- | --------------------------- |
-| `tl mem list`                       | ~3.5s                      | ~0.67s                      |
-| `tl mem extract --phase brainstorm` | ~5.8s                      | ~0.73s                      |
+| `omt mem list`                       | ~3.5s                      | ~0.67s                      |
+| `omt mem extract --phase brainstorm` | ~5.8s                      | ~0.73s                      |
 
 Rules for extending:
 
@@ -1139,7 +1139,7 @@ subpath surface — the CLI must not deep-import them.
 
 | Export                                                       | Use                                          |
 | ------------------------------------------------------------ | -------------------------------------------- |
-| `runMem(args)`                                               | Entry point — `tl mem ...` calls into this   |
+| `runMem(args)`                                               | Entry point — `omt mem ...` calls into this   |
 | `parseArgv(argv)` and the CLI flag → `MemFilter` translation | argv parsing — used by `mem-helpers.test.ts` |
 | `shortDate`, `shortPath`                                     | terminal formatting — tested directly        |
 

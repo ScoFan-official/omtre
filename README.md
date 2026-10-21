@@ -45,7 +45,7 @@ AI coding agents are fast, but each new session starts from zero. omtre makes th
 | **Contracts, not suggestions** | Specs and gates live in `.omtre/spec/`; the workflow refuses to skip them. |
 | **One spine, any agent** | The same `.omtre/` layout works across 22 coding agents and IDEs. |
 | **Repo-native state** | Tasks, decisions, and memory stay in the repo. No hidden service, no vendor lock-in. |
-| **Batteries included** | 43 first-party skills, a marketplace, and 1,700+ catalog assets. |
+| **Batteries included** | 43 default skills, a marketplace, and 1,700+ catalog assets. |
 | **Independent cadence** | omtre has its own release line and design principles; upstream changes are inputs, not the roadmap. |
 
 ## Quick start
@@ -95,7 +95,7 @@ omtre ships adapters for 22 coding agents and IDEs, including Claude Code, Curso
 
 ## Skills & marketplace
 
-- **43 first-party skills** — including `omtre-run`, `omtre-domains`, `dispatch-roster`, `hygiene-sweep`, `rules-audit`, `code-review`, `tdd`, and the `omtre-meta` guide.
+- **43 default skills** — including `omtre-run`, `omtre-domains`, `dispatch-roster`, `hygiene-sweep`, `rules-audit`, `code-review`, `tdd`, and the `omtre-meta` guide.
 - **1,700+ catalog assets** — vendored with attribution; see the [marketplace](./marketplace/README.md).
 
 Install the recommended skill set:

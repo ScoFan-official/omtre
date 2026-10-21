@@ -48,8 +48,7 @@ user-facing docs live in `README.md`, `README.zh-CN.md`, and `docs/`.
 
 - Keep English and Chinese user-facing docs in sync.
 - Verify every command you document by running it.
-- Attribute vendored content in `marketplace/ATTRIBUTION.md` or
-  `catalog/ATTRIBUTION.md`.
+- Attribute vendored content in `catalog/ATTRIBUTION.md`.
 - Keep lineage statements in `NOTICE` and `docs/upstream.md`; do not put
   upstream branding back into the product surface.
 

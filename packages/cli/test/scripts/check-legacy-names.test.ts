@@ -279,4 +279,17 @@ describe("scripts/check-legacy-names.mjs", () => {
     expect(failRes.status).toBe(1);
     expect(failRes.stderr).toContain(`README.md:1: ${TITLE_LEGACY}`);
   });
+
+  it("fails on an unclosed attribution block", () => {
+    const root = makeTempRoot();
+    writeFile(
+      root,
+      "README.md",
+      "<!-- omtre:upstream-attribution:start -->\nclean content\n",
+    );
+
+    const res = runGate(root);
+    expect(res.status).toBe(1);
+    expect(res.stderr).toContain("Unclosed omtre:upstream-attribution block");
+  });
 });

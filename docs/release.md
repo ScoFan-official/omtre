@@ -44,7 +44,8 @@ optional and does not gate the CLI install.
    the workflow manually:
 
    - Actions → **Publish to npm** → **Run workflow**
-   - Select the tag `cli-v1.0.0`
+   - Select the tag `cli-v1.0.0`, not a branch: `check-versions --require-tag`
+     fails when `GITHUB_REF_NAME` is a branch
    - Leave `publish_core` off unless the npm org `omtre` exists
 
 5. Verify the public registry and a clean install:

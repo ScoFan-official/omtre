@@ -82,7 +82,7 @@ After collection, `collectTemplateFiles` runs two final passes:
 These two runtime-facing files have different update contracts:
 
 - **`.omtre/workflow.md`** stays on the normal whole-file template path. `collectTemplateFiles` inserts the bundled `workflowMdTemplate`; `analyzeChanges` decides whether to auto-update, prompt, skip, or create `.new` by comparing the current file hash with `.omtre/.template-hashes.json`. Do not partially merge only `[workflow-state:*]` blocks.
-- **`AGENTS.md`** (`commands/update.ts:buildAgentsMdTemplate`) merges only the `<!-- OMTRE:START -->`…`<!-- OMTRE:END -->` region via `commands/update.ts:replaceomtreManagedBlock`; if no markers exist, the template managed block is appended. The legacy untracked-hash whitelist `LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES` lets a pristine pre-tracking AGENTS.md auto-update without a "modified by you" false positive (see `commands/update.ts:isKnownUntrackedTemplate`).
+- **`AGENTS.md`** (`commands/update.ts:buildAgentsMdTemplate`) merges only the `<!-- OMTRE:START -->`…`<!-- OMTRE:END -->` region via `commands/update.ts:replaceManagedBlock`; if no markers exist, the template managed block is appended. The legacy untracked-hash whitelist `LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES` lets a pristine pre-tracking AGENTS.md auto-update without a "modified by you" false positive (see `commands/update.ts:isKnownUntrackedTemplate`).
 
 Why workflow is whole-file: `.omtre/workflow.md` is parsed by `get_context.py`,
 `workflow_phase.py`, SessionStart strippers, and per-turn workflow-state hooks.

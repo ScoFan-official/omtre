@@ -1,6 +1,6 @@
 ---
 name: create-manifest
-description: "Create a omtre migration manifest and matching docs-site changelogs for a target release by analyzing commits since the previous release. Use when preparing a patch, beta, rc, or minor release manifest."
+description: "Create an omtre migration manifest and matching docs-site changelogs for a target release by analyzing commits since the previous release. Use when preparing a patch, beta, rc, or minor release manifest."
 ---
 
 # Create Migration Manifest

@@ -477,7 +477,7 @@ tree) with `session_auto_commit` enabled, pointing back at this section.
 ```typescript
 import { downloadTemplate } from "giget";
 
-await downloadTemplate("gh:mindfold-ai/omtre/marketplace/specs/electron-fullstack", {
+await downloadTemplate("gh:ScoFan-official/omtre/marketplace/specs/electron-fullstack", {
   dir: destDir,
 });
 ```

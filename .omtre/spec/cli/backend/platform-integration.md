@@ -845,7 +845,7 @@ For Pi Agent:
 | Per-turn workflow-state breadcrumb | `before_agent_start.message` hidden custom message — persists cached `<workflow-state>` + `<session-overview>` from `getTurnCtx()` without showing it in the UI; skipped when identical to the last persisted runtime context (dedup)                                |
 | Startup context                    | `before_agent_start` builds compact SessionStart-equivalent context (`<session-context>`, adaptive `<first-reply-notice>`, `<session-overview>`, `<omtre-workflow>`, `<ready>`) once per context key, memoizes it, and contributes the identical bytes to `systemPrompt` on every turn |
 | Per-agent-invocation context       | `before_agent_start.systemPrompt` carries a per-context-key snapshot of task context (PRD + jsonl) taken on first use; later on-disk task changes are delivered through `before_agent_start.message` as `<omtre-task-context-update>` persisted messages           |
-| Per-Bash-tool session identity     | `tool_call` extension event; mutates `event.input.command` in place via `injectomtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;`                                                                                                         |
+| Per-Bash-tool session identity     | `tool_call` extension event; mutates `event.input.command` in place via `injectOmtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;`                                                                                                         |
 | Sub-agent dispatch                 | custom `omtre_subagent` tool with `promptSnippet`/`promptGuidelines = SUBAGENT_DISPATCH_PROTOCOL`; resolves the Pi CLI JS entrypoint when possible, runs `--mode text -p --no-session`, sends the delegated prompt through stdin, and forwards `OMTRE_CONTEXT_ID` |
 
 The compact model-visible context injection point is `before_agent_start.message`; it uses `TurnContextCache` so the same request path does not re-spawn the default `get_context.py` session-context call unnecessarily. Pi does not register an omtre `input` handler for runtime context injection, so user text is not rewritten. The existing Pi `context` event may establish the context key, but it must not append omtre runtime messages because request-local messages are not persisted and can break provider prefix cache. See "Class-3 injection points (Pi extension)" below the modes table for the runtime contract.
@@ -972,7 +972,7 @@ spawn(
 | Context             | Forward `OMTRE_CONTEXT_ID` into the child env when available                                                                                                                                                       |
 | Agent config        | Parse `model`, `thinking`, and `fallbackModels` from `.pi/agents/*.md` frontmatter                                                                                                                                   |
 | Per-call overrides  | `omtre_subagent` tool input may override frontmatter with `model` and `thinking`                                                                                                                                   |
-| Agent validation    | `isomtreAgent()` checks `existsSync(.pi/agents/omtre-{agent}.md)` before spawn; invalid → returns error text listing community alternatives                                                                      |
+| Agent validation    | `isOmtreAgent()` checks `existsSync(.pi/agents/omtre-{agent}.md)` before spawn; invalid → returns error text listing community alternatives                                                                      |
 | Model/thinking args | If model and thinking are present and model has no thinking suffix, pass `--model <model>:<thinking>`; if model already has a suffix, pass it unchanged; if thinking exists without model, pass `--thinking <level>` |
 | Output buffers      | Bound stdout and stderr collection separately; keep the tail plus truncation notice                                                                                                                                  |
 
@@ -1168,10 +1168,10 @@ OpenCode is a hybrid class-1 platform: its main session uses `tool.execute.befor
 **Required contract** for any OpenCode `chat.message` plugin that mutates `output.parts`:
 
 ```js
-import { isomtreSubagent } from "../lib/omtre-context.js"
+import { isOmtreSubagent } from "../lib/omtre-context.js"
 
 "chat.message": async (input, output) => {
-  if (isomtreSubagent(input)) {
+  if (isOmtreSubagent(input)) {
     // input.agent matched /^omtre-(implement|check|research)$/
     // Sub-agent context is injected by inject-subagent-context.js on the
     // parent's tool.execute.before — do not double-inject here.
@@ -1181,7 +1181,7 @@ import { isomtreSubagent } from "../lib/omtre-context.js"
 }
 ```
 
-`isomtreSubagent()` lives in `lib/omtre-context.js`; the regex matches `omtre-implement` / `omtre-check` / `omtre-research` exactly.
+`isOmtreSubagent()` lives in `lib/omtre-context.js`; the regex matches `omtre-implement` / `omtre-check` / `omtre-research` exactly.
 
 **Sub-agent task resolution order** in `inject-subagent-context.js` `tool.execute.before` (only later steps run when earlier ones miss):
 
@@ -1237,7 +1237,7 @@ See **"Class-3 injection points (Pi extension)"** and **"Cross-platform consiste
 | `input`                 | not registered for omtre runtime context             | n/a                                        | omtre must not rewrite submitted user text; context identity is resolved in `before_agent_start` and `tool_call` where it is needed                                                                          |
 | `before_agent_start`    | `pi.on?.("before_agent_start", …)`                   | every agent invocation (main + sub-agents) | preserves `systemPrompt` with startup/full task context only, and additionally returns `message: { customType: "omtre-runtime-context", display: false, content }` containing compact `<workflow-state>` + `<session-overview>`; Pi wraps the message as a persisted `role: "custom"` session message |
 | `context`               | `pi.on?.("context", …)`                              | before each LLM call                       | preserves existing context-key establishment only; must not append request-local omtre runtime messages because they are not persisted and can move between turns                                           |
-| `tool_call` (Bash)      | `pi.on?.("tool_call", …)`                            | every Bash tool call                       | mutates `event.input.command` in place via `injectomtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;` so child Python scripts (e.g. `task.py current`) inherit session identity      |
+| `tool_call` (Bash)      | `pi.on?.("tool_call", …)`                            | every Bash tool call                       | mutates `event.input.command` in place via `injectOmtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;` so child Python scripts (e.g. `task.py current`) inherit session identity      |
 | `omtre_subagent` tool | `pi.registerTool?.({ name: "omtre_subagent", … })` | extension load time (once)                 | `promptSnippet` and `promptGuidelines` carry `SUBAGENT_DISPATCH_PROTOCOL` so the model sees the dispatch contract before it ever calls the tool                                                                 |
 
 `TurnContextCache` (in `index.ts.txt`) memoizes the per-turn context-key → `{workflowState, sessionOverview}` pair so `before_agent_start` does not double-spawn the default `get_context.py` session-context call. The cache key is the resolved context key; entries are short-lived (one turn/request window).

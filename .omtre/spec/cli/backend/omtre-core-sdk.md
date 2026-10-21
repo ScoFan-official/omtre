@@ -30,10 +30,10 @@ Core owns:
 
 CLI owns:
 
-- command definitions and option parsing (including `tl mem` argv parsing)
-- help text and terminal output (including `tl mem` row formatting and `--json` shaping)
+- command definitions and option parsing (including `omt mem` argv parsing)
+- help text and terminal output (including `omt mem` row formatting and `--json` shaping)
 - prompts, confirmations, exit codes, and `process.exit`
-- the OpenCode-unavailable stderr notice for `tl mem` (a presentation concern, not a core one)
+- the OpenCode-unavailable stderr notice for `omt mem` (a presentation concern, not a core one)
 - template copying, dogfooding paths, migration manifest application, and update UX
 - release scripts and CI-specific package orchestration
 

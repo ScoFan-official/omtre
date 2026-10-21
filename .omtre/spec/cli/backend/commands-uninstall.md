@@ -67,7 +67,7 @@ For every POSIX path in `hashes`:
    - If the scrubber returns `fullyEmpty: true`, record as `PlannedDeletion { missing: false }`. The file will be unlinked just like any other manifest entry.
    - Otherwise, record as `PlannedModification` carrying the pre-computed `ScrubResult` (the post-scrub content) plus the `reason` string for the human-readable plan output.
 
-`removeomtreDir` is set to `true` unconditionally — by the time
+`removeWorkflowDir` is set to `true` unconditionally — by the time
 `buildManagedRemovalPlan` runs, we have already verified `.omtre/` exists.
 
 The shared planner also supports `strictPaths: true` for reversible ablation.
@@ -183,9 +183,9 @@ This is **deliberately destructive** for user data inside `.omtre/`. Users are r
 
 > Rationale: a "soft uninstall" that leaves orphan `.omtre/` content behind is a worse state than either fully-installed or fully-uninstalled — the leftover files reference removed scripts (`.omtre/scripts/`) and broken sub-agent configs (`.omtre/tasks/<id>/implement.jsonl` pointing at deleted spec files). Either keep omtre or remove it cleanly. There is no half-omtre mode.
 
-### Dirty-Data Guard — `collectUncommittedomtreData`
+### Dirty-Data Guard — `collectUncommittedOmtreData`
 
-`.omtre/spec/`, `.omtre/tasks/`, `.omtre/workspace/`, and `.omtre/domains/` are the same subdirectories `update.ts` marks PROTECTED (user-authored specs, task PRDs, journals, domain boards). Because Phase 3 deletes them with no backup, `uninstall()` calls `collectUncommittedomtreData(cwd)` right after `renderPlan` (before the dry-run exit and before the confirmation prompt). It shells out to `git status --porcelain -- .omtre/spec .omtre/tasks .omtre/workspace .omtre/domains` and returns the list of modified/staged/untracked paths under those dirs. A non-git repo, or `git` being unavailable, makes it return `[]` — the guard is a no-op in that case, and uninstall proceeds exactly as it did before this fix.
+`.omtre/spec/`, `.omtre/tasks/`, `.omtre/workspace/`, and `.omtre/domains/` are the same subdirectories `update.ts` marks PROTECTED (user-authored specs, task PRDs, journals, domain boards). Because Phase 3 deletes them with no backup, `uninstall()` calls `collectUncommittedOmtreData(cwd)` right after `renderPlan` (before the dry-run exit and before the confirmation prompt). It shells out to `git status --porcelain -- .omtre/spec .omtre/tasks .omtre/workspace .omtre/domains` and returns the list of modified/staged/untracked paths under those dirs. A non-git repo, or `git` being unavailable, makes it return `[]` — the guard is a no-op in that case, and uninstall proceeds exactly as it did before this fix.
 
 - **Any hits** print a red warning (up to 20 paths, then a "`… and N more`" tail) before the prompt/dry-run message.
 - **Interactive runs** (no `--yes`) only see the warning; the existing `Continue? [Y/n]` prompt is the abort point.
@@ -325,6 +325,6 @@ Do **not** mock `fs` for these tests; they all use real tmpdirs. The pattern is:
 | `cleanupEmptyDirs` | `commands/update.ts:cleanupEmptyDirs` (re-exported) |
 | `ALL_MANAGED_DIRS` / `isManagedRootDir` | `configurators/index.ts` |
 | `DIR_NAMES.WORKFLOW` | `constants/paths.ts:DIR_NAMES` |
-| `collectUncommittedomtreData` | `commands/uninstall.ts:collectUncommittedomtreData` (exported) |
+| `collectUncommittedOmtreData` | `commands/uninstall.ts:collectUncommittedOmtreData` (exported) |
 | `OMTRE_ALLOW_DIRTY_UNINSTALL` (env bypass) | checked via `dirtyUninstallBypassEnabled` in `commands/uninstall.ts` |
 | Scrubbers (`scrubHooksJson`, `scrubOpencodePackageJson`, `scrubPiSettings`, `scrubCodexConfigToml`, `scrubManagedMarkdownBlock`) | `utils/uninstall-scrubbers.ts` — see `uninstall-scrubbers.md` |

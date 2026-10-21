@@ -228,7 +228,7 @@ Maintain a running checklist throughout the analysis. After each phase completio
 
 ## omtre Integration
 
-When used within a omtre-managed project, the analysis artifacts integrate with the task system.
+When used within an omtre-managed project, the analysis artifacts integrate with the task system.
 
 ### File Placement
 
