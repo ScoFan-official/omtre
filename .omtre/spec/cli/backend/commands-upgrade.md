@@ -1,11 +1,11 @@
-# `trellis upgrade` Command
+# `omtre upgrade` Command
 
-How `trellis upgrade` upgrades the globally installed Trellis CLI package.
+How `omtre upgrade` upgrades the globally installed omtre CLI package.
 
-This command is intentionally separate from `trellis update`:
+This command is intentionally separate from `omtre update`:
 
-- `trellis upgrade` updates the **CLI binary** by running npm's global install.
-- `trellis update` updates a **project's bundled Trellis files** under `.omtre/`
+- `omtre upgrade` updates the **CLI binary** by running npm's global install.
+- `omtre update` updates a **project's bundled omtre files** under `.omtre/`
   and platform directories.
 
 ---
@@ -13,24 +13,22 @@ This command is intentionally separate from `trellis update`:
 ## User-facing contract
 
 ```text
-trellis upgrade [--tag <tag-or-version>] [--dry-run]
+omtre upgrade [--tag <tag-or-version>] [--dry-run]
 ```
 
 Behavior:
 
-- Builds and runs `npm install -g omtre@<tag>`.
+- Resolves the GitHub release tag to its `omtre-<version>.tgz` asset and runs
+  `npm install -g <tarball-url>`.
 - POSIX execution must spawn `npm` directly without shell execution.
 - Windows execution must route through `cmd.exe /d /s /c npm install -g ...`
   instead of directly spawning `npm.cmd`.
-- Uses the current CLI channel by default:
-  - stable versions install `@latest`
-  - `-beta.*` versions install `@beta`
-  - `-rc.*` versions install `@rc`
-- `--tag <tag-or-version>` overrides the inferred channel. Accept simple npm
-  dist-tags or versions such as `latest`, `beta`, `rc`, or `0.6.0-beta.8`.
+- `latest` (the default) resolves the newest `cli-v*` GitHub release.
+- `--tag <tag-or-version>` accepts a version (`1.0.0`), a `v`-prefixed version,
+  or a full `cli-v...` tag.
 - `--dry-run` prints the exact npm command and exits without changing anything.
 
-The implementation does not detect or preserve the original installer. Trellis
+The implementation does not detect or preserve the original installer. omtre
 is published as an npm package, so npm is the upgrade backend even when the user
 installed Node through pnpm, Homebrew, Volta, proto, or another manager.
 
@@ -53,18 +51,18 @@ installed Node through pnpm, Homebrew, Volta, proto, or another manager.
 After npm reports success, print both:
 
 ```text
-trellis --version
+omtre --version
 ```
 
 and a platform-specific binary-resolution check:
 
 ```text
-which trellis   # POSIX
-where trellis   # Windows
+which omtre   # POSIX
+where omtre   # Windows
 ```
 
 This catches the common case where npm installed into one global prefix while
-the user's shell still resolves an older `trellis` binary earlier on PATH.
+the user's shell still resolves an older `omtre` binary earlier on PATH.
 
 ---
 
@@ -79,10 +77,10 @@ npm install -g omtre@latest
 should now prefer:
 
 ```text
-trellis upgrade
+omtre upgrade
 ```
 
-This applies to CLI startup warnings, `trellis update` downgrade guidance, and
+This applies to CLI startup warnings, `omtre update` downgrade guidance, and
 session-start update hints.
 
 ---

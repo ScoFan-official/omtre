@@ -144,7 +144,7 @@ vite.config.ts.timestamp-*
 # Ralph Loop state file
 .omtre/.ralph-state.json
 
-# Trellis local state (should not be committed)
+# omtre local state (should not be committed)
 .omtre/.current-task
 .omtre/.runtime/
 .omtre/.developer

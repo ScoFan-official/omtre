@@ -1,9 +1,8 @@
 name: release
 
 # Canonical CLI artifacts publish from ScoFan-official/omtre via its
-# `cli-v*` tag pipeline (cli-release.yml there). This workflow stays
-# dispatch-only for internal tarball testing; fork tags are NOT pushed to
-# trigger releases here.
+# `cli-v*` tag pipeline (cli-release.yml). This workflow stays dispatch-only
+# for internal tarball testing; release tags are NOT pushed to trigger it.
 on:
   workflow_dispatch:
 

@@ -12,6 +12,7 @@ const SCRIPT_PATH = path.join(REPO_ROOT, "scripts", "check-legacy-names.mjs");
 // Construct legacy tokens dynamically so even if this test file were scanned
 // without exemption, it does not embed literal pre-rename tokens.
 const LEGACY = ["trel", "lis"].join("");
+const TITLE_LEGACY = LEGACY[0].toUpperCase() + LEGACY.slice(1);
 const LEGACY_UPPER = ["TREL", "LIS"].join("");
 const DOT_LEGACY = `.${LEGACY}`;
 const HOME_DOT_LEGACY = `~/${DOT_LEGACY}`;
@@ -169,11 +170,13 @@ describe("scripts/check-legacy-names.mjs", () => {
 
     writeFile(root, "COPYRIGHT", `Original ${DOT_LEGACY} copyright\n`);
     writeFile(root, "LICENSE", `AGPL ${DOT_LEGACY}\n`);
-    writeFile(root, "docs/fork-sync.md", `Upstream uses ${DOT_LEGACY}\n`);
+    writeFile(root, "docs/upstream.md", `Upstream uses ${DOT_LEGACY}\n`);
     writeFile(root, "docs/pending/sample.patch", `+ ${DOT_LEGACY}/config.yaml\n`);
     writeFile(root, "catalog/pack/SKILL.md", `name: ${SKILL_PREFIX}\n`);
-    writeFile(root, "CHANGELOG.md", `- Renamed ${DOT_LEGACY}\n`);
-    writeFile(root, "CHANGELOG.pack.md", `- Released ${OH_MY_LEGACY}\n`);
+    writeFile(root, "docs/changelog-fork.md", `- Renamed ${DOT_LEGACY}\n`);
+    writeFile(root, "docs/pack-changelog.md", `- Released ${OH_MY_LEGACY}\n`);
+    writeFile(root, "NOTICE", `Derived from ${TITLE_LEGACY}\n`);
+    writeFile(root, "packages/cli/NOTICE", `Derived from ${TITLE_LEGACY}\n`);
     writeFile(
       root,
       "packages/cli/src/migrations/manifests/0.5.0.json",
@@ -210,31 +213,70 @@ describe("scripts/check-legacy-names.mjs", () => {
     expect(failRes.stderr).toContain(`README.md:1: ${DOT_LEGACY}`);
   });
 
-  it("allows historical task directory slugs under .omtre/tasks/ while still scanning their file contents", () => {
+  it("allows historical task directory slugs while still scanning active task content", () => {
     const root = makeTempRoot();
-    const histSlug = `01-22-${LEGACY}-agents-gui`;
+    const activeSlug = `10-21-${LEGACY}-follow-up`;
     writeFile(
       root,
-      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md`,
-      `# Historical task ${histSlug}\nClean content under .omtre/\n`,
+      `.omtre/tasks/${activeSlug}/prd.md`,
+      `# Active task ${activeSlug}\nClean content under .omtre/\n`,
     );
 
     const passRes = runGate(root);
     expect(passRes.status, `stderr:\n${passRes.stderr}`).toBe(0);
 
-    // Forbidden tokens inside .omtre/tasks/ file content must still be caught
+    // Forbidden tokens inside active .omtre/tasks/ content must still be caught.
     writeFile(
       root,
-      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md`,
-      `# Historical task ${histSlug}\nLeaked ${DOT_LEGACY}/config.yaml and ${ENV_LEGACY}\n`,
+      `.omtre/tasks/${activeSlug}/prd.md`,
+      `# Active task ${activeSlug}\nLeaked ${DOT_LEGACY}/config.yaml and ${ENV_LEGACY}\n`,
     );
     const failRes = runGate(root);
     expect(failRes.status).toBe(1);
     expect(failRes.stderr).toContain(
-      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md:2: ${DOT_LEGACY}`,
+      `.omtre/tasks/${activeSlug}/prd.md:2: ${DOT_LEGACY}`,
     );
     expect(failRes.stderr).toContain(
-      `.omtre/tasks/archive/2026-01/${histSlug}/prd.md:2: ${ENV_LEGACY}`,
+      `.omtre/tasks/${activeSlug}/prd.md:2: ${ENV_LEGACY}`,
     );
+  });
+
+  it("permanently allowlists archived task records and workspace journals", () => {
+    const root = makeTempRoot();
+    writeFile(
+      root,
+      `.omtre/tasks/archive/2026-01/01-22-${LEGACY}-agents-gui/prd.md`,
+      `Historical ${TITLE_LEGACY} record\n`,
+    );
+    writeFile(
+      root,
+      `.omtre/workspace/dev/journal-1.md`,
+      `Historical ${TITLE_LEGACY} journal\n`,
+    );
+
+    const res = runGate(root);
+    expect(res.status, `stderr:\n${res.stderr}`).toBe(0);
+  });
+
+  it("allows explicit attribution blocks but catches bare legacy names outside them", () => {
+    const root = makeTempRoot();
+    writeFile(
+      root,
+      "README.md",
+      [
+        "<!-- omtre:upstream-attribution:start -->",
+        `${TITLE_LEGACY} lineage is documented here.`,
+        "<!-- omtre:upstream-attribution:end -->",
+        "",
+      ].join("\n"),
+    );
+
+    const passRes = runGate(root);
+    expect(passRes.status, `stderr:\n${passRes.stderr}`).toBe(0);
+
+    writeFile(root, "README.md", `${TITLE_LEGACY} is still in the product header.\n`);
+    const failRes = runGate(root);
+    expect(failRes.status).toBe(1);
+    expect(failRes.stderr).toContain(`README.md:1: ${TITLE_LEGACY}`);
   });
 });

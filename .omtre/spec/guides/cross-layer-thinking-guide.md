@@ -125,11 +125,11 @@ After implementation:
 
 ## Cross-Platform Template Consistency
 
-In Trellis, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
+In omtre, command templates (e.g., `record-session.md`) exist in **multiple platforms** with identical or near-identical content. This is a cross-layer boundary.
 
 ### Checklist: After Modifying Any Command Template
 
-- [ ] Find all platforms with the same command: `find src/templates/*/commands/trellis/ -name "<command>.*"`
+- [ ] Find all platforms with the same command: `find src/templates/*/commands/omtre/ -name "<command>.*"`
 - [ ] Update all platform copies (Markdown `.md` and TOML `.toml`)
 - [ ] For Gemini TOML: adapt line continuations (`\\` vs `\`) and triple-quoted strings
 - [ ] Run `/omt:check-cross-layer` to verify nothing was missed
@@ -140,7 +140,7 @@ In Trellis, command templates (e.g., `record-session.md`) exist in **multiple pl
 
 ## Generated Runtime Template Upgrade Consistency
 
-Some generated files are both documentation and runtime input. In Trellis,
+Some generated files are both documentation and runtime input. In omtre,
 `.omtre/workflow.md` is parsed by `get_context.py`, `workflow_phase.py`,
 SessionStart filters, and per-turn hooks. Template changes must be validated
 against both fresh init and upgrade paths.
@@ -187,7 +187,7 @@ audit for beta markers against the root release tree.
 **Real-world example**: Codex inline mode changed workflow platform markers from
 `[Codex]` / `[Kilo, Antigravity, Windsurf]` to `[codex-sub-agent]` /
 `[codex-inline, Kilo, Antigravity, Windsurf]`. Fresh init was correct, but
-`trellis update` only merged `[workflow-state:*]` blocks and preserved stale
+`omtre update` only merged `[workflow-state:*]` blocks and preserved stale
 markers outside those blocks. Result: upgraded projects got new hook scripts
 but old workflow routing, so `get_context.py --mode phase --platform codex`
 could return empty Phase 2.1 detail.

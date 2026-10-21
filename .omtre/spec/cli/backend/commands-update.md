@@ -1,6 +1,6 @@
-# `trellis update` Command
+# `omtre update` Command
 
-How `trellis update` upgrades a user project's bundled Trellis assets (Python scripts, workflow.md, AGENTS.md, platform configs) from the version recorded in `.omtre/.version` to the version of the installed CLI.
+How `omtre update` upgrades a user project's bundled omtre assets (Python scripts, workflow.md, AGENTS.md, platform configs) from the version recorded in `.omtre/.version` to the version of the installed CLI.
 
 This spec covers the command pipeline, flags, interactive surface, and the subsystems update orchestrates. Manifest mechanics — schema fields, migration types, hash gating semantics — live in `migrations.md`. This document references that one rather than restating it.
 
@@ -16,8 +16,8 @@ User-facing contract:
 
 Two big invariants:
 
-1. **Idempotent**: re-running `trellis update` immediately after a successful run prints `✓ Already up to date!` and writes nothing. If you ever see auto-update churn on a clean re-run, the cause is almost always a placeholder unresolved in `collectTemplateFiles` (see Common Pitfalls).
-2. **User edits are never silently overwritten**. Anything outside Trellis-managed templates is in `PROTECTED_PATHS`; anything inside whose hash differs from the recorded one drops to the conflict prompt or `--force` / `--skip-all` / `--create-new` policy.
+1. **Idempotent**: re-running `omtre update` immediately after a successful run prints `✓ Already up to date!` and writes nothing. If you ever see auto-update churn on a clean re-run, the cause is almost always a placeholder unresolved in `collectTemplateFiles` (see Common Pitfalls).
+2. **User edits are never silently overwritten**. Anything outside omtre-managed templates is in `PROTECTED_PATHS`; anything inside whose hash differs from the recorded one drops to the conflict prompt or `--force` / `--skip-all` / `--create-new` policy.
 
 ---
 
@@ -26,7 +26,7 @@ Two big invariants:
 Wired in `cli/index.ts` via Commander:
 
 ```text
-trellis update
+omtre update
   [--dry-run]            preview only
   [-f, --force]          overwrite all changed files; also bypasses final "Proceed?" confirm and forces modified migrations
   [-s, --skip-all]       skip all changed files; also auto-skips modified migrations under --migrate
@@ -62,15 +62,15 @@ Note that `force` / `skipAll` / `createNew` are mutually exclusive in spirit but
 
 | Source | Where the bytes come from |
 |---|---|
-| Python scripts under `.omtre/scripts/` | `templates/trellis/index.ts:getAllScripts` |
-| `.omtre/config.yaml` | `templates/trellis/index.ts:configYamlTemplate` |
-| `.omtre/.gitignore` | `templates/trellis/index.ts:gitignoreTemplate` |
-| `.omtre/workflow.md` | `templates/trellis/index.ts:workflowMdTemplate` (whole-file hash-gated, see below) |
+| Python scripts under `.omtre/scripts/` | `templates/omtre/index.ts:getAllScripts` |
+| `.omtre/config.yaml` | `templates/omtre/index.ts:configYamlTemplate` |
+| `.omtre/.gitignore` | `templates/omtre/index.ts:gitignoreTemplate` |
+| `.omtre/workflow.md` | `templates/omtre/index.ts:workflowMdTemplate` (whole-file hash-gated, see below) |
 | Root `AGENTS.md` | `commands/update.ts:buildAgentsMdTemplate` (managed-block merge) |
 | Per-platform files | `configurators/index.ts:collectPlatformTemplates` for each detected platform via `configurators/index.ts:getConfiguredPlatforms` |
 | `.claude/settings.json` `statusLine` | preserved through `commands/update.ts:preserveExistingClaudeStatusLine` |
 
-Platforms are auto-discovered by directory existence in `cwd`. There is one exception: if `commands/update.ts:needsCodexUpgrade` returns true (legacy Trellis tracked `.agents/skills/` but no `.codex/` exists yet), `commands/update.ts:update` passes `extraPlatforms: new Set(["codex"])` to force Codex template collection so the upgrade can create `.codex/`.
+Platforms are auto-discovered by directory existence in `cwd`. There is one exception: if `commands/update.ts:needsCodexUpgrade` returns true (legacy omtre tracked `.agents/skills/` but no `.codex/` exists yet), `commands/update.ts:update` passes `extraPlatforms: new Set(["codex"])` to force Codex template collection so the upgrade can create `.codex/`.
 
 After collection, `collectTemplateFiles` runs two final passes:
 
@@ -82,7 +82,7 @@ After collection, `collectTemplateFiles` runs two final passes:
 These two runtime-facing files have different update contracts:
 
 - **`.omtre/workflow.md`** stays on the normal whole-file template path. `collectTemplateFiles` inserts the bundled `workflowMdTemplate`; `analyzeChanges` decides whether to auto-update, prompt, skip, or create `.new` by comparing the current file hash with `.omtre/.template-hashes.json`. Do not partially merge only `[workflow-state:*]` blocks.
-- **`AGENTS.md`** (`commands/update.ts:buildAgentsMdTemplate`) merges only the `<!-- OMTRE:START -->`…`<!-- OMTRE:END -->` region via `commands/update.ts:replaceTrellisManagedBlock`; if no markers exist, the template managed block is appended. The legacy untracked-hash whitelist `LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES` lets a pristine pre-tracking AGENTS.md auto-update without a "modified by you" false positive (see `commands/update.ts:isKnownUntrackedTemplate`).
+- **`AGENTS.md`** (`commands/update.ts:buildAgentsMdTemplate`) merges only the `<!-- OMTRE:START -->`…`<!-- OMTRE:END -->` region via `commands/update.ts:replaceomtreManagedBlock`; if no markers exist, the template managed block is appended. The legacy untracked-hash whitelist `LEGACY_UNTRACKED_AGENTS_MD_BLOCK_HASHES` lets a pristine pre-tracking AGENTS.md auto-update without a "modified by you" false positive (see `commands/update.ts:isKnownUntrackedTemplate`).
 
 Why workflow is whole-file: `.omtre/workflow.md` is parsed by `get_context.py`,
 `workflow_phase.py`, SessionStart strippers, and per-turn workflow-state hooks.
@@ -90,9 +90,9 @@ Runtime-significant headings and platform markers live outside
 `[workflow-state:*]` blocks. Updating only tag blocks can make breadcrumbs
 current while leaving stale phase or platform routing sections behind.
 
-Non-native workflow variants selected through `trellis workflow --template` or
-`trellis init --workflow` are deliberately removed from
-`.omtre/.template-hashes.json`. That makes `trellis update` classify the file
+Non-native workflow variants selected through `omtre workflow --template` or
+`omtre init --workflow` are deliberately removed from
+`.omtre/.template-hashes.json`. That makes `omtre update` classify the file
 as user-managed instead of auto-updating it back to bundled native workflow.
 
 ### 3. Analyze on-disk state
@@ -123,7 +123,7 @@ Three meanings, all in this single flag:
 
 1. **Conflict resolution** (`commands/update.ts:promptConflictResolution`): for every entry in `changedFiles`, choose `overwrite` without asking.
 2. **Migration mode** (`commands/update.ts:executeMigrations`): for every `confirm`-bucket migration, treat as `rename`/`delete` (no inline `.backup`). The full snapshot under `.omtre/.backup-<timestamp>/` is the only safety net in this mode — see `update.integration.test.ts > #26 rename-anyway does NOT leave an inline .backup`.
-3. **Final confirm** (`commands/update.ts:update`): skip the global `Proceed?` prompt. This is what makes `trellis update --force --migrate` viable for CI / scripted upgrades.
+3. **Final confirm** (`commands/update.ts:update`): skip the global `Proceed?` prompt. This is what makes `omtre update --force --migrate` viable for CI / scripted upgrades.
 
 ### `--skip-all` / `-s`
 
@@ -148,7 +148,7 @@ Opt-in to apply file migrations (renames/deletes/dir renames). Without it: migra
 
 ### Tag flag (`--tag <beta|rc|latest>`)
 
-There is no `--tag` flag on `trellis update` today. Version selection is implicit: `update()` always uses the version of the installed CLI (`constants/version.ts:VERSION`). Users who want a specific CLI channel should run `trellis upgrade --tag beta` (or `latest` / `rc`) first, then run `trellis update`. The npm-version check in `commands/update.ts:getLatestNpmVersion` only looks at the `latest` dist-tag and is purely advisory ("⚠️ Your CLI is behind npm").
+There is no `--tag` flag on `omtre update` today. Version selection is implicit: `update()` always uses the version of the installed CLI (`constants/version.ts:VERSION`). Users who want a specific CLI channel should run `omtre upgrade --tag beta` (or `latest` / `rc`) first, then run `omtre update`. The npm-version check in `commands/update.ts:getLatestNpmVersion` only looks at the `latest` dist-tag and is purely advisory ("⚠️ Your CLI is behind npm").
 
 ---
 
@@ -167,7 +167,7 @@ Migration state is then run through `commands/update.ts:classifyMigrations` agai
 | `conflict` | both source and target exist with user content |
 | `skip` | source missing, path is `PROTECTED_PATHS`, or (see below) an unowned `rename-dir` source |
 
-`rename-dir` has an extra ownership gate when the target is absent: `commands/update.ts:dirHasManifestEntries(item.from, hashes)` must find at least one manifest-tracked file under that source directory before it lands in `auto`. If the manifest has no record of the directory — e.g. a user's own `.windsurf/` editor config that merely shares a path with a retired Trellis platform dir — the item goes to `skip` instead, even under `--force` (skip never executes). See [Filesystem Safety § 2–3](./filesystem-safety.md) for the rationale and the other ownership/backup gates it's modeled after.
+`rename-dir` has an extra ownership gate when the target is absent: `commands/update.ts:dirHasManifestEntries(item.from, hashes)` must find at least one manifest-tracked file under that source directory before it lands in `auto`. If the manifest has no record of the directory — e.g. a user's own `.windsurf/` editor config that merely shares a path with a retired omtre platform dir — the item goes to `skip` instead, even under `--force` (skip never executes). See [Filesystem Safety § 2–3](./filesystem-safety.md) for the rationale and the other ownership/backup gates it's modeled after.
 
 Sorting before execution is by `commands/update.ts:sortMigrationsForExecution`: deeper `rename-dir` first, then other `rename-dir`, then `rename` / `delete`. Critical for nested directory renames — without depth ordering, a parent move would leave child entries pointing at a dead source.
 
@@ -246,7 +246,7 @@ Order of operations in `commands/update.ts:update` (after the `Proceed?` confirm
 
 `saveHashes` (called by `updateHashes`/`renameHash`/`removeHash`) writes `.omtre/.template-hashes.json` via `writeFileAtomic` (temp file in the same dir + rename), not a direct `writeFileSync`. A crash mid-write can no longer truncate the manifest to `{}`, which would otherwise make every managed file look user-modified on the next run. See [Filesystem Safety § 1](./filesystem-safety.md).
 
-`migrations.md` documents the relationship to `allowed_hashes` in `safe-file-delete` migrations: the hash file tracks "Trellis-installed bytes" (so update can detect user edits); `allowed_hashes` is a bounded set of "known-pristine bytes" the manifest blesses for auto-deletion. They are different sets — a user file might have a recorded hash but not be `allowed_hashes`-eligible.
+`migrations.md` documents the relationship to `allowed_hashes` in `safe-file-delete` migrations: the hash file tracks "omtre-installed bytes" (so update can detect user edits); `allowed_hashes` is a bounded set of "known-pristine bytes" the manifest blesses for auto-deletion. They are different sets — a user file might have a recorded hash but not be `allowed_hashes`-eligible.
 
 The idempotency invariant ("re-running update on a clean repo writes nothing") rests on three pieces of hygiene:
 
@@ -266,7 +266,7 @@ Update and init share the same template producers:
 | Detect platforms | `configurators/index.ts:getConfiguredPlatforms` |
 | Backup roots | `configurators/index.ts:ALL_MANAGED_DIRS` (also the source of `BACKUP_DIRS` in update) |
 | Empty-dir cleanup gate | `configurators/index.ts:isManagedPath` / `isManagedRootDir` |
-| Python script bundle | `templates/trellis/index.ts:getAllScripts` |
+| Python script bundle | `templates/omtre/index.ts:getAllScripts` |
 | Init hash seeding | `utils/template-hash.ts:initializeHashes` (init); update keeps it fresh via `updateHashes` |
 
 What's unique to update:
@@ -307,11 +307,11 @@ This document does NOT restate any of that. When extending update behavior, deci
 
 ### Orphan migrations
 
-If `.omtre/.version` says you're already on the latest CLI but a stale `from` path still exists on disk and the new `to` doesn't, that's an orphan. `update()` always scans `getAllMigrations()` for orphans regardless of version range and adds them to `pendingMigrations`. They show up under "⚠️ Detected incomplete migrations from previous updates" in the printed plan. Causes: a previous run was interrupted between `migrations` execution and `updateVersionFile`; a previous run skipped the migration via `[s]` and the user expected it to apply later; manifest authoring error (a v0.4 entry referencing a path that was already moved before v0.4 ever shipped). All three resolve the same way: `trellis update --migrate`.
+If `.omtre/.version` says you're already on the latest CLI but a stale `from` path still exists on disk and the new `to` doesn't, that's an orphan. `update()` always scans `getAllMigrations()` for orphans regardless of version range and adds them to `pendingMigrations`. They show up under "⚠️ Detected incomplete migrations from previous updates" in the printed plan. Causes: a previous run was interrupted between `migrations` execution and `updateVersionFile`; a previous run skipped the migration via `[s]` and the user expected it to apply later; manifest authoring error (a v0.4 entry referencing a path that was already moved before v0.4 ever shipped). All three resolve the same way: `omtre update --migrate`.
 
 ### Backup bloat
 
-Every non-trivial run creates `.omtre/.backup-<timestamp>/`. `BACKUP_EXCLUDE_PATTERNS` keeps user-data trees and platform worktrees out, but the snapshot still includes every managed config file in every platform directory. Power users with 8+ platforms configured can accumulate hundreds of MB of backups over a few months. There is no automatic pruning today — Trellis treats backups as user data ("cleanup is your call"). If you add automatic pruning, it must be opt-in and must not delete backups newer than the last successful version transition (otherwise a debug rollback path disappears).
+Every non-trivial run creates `.omtre/.backup-<timestamp>/`. `BACKUP_EXCLUDE_PATTERNS` keeps user-data trees and platform worktrees out, but the snapshot still includes every managed config file in every platform directory. Power users with 8+ platforms configured can accumulate hundreds of MB of backups over a few months. There is no automatic pruning today — omtre treats backups as user data ("cleanup is your call"). If you add automatic pruning, it must be opt-in and must not delete backups newer than the last successful version transition (otherwise a debug rollback path disappears).
 
 ### `node_modules/` under managed dirs
 
@@ -330,7 +330,7 @@ Reading the file with `fs.readFileSync(...).trim()` and using the result as `ass
 
 ### Idempotency churn after adding a placeholder
 
-Symptom: every `trellis update` shows the same hooks/settings file as auto-updated. Root cause: a configurator's `configure()` resolves a placeholder before writing, but `collectTemplates` returns the unresolved template. Fix: every placeholder must be resolved in BOTH places. The cleanest pattern is to share a `resolvePlaceholders(...)` call in both code paths inside `configurators/<platform>.ts`. See `platform-integration.md > Common Mistakes > "Template placeholder not resolved in collectTemplates"`.
+Symptom: every `omtre update` shows the same hooks/settings file as auto-updated. Root cause: a configurator's `configure()` resolves a placeholder before writing, but `collectTemplates` returns the unresolved template. Fix: every placeholder must be resolved in BOTH places. The cleanest pattern is to share a `resolvePlaceholders(...)` call in both code paths inside `configurators/<platform>.ts`. See `platform-integration.md > Common Mistakes > "Template placeholder not resolved in collectTemplates"`.
 
 ### "Modified by you" on a file the user never touched
 
@@ -345,7 +345,7 @@ Migrations are forward-only. A user who downgrades while staying on the same maj
 
 ### Codex two-layer upgrade
 
-Old Trellis used `.agents/skills/` as the Codex configDir; current Trellis uses `.codex/` plus a shared `.agents/skills/` layer. `commands/update.ts:needsCodexUpgrade` detects the legacy state by looking for command-as-skill marker entries (`omtre-continue/SKILL.md`, `omtre-finish-work/SKILL.md`) in the hash file, then excludes any configured non-Codex platform whose current template collector declares those same marker paths. Current non-Codex platforms with a private command surface, such as ZCode, must not declare those marker paths under `.agents/skills`; this keeps combined installs from producing hash churn and keeps the Codex legacy detector unambiguous. When legacy Codex is detected, `update()` injects `codex` into `extraPlatforms` so `collectTemplateFiles` produces the missing `.codex/` files.
+Old omtre used `.agents/skills/` as the Codex configDir; current omtre uses `.codex/` plus a shared `.agents/skills/` layer. `commands/update.ts:needsCodexUpgrade` detects the legacy state by looking for command-as-skill marker entries (`omtre-continue/SKILL.md`, `omtre-finish-work/SKILL.md`) in the hash file, then excludes any configured non-Codex platform whose current template collector declares those same marker paths. Current non-Codex platforms with a private command surface, such as ZCode, must not declare those marker paths under `.agents/skills`; this keeps combined installs from producing hash churn and keeps the Codex legacy detector unambiguous. When legacy Codex is detected, `update()` injects `codex` into `extraPlatforms` so `collectTemplateFiles` produces the missing `.codex/` files.
 
 General platform detection also uses template hashes, but with a stricter
 ownership intersection: a platform counts only when the manifest contains a

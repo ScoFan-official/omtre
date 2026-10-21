@@ -1,6 +1,6 @@
 # Docs-Site Sync Matrix
 
-> When Trellis changes **workflow**, **platforms**, **commands**, or **skills**, which docs-site pages must update in lockstep. A concrete "Audit ALL Writers" checklist for documentation.
+> When omtre changes **workflow**, **platforms**, **commands**, or **skills**, which docs-site pages must update in lockstep. A concrete "Audit ALL Writers" checklist for documentation.
 
 ---
 
@@ -42,7 +42,7 @@ to `beta/**` / `zh/beta/**` instead.
 
 ## Trigger 1: Phase Structure Changes
 
-Scope: any edit to `packages/cli/src/templates/trellis/workflow.md` that adds/removes a step, renames a phase, or changes required/optional/once tags.
+Scope: any edit to `packages/cli/src/templates/omtre/workflow.md` that adds/removes a step, renames a phase, or changes required/optional/once tags.
 
 | File (en + zh)                      | What to sync                                                                                                                        |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -204,7 +204,7 @@ Migration manifests in `packages/cli/src/migrations/manifests/` need matching ch
 
 ## Trigger 7: `.omtre/config.yaml` Template or Reader Changes
 
-Scope: any edit to `packages/cli/src/templates/trellis/config.yaml`, config readers under `packages/cli/src/templates/trellis/scripts/common/`, or `configSectionsAdded` behavior in update manifests.
+Scope: any edit to `packages/cli/src/templates/omtre/config.yaml`, config readers under `packages/cli/src/templates/omtre/scripts/common/`, or `configSectionsAdded` behavior in update manifests.
 
 | File (en + zh, release + beta) | What to sync |
 |---|---|

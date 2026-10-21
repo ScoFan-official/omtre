@@ -24,7 +24,7 @@ Managed by Omtre. Edits outside this block are preserved; edits inside may be ov
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **Trellis** (14336 symbols, 20870 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **omtre** (14336 symbols, 20870 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
@@ -47,10 +47,10 @@ This project is indexed by GitNexus as **Trellis** (14336 symbols, 20870 relatio
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/Trellis/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/Trellis/clusters` | All functional areas |
-| `gitnexus://repo/Trellis/processes` | All execution flows |
-| `gitnexus://repo/Trellis/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/omtre/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/omtre/clusters` | All functional areas |
+| `gitnexus://repo/omtre/processes` | All execution flows |
+| `gitnexus://repo/omtre/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

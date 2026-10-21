@@ -1,4 +1,4 @@
-# Trellis Core SDK
+# omtre Core SDK
 
 > Package boundary and coding rules for `@omtre/core` and the CLI.
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Trellis is split into two version-locked packages:
+omtre is split into two version-locked packages:
 
 | Package | Responsibility |
 |---|---|

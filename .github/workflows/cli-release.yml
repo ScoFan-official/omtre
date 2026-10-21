@@ -1,10 +1,9 @@
 name: cli-release
 
-# Canonical CLI distribution: ScoFan-official/omtre is the unified
-# source/build workspace. This pipeline builds the CLI from the
-# matching tag and publishes the tarball here, so pack releases
-# (vX.Y.Z) and CLI releases (cli-v<upstream>-ohmy.<N>) share one user-facing
-# releases page.
+# GitHub Release channel: ScoFan-official/omtre is the unified source/build
+# workspace. This pipeline builds the CLI from the matching `cli-v<version>`
+# tag and publishes the standalone `omtre-<version>.tgz` asset. npm publishing
+# runs in publish.yml; the two channels carry the same version.
 on:
   push:
     tags: ["cli-v*"]

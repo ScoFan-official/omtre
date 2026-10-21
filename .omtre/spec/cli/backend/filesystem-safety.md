@@ -1,13 +1,13 @@
 # Filesystem Safety — Atomic Writes & Destructive-Op Guards
 
 > Cross-cutting contract for any code that **writes, deletes, moves, or
-> overwrites** files in a user's repo. Trellis ships as a CLI that runs inside
+> overwrites** files in a user's repo. omtre ships as a CLI that runs inside
 > real git repos, so a truncated write or a mistargeted delete is user data
 > loss, not a transient bug. These are the guardrails the 2026-07-10 audit's
 > two root causes distilled to.
 
 Applies to: `commands/update.ts`, `commands/uninstall.ts`, `utils/*`,
-`core/channel/**`, and the shipped Python under `templates/trellis/scripts/`.
+`core/channel/**`, and the shipped Python under `templates/omtre/scripts/`.
 
 ---
 
@@ -32,7 +32,7 @@ export function writeFileAtomic(filePath: string, data: string | Uint8Array): vo
 ```
 
 ```python
-# templates/trellis/scripts/common/io.py
+# templates/omtre/scripts/common/io.py
 def write_json(path: Path, data: dict) -> bool
 def write_text_atomic(path: Path, text: str) -> bool
 # tempfile.mkstemp(dir=path.parent) -> os.fdopen write -> os.replace(tmp, path);
@@ -74,7 +74,7 @@ delete escapes the store.
 |---|---|---|
 | channel / worker name | `assertSafeName(name, kind)` — `^[A-Za-z0-9._-]+$`, rejects `.`/`..` — called inside `channelDir` (the single chokepoint every path helper passes through) | `core` + `cli` `channel/store/paths.ts` |
 | `task.py archive <name>` target | `is_within_tasks_dir(task_dir_abs, repo_root)` — dir must be a direct child of `.omtre/tasks/` | `scripts/common/task_utils.py` |
-| rename-dir migration source | `dirHasManifestEntries(fromDir, hashes)` — only auto-move a dir Trellis provably created | `commands/update.ts` |
+| rename-dir migration source | `dirHasManifestEntries(fromDir, hashes)` — only auto-move a dir omtre provably created | `commands/update.ts` |
 
 > **Why the chokepoint, not the entrypoint**: validating inside `channelDir`
 > (not in each of create/rm/run) means one guard covers every current and future
@@ -103,7 +103,7 @@ one of these must hold. Pick by operation:
 | Move a dir that may be user-owned (rename-dir) | Ownership check (`dirHasManifestEntries`); unowned + target-absent → **skip** (safe even under `--force`, since skip never executes). |
 | Overwrite a dir from a remote source | Download to a temp dir; `rm` + copy the old dir **only after** the download succeeds (`downloadWithStrategy` `overwrite`). Never delete-then-download. |
 | Rename onto a possibly-existing target | `fs.existsSync(newPath)` first; skip/renumber instead of clobbering (`renameTracesToJournal`). Especially when the dir is excluded from backup. |
-| `rm -rf` a tree with user data (`uninstall`) | `collectUncommittedTrellisData(cwd)` (git status over `spec/tasks/workspace`); scripted `--yes` fails closed unless `OMTRE_ALLOW_DIRTY_UNINSTALL=1`. Disclosure must name what user data is deleted. |
+| `rm -rf` a tree with user data (`uninstall`) | `collectUncommittedomtreData(cwd)` (git status over `spec/tasks/workspace`); scripted `--yes` fails closed unless `OMTRE_ALLOW_DIRTY_UNINSTALL=1`. Disclosure must name what user data is deleted. |
 
 **Env override precedent**: a fail-closed guard on a `--yes`/`--force` path gets
 an explicit env bypass, mirroring `OMTRE_ALLOW_HOMEDIR`
@@ -114,7 +114,7 @@ an explicit env bypass, mirroring `OMTRE_ALLOW_HOMEDIR`
 
 ## 4. Dogfood twin sync
 
-Shipped Python (`packages/cli/src/templates/trellis/scripts/**`) has a dogfood
+Shipped Python (`packages/cli/src/templates/omtre/scripts/**`) has a dogfood
 twin at repo `.omtre/scripts/**`. **Every `.py` under the two trees must be
 byte-identical, and the build fails if it is not** — there is no such thing as
 acceptable local drift. Edit both copies, never one.
@@ -133,15 +133,15 @@ without the guard**:
 - Atomic write: write-succeeds + no tmp leftover + original survives a failed write (`test/utils/atomic-write.test.ts`; Python covered via `task-archive` integration).
 - Path traversal: `create '../../victim' --force` / `rm '../../victim'` throw and the external dir survives — reproduce in a sandbox (`test/channel/name-safety`, `test/commands/channel-name-safety`).
 - Ownership/backup gates: unowned source skipped (`update-internals` rename-dir gate), `archive src` refused with `src/` intact (`task-archive` integration), overwrite-fails-preserves-spec (`template-fetcher-overwrite`), uninstall refuses dirty `--yes` (`uninstall-dirty-guard`, real git).
-- Dogfood twin sync: identical `.py` path sets in both trees, plus one byte-compare case per file (`regression.test.ts` → "regression: .omtre/scripts stays byte-identical to templates/trellis/scripts"). The file list is derived from the filesystem, so a new script is covered the moment it is added.
+- Dogfood twin sync: identical `.py` path sets in both trees, plus one byte-compare case per file (`regression.test.ts` → "regression: .omtre/scripts stays byte-identical to templates/omtre/scripts"). The file list is derived from the filesystem, so a new script is covered the moment it is added.
 
 ---
 
 ## Related
 
-- [`trellis update` Command](./commands-update.md) — migration classification/apply
-- [`trellis uninstall` Command](./commands-uninstall.md) — plan/execute phases
-- [`trellis channel` Command](./commands-channel.md) — store paths, project buckets
+- [`omtre update` Command](./commands-update.md) — migration classification/apply
+- [`omtre uninstall` Command](./commands-uninstall.md) — plan/execute phases
+- [`omtre channel` Command](./commands-channel.md) — store paths, project buckets
 - [Script Conventions](./script-conventions.md) — Python `io.py` contract
 - [Migrations](./migrations.md) — rename/rename-dir/delete semantics
 
@@ -155,7 +155,7 @@ inside a trusted root. Trusted roots resolve once per spawn
 1. `.omtre/config.yaml` → `channel.trusted_context_dirs` (list; relative
    entries resolve against cwd; missing dirs warn + skip; each entry is
    realpath-canonicalized).
-2. Auto-trust (disable with `channel.auto_trust_trellis_symlinks: false`):
+2. Auto-trust (disable with `channel.auto_trust_omtre_symlinks: false`):
    ONLY the top-level `.omtre/tasks` and `.omtre/workspace` entries, when
    they are themselves symlinks, contribute their realpath targets. No
    recursion — a nested symlink planted inside a task dir stays refused.

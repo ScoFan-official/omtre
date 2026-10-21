@@ -78,8 +78,8 @@ Phase 3: Finish  -> verify, update spec, commit, and wrap up
 
 ### Request Triage
 
-- Simple conversation or small task: ask only whether this turn should create a omtre task. If the user says no, skip omtre for this session.
-- Complex task: ask whether you may create a omtre task and enter planning. If the user says no, do not do broad inline implementation.
+- Simple conversation or small task: ask only whether this turn should create an omtre task. If the user says no, skip omtre for this session.
+- Complex task: ask whether you may create an omtre task and enter planning. If the user says no, do not do broad inline implementation.
 - User approval to create a task is not approval to start implementation. Implementation waits until artifacts are reviewed and `task.py start` has run.
 
 ### Planning Artifacts
@@ -97,8 +97,8 @@ Use a parent task when one request contains several independently verifiable del
 
 [workflow-state:no_task]
 No active task. First classify the current turn and ask for task-creation consent before creating any omtre task.
-Simple conversation / small task: ask only whether this turn should create a omtre task. If the user says no, skip omtre for this session.
-Complex task: ask the user if you can create a omtre task and enter the planning phase. If the user says no, explain, clarify scope, or suggest a smaller split.
+Simple conversation / small task: ask only whether this turn should create an omtre task. If the user says no, skip omtre for this session.
+Complex task: ask the user if you can create an omtre task and enter the planning phase. If the user says no, explain, clarify scope, or suggest a smaller split.
 [/workflow-state:no_task]
 
 ### Phase 1: Plan

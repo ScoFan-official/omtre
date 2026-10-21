@@ -1,4 +1,4 @@
-# Trellis: append-only developer journals should merge cleanly across
+# omtre: append-only developer journals should merge cleanly across
 # parallel sessions/worktrees — each session only appends a new block, so
 # there is nothing to actually conflict on.
 #

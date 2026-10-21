@@ -8,7 +8,7 @@
 
 ## Overview
 
-The breadcrumb is the **only** per-turn channel that fires while a Trellis task
+The breadcrumb is the **only** per-turn channel that fires while an omtre task
 is active. It is intended for the main AI session, while sub-agent context
 normally arrives through `inject-subagent-context` on class-1 platforms or a
 pull-based prelude on class-2 platforms. Host behavior can still surface the
@@ -117,12 +117,12 @@ Both regexes MUST use the `\1` backreference variant — `[workflow-state:([A-Za
 
 ### 1. Scope / Trigger
 
-OpenCode SessionStart and per-turn workflow-state plugins inject Trellis
+OpenCode SessionStart and per-turn workflow-state plugins inject omtre
 context through `experimental.chat.messages.transform`. That hook runs on
 the in-memory transcript OpenCode is about to convert to model messages
 (`SessionPrompt.run` and compaction). It does not write SQLite / TUI /
 Web history. `chat.message` remains the persist path and must not be used
-for Trellis context (issue #553, replacing the persisted-synthetic-part
+for omtre context (issue #553, replacing the persisted-synthetic-part
 contract from #524).
 
 ### 2. Signatures
@@ -151,7 +151,7 @@ contract from #524).
   transcript has no assistant message.
 - Plugin error handling leaves `output.messages` unchanged (prepend is the
   last step).
-- Trellis sub-agent turns (`info.agent` matching `omtre-implement` /
+- omtre sub-agent turns (`info.agent` matching `omtre-implement` /
   `omtre-check` / `omtre-research`) skip both plugins.
 
 ### 4. Validation & Error Matrix
@@ -171,7 +171,7 @@ contract from #524).
   and `<workflow-state>`.
 - Base: an attachment-only latest user message gets ephemeral text parts
   prepended; the file part object is unchanged.
-- Bad: mutating `chat.message` `output.parts` persists Trellis context into
+- Bad: mutating `chat.message` `output.parts` persists omtre context into
   history and makes revert restore it into the prompt box.
 
 ### 6. Tests Required
@@ -182,10 +182,10 @@ contract from #524).
   and deep-compare every historical message.
 - SessionStart tests cover first-reply-notice presence vs absence after an
   assistant turn. Workflow tests cover default/custom/disabled skip keywords.
-- Existing hook-disable, non-interactive, and Trellis sub-agent exclusion
+- Existing hook-disable, non-interactive, and omtre sub-agent exclusion
   tests remain mandatory, aimed at the transform hook.
 - Template collection tests assert the helper ships through both fresh init
-  and `trellis update`; dogfood `.opencode/` copies must match template bytes.
+  and `omtre update`; dogfood `.opencode/` copies must match template bytes.
 
 ### 7. Wrong vs Correct
 
@@ -235,7 +235,7 @@ blocks such as `[codex-inline, Kilo, Antigravity, Devin]` are parsed by
 `workflow_phase.py` / `get_context.py` when step-specific instructions are
 loaded.
 
-For that reason, `trellis update` must update `workflow.md` as one managed
+For that reason, `omtre update` must update `workflow.md` as one managed
 template file whenever the installed file still matches its tracked template
 hash. It must not partially merge only `[workflow-state:*]` blocks. User edits
 are protected by the normal hash-based modified-file flow, not by preserving
@@ -256,13 +256,13 @@ a new writer requires updating this spec.**
 
 | # | Writer | File:Line | Value | Trigger |
 |---|--------|-----------|-------|---------|
-| 1 | `cmd_create` | `packages/cli/src/templates/trellis/scripts/common/task_store.py:206` | `"planning"` | `task.py create "<title>"` (also visibly auto-sets the session active-task pointer when session identity is available; `--no-start` skips pointer movement for backlog batching — see R7 in 04-30-workflow-state-commit-gap PRD) |
-| 2 | `_record_start_state` (called from both `cmd_start` branches) | `packages/cli/src/templates/trellis/scripts/task.py:111` | `"in_progress"` (gated on prior `"planning"`; the same write also records `task.json.branch` when empty) | `task.py start <dir>` |
-| 3 | `cmd_archive` | `packages/cli/src/templates/trellis/scripts/common/task_store.py:1275` | `"completed"` (flip + archive `mv`, but only after `_validate_branch_metadata` passes) | `task.py archive <dir>` |
+| 1 | `cmd_create` | `packages/cli/src/templates/omtre/scripts/common/task_store.py:206` | `"planning"` | `task.py create "<title>"` (also visibly auto-sets the session active-task pointer when session identity is available; `--no-start` skips pointer movement for backlog batching — see R7 in 04-30-workflow-state-commit-gap PRD) |
+| 2 | `_record_start_state` (called from both `cmd_start` branches) | `packages/cli/src/templates/omtre/scripts/task.py:111` | `"in_progress"` (gated on prior `"planning"`; the same write also records `task.json.branch` when empty) | `task.py start <dir>` |
+| 3 | `cmd_archive` | `packages/cli/src/templates/omtre/scripts/common/task_store.py:1275` | `"completed"` (flip + archive `mv`, but only after `_validate_branch_metadata` passes) | `task.py archive <dir>` |
 | 4 | `emptyTaskJson` factory | `packages/cli/src/utils/task-json.ts:54` | `"planning"` (default) | TS callers (init, update) |
-| 5 | `getBootstrapTaskJson` | `packages/cli/src/commands/init.ts:535` | `"in_progress"` (override) | `trellis init` (creator path) |
-| 6 | `getJoinerTaskJson` | `packages/cli/src/commands/init.ts:587` | `"in_progress"` (override) | `trellis init` (joiner path) |
-| 7 | migration-task via `emptyTaskJson` | `packages/cli/src/commands/update.ts:2483-2494` | `"planning"` (override on factory) | `trellis update --migrate` for breaking-change manifest |
+| 5 | `getBootstrapTaskJson` | `packages/cli/src/commands/init.ts:535` | `"in_progress"` (override) | `omtre init` (creator path) |
+| 6 | `getJoinerTaskJson` | `packages/cli/src/commands/init.ts:587` | `"in_progress"` (override) | `omtre init` (joiner path) |
+| 7 | migration-task via `emptyTaskJson` | `packages/cli/src/commands/update.ts:2483-2494` | `"planning"` (override on factory) | `omtre update --migrate` for breaking-change manifest |
 
 **No other writer exists.** No hook script writes `task.json.status` — verified
 by `grep -rn '"status"' .omtre/scripts/`. Linear-sync hook (`linear_sync.py`)
@@ -346,7 +346,7 @@ Forks can define custom statuses. To do so:
 
 The breadcrumb is **intended** for the main AI session. Sub-agents have their
 own context loading paths, but host platforms may still run per-turn breadcrumb
-hooks for child turns or inherit main-session per-turn context. Trellis must not
+hooks for child turns or inherit main-session per-turn context. omtre must not
 rely on categorical breadcrumb invisibility inside sub-agents.
 
 | Channel | Main session | Hook-inject sub-agent | Pull-prelude sub-agent | Extension-backed sub-agent |
@@ -368,7 +368,7 @@ jsonl entries -> `prd.md` -> `design.md if present` -> `implement.md if
 present`. Breadcrumb text must additionally be safe if a sub-agent sees it:
 main-session dispatch guidance must self-exempt `omtre-implement` /
 `omtre-check` readers so they implement or check directly instead of spawning
-nested Trellis sub-agents.
+nested omtre sub-agents.
 
 ---
 
@@ -376,7 +376,7 @@ nested Trellis sub-agents.
 
 - Edit `.omtre/workflow.md` `[workflow-state:STATUS]` blocks for breadcrumb
   body changes; never touch the parser scripts.
-- Keep `trellis update` whole-file behavior for hash-tracked `workflow.md`.
+- Keep `omtre update` whole-file behavior for hash-tracked `workflow.md`.
   Breadcrumb tag updates alone are insufficient because platform routing
   markers outside those tags are runtime input too.
 - Add a writer-table row to this spec when introducing a new status writer.
@@ -409,7 +409,7 @@ nested Trellis sub-agents.
 - Marker syntax (regex / charset)
 - Hook script structural change (parser, output envelope, what reads
   `task.json.status`)
-- `workflow.md` update semantics in `trellis update`
+- `workflow.md` update semantics in `omtre update`
 - New `task.json.status` writer (any path that mutates the field)
 - Breadcrumb body that changes the contract (e.g. removing a `[required ·
   once]` enforcement line — flag in PR description)

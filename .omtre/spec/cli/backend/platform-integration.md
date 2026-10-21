@@ -53,7 +53,7 @@ When adding a new platform `{platform}`, update the following:
 | `src/configurators/index.ts`      | Add **`{platform}: fromTemplates(collect{Platform}Templates)`** to `PLATFORM_FUNCTIONS`         |
 
 Do **not** write a `configure{Platform}` — `fromTemplates` derives it, so the
-platform's file set is described exactly once and `trellis init` and `trellis
+platform's file set is described exactly once and `omtre init` and `omtre
 update` cannot disagree about it. Copy `configurators/cursor.ts` (30 lines) or
 `configurators/antigravity.ts` (15 lines) as the shape.
 
@@ -80,7 +80,7 @@ the build if it is really just an extra write.
 
 > Note: These platforms add the platform-independent hook scripts to their template map with `collectSharedHooks(".{platform}/hooks", "{platform}")` from `shared.ts`. Commands and skills come from `src/templates/common/` via `resolveCommands()` / `resolveSkills()` / `resolveAllAsSkills()`, usually through `collectBothTemplates()`. The `createTemplateReader()` factory provides `listMdAgents()`, `getSettings()`, etc. without per-platform boilerplate.
 >
-> Trae follows this shared-hook template pattern but writes `.trae/hooks.json`, `.trae/commands/omtre-*.md` with command frontmatter, `.trae/skills/`, `.trae/agents/`, and `.trae/hooks/`. Its main session uses `SessionStart` / `UserPromptSubmit` hooks; sub-agent context remains class-2 pull-based because Trae does not expose a Trellis-supported sub-agent prompt mutation surface.
+> Trae follows this shared-hook template pattern but writes `.trae/hooks.json`, `.trae/commands/omtre-*.md` with command frontmatter, `.trae/skills/`, `.trae/agents/`, and `.trae/hooks/`. Its main session uses `SessionStart` / `UserPromptSubmit` hooks; sub-agent context remains class-2 pull-based because Trae does not expose an omtre-supported sub-agent prompt mutation surface.
 
 **Claude Code pattern** (full hooks + agents + settings):
 
@@ -99,12 +99,12 @@ the build if it is really just an extra write.
 | Directory                                    | Contents                     |
 | -------------------------------------------- | ---------------------------- |
 | `src/templates/{platform}/`                  | Root directory               |
-| `src/templates/{platform}/commands/trellis/` | Slash commands (`.md` files) |
+| `src/templates/{platform}/commands/omtre/` | Slash commands (`.md` files) |
 | `src/templates/{platform}/plugin/`           | JS plugin files              |
 | `src/templates/{platform}/lib/`              | JS library files             |
 | `src/templates/{platform}/package.json`      | Plugin dependencies          |
 
-> Note: OpenCode uses JS plugins instead of Python hooks and has no `index.ts` template module — `collectOpenCodeTemplates()` (`opencode.ts:79-95`) walks the template directory instead, then adds commands and skills from `common/`. It is registered through `fromTemplates` like every other platform, so `trellis update` tracks OpenCode files normally. If a new platform uses JS plugins, follow this pattern — and note the walk's `EXCLUDE_PATTERNS` keeps `.js` (real plugin code) while dropping `.js.map` / `.d.ts` build artifacts.
+> Note: OpenCode uses JS plugins instead of Python hooks and has no `index.ts` template module — `collectOpenCodeTemplates()` (`opencode.ts:79-95`) walks the template directory instead, then adds commands and skills from `common/`. It is registered through `fromTemplates` like every other platform, so `omtre update` tracks OpenCode files normally. If a new platform uses JS plugins, follow this pattern — and note the walk's `EXCLUDE_PATTERNS` keeps `.js` (real plugin code) while dropping `.js.map` / `.d.ts` build artifacts.
 
 **TypeScript extension pattern** (Pi Agent):
 
@@ -113,14 +113,14 @@ the build if it is really just an extra write.
 | `src/templates/{platform}/`                                | Root directory                                                                            |
 | `src/templates/{platform}/index.ts`                        | Uses `createTemplateReader(import.meta.url)` — exports agents, settings, extension source |
 | `src/templates/{platform}/agents/`                         | Agent definitions (`.md` files — implement, check, research)                              |
-| `src/templates/{platform}/extensions/trellis/index.ts.txt` | Project-local extension source written to `.pi/extensions/trellis/index.ts`               |
+| `src/templates/{platform}/extensions/omtre/index.ts.txt` | Project-local extension source written to `.pi/extensions/omtre/index.ts`               |
 | `src/templates/{platform}/settings.json`                   | Platform settings that enable extension, skills, and prompts                              |
 
-> Note: Pi Agent uses project-local TypeScript extensions instead of Trellis Python hooks. Keep generated hooks under `.pi/extensions/`, write prompt templates under `.pi/prompts/omtre-*.md`, and do not copy `shared-hooks/*.py` into `.pi/`. Agent Skills write to the shared `.agents/skills/` root (same path Codex and Gemini CLI use) via `resolveSkillsNeutral()`, not a private `.pi/skills/` root — Pi discovers `.agents/skills/` natively, and keeping a separate `.pi/skills/` copy caused Pi to see every skill twice when Codex or Gemini was also installed (#447). `configDir` stays `.pi`; `supportsAgentSkills: true` adds `.agents/skills` to Pi's managed paths, same as Codex/Gemini. A rename-dir migration (`0.6.8.json`) relocates any pre-#447 `.pi/skills/` install into `.agents/skills/` on `trellis update`. For the nested Pi launcher contract, see "Scenario: Pi Sub-Agent Launcher".
+> Note: Pi Agent uses project-local TypeScript extensions instead of omtre Python hooks. Keep generated hooks under `.pi/extensions/`, write prompt templates under `.pi/prompts/omtre-*.md`, and do not copy `shared-hooks/*.py` into `.pi/`. Agent Skills write to the shared `.agents/skills/` root (same path Codex and Gemini CLI use) via `resolveSkillsNeutral()`, not a private `.pi/skills/` root — Pi discovers `.agents/skills/` natively, and keeping a separate `.pi/skills/` copy caused Pi to see every skill twice when Codex or Gemini was also installed (#447). `configDir` stays `.pi`; `supportsAgentSkills: true` adds `.agents/skills` to Pi's managed paths, same as Codex/Gemini. A rename-dir migration (`0.6.8.json`) relocates any pre-#447 `.pi/skills/` install into `.agents/skills/` on `omtre update`. For the nested Pi launcher contract, see "Scenario: Pi Sub-Agent Launcher".
 >
-> Pi is an explicit `omtre-start` exception: `session_start` is notify-only and cannot mutate model-visible context, so the configurator must keep `.pi/prompts/omtre-start.md` as a manual bootstrap fallback while the extension injects startup/full Trellis context through `before_agent_start.systemPrompt` and persists compact workflow/session context through a hidden custom message returned from `before_agent_start`.
+> Pi is an explicit `omtre-start` exception: `session_start` is notify-only and cannot mutate model-visible context, so the configurator must keep `.pi/prompts/omtre-start.md` as a manual bootstrap fallback while the extension injects startup/full omtre context through `before_agent_start.systemPrompt` and persists compact workflow/session context through a hidden custom message returned from `before_agent_start`.
 >
-> Project-local package isolation rule: when Trellis enables Pi for a project, `.pi/settings.json` does not include `npm:pi-subagents` in `packages` — Trellis's own tool is named `trellis_subagent`, so no name collision with community `subagent` tool exists. Users may install community sub-agent packages (nicobailon/pi-subagents or tintinweb/pi-subagents) independently.
+> Project-local package isolation rule: when omtre enables Pi for a project, `.pi/settings.json` does not include `npm:pi-subagents` in `packages` — omtre's own tool is named `omtre_subagent`, so no name collision with community `subagent` tool exists. Users may install community sub-agent packages (nicobailon/pi-subagents or tintinweb/pi-subagents) independently.
 
 **Skills pattern** (Codex, Kiro):
 
@@ -150,17 +150,17 @@ the build if it is really just an extra write.
 > - Platform detection uses `.codex/` only — `.agents/skills/` alone does NOT trigger codex detection
 > - `configDir` is `".codex"`, with `supportsAgentSkills: true` to auto-include `.agents/skills` in managed paths
 >
-> **Kimi Code is a hybrid skills platform** — workflow/bundled skills go to the shared `.agents/skills/` root via `resolveSkillsNeutral()` (byte-identical to Codex/Gemini/Pi; Kimi discovers that root natively), while the session-boundary commands (`start` / `continue` / `finish-work`, invoked as `/skill:omtre-<name>`) and the Trellis agent prompts are written as Kimi-private skills under `.kimi-code/skills/<name>/SKILL.md`. The same agent prompts are also installed as project-level custom sub-agent definitions at `.kimi-code/agents/omtre-{implement,check,research}.md` (Claude Code-compatible frontmatter), so the main session can dispatch `omtre-<name>` sub-agents directly; the skill copies stay as a guidance/fallback path. Kimi has no project-level hooks/settings file (hooks are user-level `~/.kimi-code/config.toml` only), so no hooks, settings, or extension files are written, and the agent prompts keep the pull-based prelude on implement/check (class-2).
+> **Kimi Code is a hybrid skills platform** — workflow/bundled skills go to the shared `.agents/skills/` root via `resolveSkillsNeutral()` (byte-identical to Codex/Gemini/Pi; Kimi discovers that root natively), while the session-boundary commands (`start` / `continue` / `finish-work`, invoked as `/skill:omtre-<name>`) and the omtre agent prompts are written as Kimi-private skills under `.kimi-code/skills/<name>/SKILL.md`. The same agent prompts are also installed as project-level custom sub-agent definitions at `.kimi-code/agents/omtre-{implement,check,research}.md` (Claude Code-compatible frontmatter), so the main session can dispatch `omtre-<name>` sub-agents directly; the skill copies stay as a guidance/fallback path. Kimi has no project-level hooks/settings file (hooks are user-level `~/.kimi-code/config.toml` only), so no hooks, settings, or extension files are written, and the agent prompts keep the pull-based prelude on implement/check (class-2).
 
 #### Rule: `.agents/skills/` writes use `resolvePlaceholdersNeutral()`
 
 `.agents/skills/` is a **shared destination**: multiple configurators (Codex, Gemini CLI 0.40+ via the workspace alias, future agentskills.io consumers) all write into the same path. Per-platform `{{CMD_REF:name}}` resolution (`$name` for Codex, `/omt:name` for Gemini, etc.) makes the same `<skill>/SKILL.md` differ byte-for-byte depending on which configurator ran last → "last-writer-wins" content collisions and `.template-hashes.json` churn.
 
-**Rule**: Anything written under `.agents/skills/` MUST be rendered via `resolvePlaceholdersNeutral()` (in `configurators/shared.ts`), which substitutes `` `name` (Trellis command) `` for `{{CMD_REF:name}}` instead of a platform prefix. All other placeholders (`{{CLI_FLAG}}`, `{{EXECUTOR_AI}}`, `{{USER_ACTION_LABEL}}`, conditionals, `{{PYTHON_CMD}}`) still resolve from the platform context — those don't appear in the auto-triggered skill templates from `common/skills/`, so the rendered output stays identical across writers.
+**Rule**: Anything written under `.agents/skills/` MUST be rendered via `resolvePlaceholdersNeutral()` (in `configurators/shared.ts`), which substitutes `` `name` (omtre command) `` for `{{CMD_REF:name}}` instead of a platform prefix. All other placeholders (`{{CLI_FLAG}}`, `{{EXECUTOR_AI}}`, `{{USER_ACTION_LABEL}}`, conditionals, `{{PYTHON_CMD}}`) still resolve from the platform context — those don't appear in the auto-triggered skill templates from `common/skills/`, so the rendered output stays identical across writers.
 
 Per-platform skill directories (`.claude/skills/`, `.cursor/skills/`, `.qoder/skills/`, etc.) keep using `resolvePlaceholders()` — `{{CMD_REF}}` resolves to the platform-correct slash form there, because no other configurator writes those paths.
 
-**Command-as-skill fallback files under `.agents/skills/`** (currently `omtre-start/SKILL.md`, `omtre-continue/SKILL.md`, and `omtre-finish-work/SKILL.md`, written via `resolveAllAsSkillsNeutral()` by Codex) may use per-platform `{{CLI_FLAG}}` / `{{PYTHON_CMD}}` because they are user-invoked fallback entrypoints. They still go through the neutral helper to keep `{{CMD_REF}}` neutralized for consistency with the surrounding shared skills. Platforms with their own private command and skill roots should not write `.agents/skills/`; for example, ZCode writes workflow/bundled skills under `.zcode/skills/` and keeps slash commands under `.zcode/commands/trellis/*.md`.
+**Command-as-skill fallback files under `.agents/skills/`** (currently `omtre-start/SKILL.md`, `omtre-continue/SKILL.md`, and `omtre-finish-work/SKILL.md`, written via `resolveAllAsSkillsNeutral()` by Codex) may use per-platform `{{CLI_FLAG}}` / `{{PYTHON_CMD}}` because they are user-invoked fallback entrypoints. They still go through the neutral helper to keep `{{CMD_REF}}` neutralized for consistency with the surrounding shared skills. Platforms with their own private command and skill roots should not write `.agents/skills/`; for example, ZCode writes workflow/bundled skills under `.zcode/skills/` and keeps slash commands under `.zcode/commands/omtre/*.md`.
 
 **Wrong**:
 
@@ -209,7 +209,7 @@ files.set(
 | ----------------------- | ------------------------------------------------ |
 | (no template directory) | Antigravity derives from Codex skills at runtime |
 
-> Note: Antigravity has no physical template files. `collectAntigravityTemplates()` (`antigravity.ts:9-15`) is a single `collectBothTemplates()` call against `src/templates/common/` — commands become `.agent/workflows/{name}.md`, skills become `.agent/skills/omtre-{name}/SKILL.md`. **There is no coupling to Codex**; `.codex/skills/` holds only user content and deleting Trellis's Codex skill templates (2026-08-05) changed nothing here. The config dir is `.agent/workflows` with `.agent/skills` as an extra managed path. Workflows are triggered with `/workflow-name` slash commands.
+> Note: Antigravity has no physical template files. `collectAntigravityTemplates()` (`antigravity.ts:9-15`) is a single `collectBothTemplates()` call against `src/templates/common/` — commands become `.agent/workflows/{name}.md`, skills become `.agent/skills/omtre-{name}/SKILL.md`. **There is no coupling to Codex**; `.codex/skills/` holds only user content and deleting omtre's Codex skill templates (2026-08-05) changed nothing here. The config dir is `.agent/workflows` with `.agent/skills` as an extra managed path. Workflows are triggered with `/workflow-name` slash commands.
 
 **Copilot pattern** (prompts + hooks):
 
@@ -223,7 +223,7 @@ files.set(
 
 > Note: Copilot uses `.prompt.md` format for commands (not plain `.md`). Hooks use `hooks.json` (not `settings.json`).
 >
-> SessionStart status: Microsoft's [VS Code Agent hooks docs](https://code.visualstudio.com/docs/copilot/customization/hooks) (preview, documented since VS Code 1.110 in Feb 2026) define `SessionStart.hookSpecificOutput.additionalContext` as the field that injects context into the agent's conversation. Trellis's `copilot/hooks/session-start.py` emits this spec-compliant shape. Whether Copilot consumes `additionalContext` depends on the user's installed VS Code and Copilot versions, which is outside Trellis's control — do not re-introduce a hardcoded `systemMessage` claiming Copilot ignores hook output (see GitHub #248). Copilot remains a class-2 (pull-based) platform for sub-agent context delivery until end-to-end consumption is verified.
+> SessionStart status: Microsoft's [VS Code Agent hooks docs](https://code.visualstudio.com/docs/copilot/customization/hooks) (preview, documented since VS Code 1.110 in Feb 2026) define `SessionStart.hookSpecificOutput.additionalContext` as the field that injects context into the agent's conversation. omtre's `copilot/hooks/session-start.py` emits this spec-compliant shape. Whether Copilot consumes `additionalContext` depends on the user's installed VS Code and Copilot versions, which is outside omtre's control — do not re-introduce a hardcoded `systemMessage` claiming Copilot ignores hook output (see GitHub #248). Copilot remains a class-2 (pull-based) platform for sub-agent context delivery until end-to-end consumption is verified.
 
 **Droid pattern** (droids + settings):
 
@@ -335,8 +335,8 @@ for (const [filePath, content] of collectSkillTemplates(
 source, dist, generated-files, and update-tracking chain:
 `src/templates/common/bundled-skills/<skill>/` ->
 `dist/templates/common/bundled-skills/<skill>/` -> platform skill roots after
-built-binary `trellis init` -> `.omtre/.template-hashes.json` -> built-binary
-`trellis update --dry-run` with no pending changes.
+built-binary `omtre init` -> `.omtre/.template-hashes.json` -> built-binary
+`omtre update --dry-run` with no pending changes.
 
 ### Step 5: Template Extraction
 
@@ -344,7 +344,7 @@ built-binary `trellis init` -> `.omtre/.template-hashes.json` -> built-binary
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/templates/extract.ts` | Only needed if platform has a physical template directory. Most new platforms generate from `common/` templates and don't need extraction functions |
 
-> Note: Platforms using `createTemplateReader(import.meta.url)` in their `index.ts` handle their own template reading. The `extract.ts` functions (`getTrellisSourcePath()`, `readTrellisFile()`, `copyTrellisDir()`) are primarily for the `.omtre/` workflow files, not platform templates.
+> Note: Platforms using `createTemplateReader(import.meta.url)` in their `index.ts` handle their own template reading. The `extract.ts` functions (`getOmtreSourcePath()`, `readOmtreFile()`, `copyOmtreDir()`) are primarily for the `.omtre/` workflow files, not platform templates.
 
 ### Step 6: Python Scripts (independent runtime)
 
@@ -352,20 +352,20 @@ built-binary `trellis init` -> `.omtre/.template-hashes.json` -> built-binary
 
 | File                                                  | Change                                                                                                          |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `src/templates/trellis/scripts/common/cli_adapter.py` | Add to `Platform` literal type, `config_dir_name` property, `detect_platform()`, `get_cli_adapter()` validation |
+| `src/templates/omtre/scripts/common/cli_adapter.py` | Add to `Platform` literal type, `config_dir_name` property, `detect_platform()`, `get_cli_adapter()` validation |
 
 **cli_adapter.py methods requiring explicit branches** (do NOT rely on `else` fallthrough):
 
 | Method                       | What to decide                    | Example                                          |
 | ---------------------------- | --------------------------------- | ------------------------------------------------ |
 | `config_dir_name`            | Config directory name             | `".gemini"`, `".agent"`                          |
-| `get_trellis_command_path()` | Command file path format          | `.toml` vs `.md`, subdirectory vs flat           |
+| `get_omtre_command_path()` | Command file path format          | `.toml` vs `.md`, subdirectory vs flat           |
 | `get_non_interactive_env()`  | Non-interactive env var           | `{}` if none, or platform-specific               |
 | `build_run_command()`        | CLI command for running agents    | `["gemini", prompt]` or raise ValueError         |
 | `build_resume_command()`     | CLI command for resuming sessions | `["gemini", "--resume", id]` or raise ValueError |
 | `cli_name`                   | CLI executable name               | `"gemini"`, `"agy"`                              |
 | `detect_platform()`          | Directory detection logic         | Check `.gemini/` exists                          |
-| `get_commands_path()`        | Command directory structure       | `commands/trellis/` or `workflows/`              |
+| `get_commands_path()`        | Command directory structure       | `commands/omtre/` or `workflows/`              |
 
 > Note: Python scripts run in user projects at runtime — they cannot import from the TS registry and maintain their own registry in `cli_adapter.py`.
 
@@ -445,7 +445,7 @@ forms.
 > adding env names.
 
 Pi Agent exposes its real session identity through the extension context, not
-through ordinary Bash environment. The generated `.pi/extensions/trellis/index.ts`
+through ordinary Bash environment. The generated `.pi/extensions/omtre/index.ts`
 extension must read `ctx.sessionManager.getSessionId()`, derive the same
 `pi_<session-id>` context key for context injection and sub-agent launches, and
 prefix Bash tool calls in `tool_call` with
@@ -472,7 +472,7 @@ ticket instead (see below). Without one of these session signals, `task.py
 start` must fail with a clear session identity hint and must not write
 `.omtre/.current-task`.
 Pi is extension-backed rather than Python-hook-backed: `tool_call` must mutate
-`event.input.command` before Bash execution, and the custom `trellis_subagent` tool must
+`event.input.command` before Bash execution, and the custom `omtre_subagent` tool must
 spawn child `pi` processes with `OMTRE_CONTEXT_ID` in `env`.
 
 #### Shell-ticket bridge (platform-neutral)
@@ -509,7 +509,7 @@ while debugging. Statuslines may shorten this to `[session]` to avoid noisy UI.
 
 | File                                                 | Constant                        | When to update                                                                                                              |
 | ---------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `src/templates/trellis/scripts/common/task_store.py` | `_SUBAGENT_CONFIG_DIRS` (tuple) | Add `.{configDir}/` if the new platform can spawn sub-agents (Class-1 hook-inject, Class-2 pull-based, or extension-backed) |
+| `src/templates/omtre/scripts/common/task_store.py` | `_SUBAGENT_CONFIG_DIRS` (tuple) | Add `.{configDir}/` if the new platform can spawn sub-agents (Class-1 hook-inject, Class-2 pull-based, or extension-backed) |
 
 This tuple is consulted by `cmd_create` to decide whether to seed `implement.jsonl` / `check.jsonl` for the new task. Agent-less platforms (Kilo, Antigravity, Devin) MUST be excluded — they don't consume jsonl.
 
@@ -523,7 +523,7 @@ Same root reason as `cli_adapter.py`: Python scripts run at user-project runtime
 > - `detect_platform` checks `.codex/` existence (not `.agents/skills/`)
 
 **Repo-global, not Codex-specific**: the shipped script tree
-(`packages/cli/src/templates/trellis/scripts/`) and Trellis's own dogfood copy
+(`packages/cli/src/templates/omtre/scripts/`) and omtre's own dogfood copy
 (`.omtre/scripts/`) must stay byte-identical. This is now build-enforced —
 see `script-conventions.md` → "Two script trees, one content".
 
@@ -531,7 +531,7 @@ see `script-conventions.md` → "Two script trees, one content".
 
 #### 1. Scope / Trigger
 
-Trigger: Codex has a native sub-agent start hook. Trellis must send only the
+Trigger: Codex has a native sub-agent start hook. omtre must send only the
 dispatched role's task context to a child without letting a stale environment
 override the parent session or letting a missing parent borrow another window's
 task.
@@ -584,7 +584,7 @@ The native hook path calls this resolver with `platform="codex"`,
   `configurators/codex.ts`) both extract any existing top-level `model` /
   `model_reasoning_effort` lines from the on-disk file and re-insert them
   after `sandbox_mode` in the freshly rendered template before writing or
-  hashing, so `trellis init` / `trellis update` never clobber a user-pinned
+  hashing, so `omtre init` / `omtre update` never clobber a user-pinned
   model and never flag the pinned lines as a modified-file conflict. Static
   templates ship these as commented hint lines only.
 
@@ -601,7 +601,7 @@ The native hook path calls this resolver with `platform="codex"`,
 | referenced full-output file cannot be read | child uses its role-specific `Active task:` pull fallback |
 | no saved-output notice and marker is absent | child uses its role-specific `Active task:` pull fallback |
 | stale/missing task, malformed hook JSON, or unexpected error | fail open; Codex still starts the child |
-| non-Trellis `agent_type` | no Trellis output |
+| non-omtre `agent_type` | no omtre output |
 
 #### 5. Good / Base / Bad Cases
 
@@ -619,7 +619,7 @@ The native hook path calls this resolver with `platform="codex"`,
 - Parse generated Hook config and assert both event registrations plus the
   narrowed matcher.
 - Black-box the shared hook for valid, unknown, malformed, concurrent, and
-  non-Trellis subagents; assert the output envelope, marker, ordering, and
+  non-omtre subagents; assert the output envelope, marker, ordering, and
   environment-override isolation.
 - Cover `auto` default, explicit `inline`, legacy `sub-agent`, and invalid
   configuration across JSONL seeding, effective workflow platform, and the
@@ -647,10 +647,10 @@ file first, and use the role-specific pull fallback only when recovery fails.
 
 ### Step 7: Documentation
 
-| File           | Change                                         |
-| -------------- | ---------------------------------------------- |
-| `README.md`    | Add platform to supported tools list           |
-| `README_CN.md` | Add platform to supported tools list (Chinese) |
+| File                                  | Change                                              |
+| ------------------------------------- | --------------------------------------------------- |
+| `README.md` / `README.zh-CN.md`       | Add platform to the supported tools list (EN + ZH)  |
+| `docs/pack.md` / `docs/pack.zh-CN.md` | Add the platform to the full support section        |
 
 ### Step 8: Build Scripts
 
@@ -660,12 +660,12 @@ file first, and use the role-specific pull fallback only when recovery fails.
 
 ### Step 9: Project Config (Optional)
 
-If Trellis project itself should support the new platform:
+If omtre project itself should support the new platform:
 
 | Directory                       | Contents                       |
 | ------------------------------- | ------------------------------ |
 | `.{platform}/`                  | Project's own config directory |
-| `.{platform}/commands/trellis/` | Slash commands                 |
+| `.{platform}/commands/omtre/` | Slash commands                 |
 | `.{platform}/agents/`           | Agents                         |
 | `.{platform}/hooks/`            | Hooks                          |
 | `.{platform}/settings.json`     | Settings                       |
@@ -683,7 +683,7 @@ If Trellis project itself should support the new platform:
 | Test File                                | What to Add                                                                                                                                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `test/templates/{platform}.test.ts`      | **NEW FILE**: Verify the platform's template-module readers (`getAllAgents()`, `getAllHooks()`, `getHooksConfig()`, `getSettings()` — whichever it exposes) return the expected set, content non-empty, format valid. Assert one bundled skill file by name if the platform ships them |
-| `test/configurators/platforms.test.ts`   | Detection test: `getConfiguredPlatforms` recognizes tracked Trellis templates but ignores native platform directories. Content test: `configurePlatform` writes the expected paths, no compiled artifacts. **The `configure` ⟷ `collectTemplates` parity assertions are registry-wide and cover a new platform automatically — do not copy them per platform** |
+| `test/configurators/platforms.test.ts`   | Detection test: `getConfiguredPlatforms` recognizes tracked omtre templates but ignores native platform directories. Content test: `configurePlatform` writes the expected paths, no compiled artifacts. **The `configure` ⟷ `collectTemplates` parity assertions are registry-wide and cover a new platform automatically — do not copy them per platform** |
 | `test/commands/init.integration.test.ts` | Init test: `init({ {platform}: true })` creates correct directory. Negative assertions: add `.{configDir}` checks to existing platform tests                                                                            |
 | `test/templates/extract.test.ts`         | `get{Platform}TemplatePath()` returns existing dir. `get{Platform}SourcePath()` deprecated alias equals template path                                                                                                   |
 | `test/regression.test.ts`                | Platform registration: `AI_TOOLS.{platform}` exists with correct `configDir`. cli_adapter: `commonCliAdapter` contains `"{platform}"` and `".{configDir}"`. Update `withTracking` list if `collectTemplates` is defined |
@@ -757,7 +757,7 @@ tables name the file without invoking it.
 
 - **Good** — a platform gains a pre-shell event: add it to the table *and* add the invocation to its config template, in the same change. The test proves both halves landed.
 - **Base** — Kiro. Deliberately **not** wired: neither of its two hook surfaces (CLI agent JSON `hooks.{agentSpawn,userPromptSubmit}` and IDE `.kiro.hook` `when.type`) publishes a pre-tool trigger, and an unknown key in the agent JSON risks the whole agent failing to load. The probe that would settle it is recorded in the declaration comment — run Kiro, check its hook trigger list.
-- **Bad** — declaring the hook and "wiring it later". The file ships, `trellis update` starts managing it, users see it in their repo, and nothing calls it. This is precisely the state the test now makes unreachable.
+- **Bad** — declaring the hook and "wiring it later". The file ships, `omtre update` starts managing it, users see it in their repo, and nothing calls it. This is precisely the state the test now makes unreachable.
 
 ### 6. Tests Required
 
@@ -798,7 +798,7 @@ foo: ["session-start.py", "inject-shell-session-context.py"],
 
 ### 1. Scope / Trigger
 
-Use this pattern when a platform provides project-local JS/TS extension events and custom tools rather than Trellis-compatible Python hooks. Pi Agent is the reference implementation.
+Use this pattern when a platform provides project-local JS/TS extension events and custom tools rather than omtre-compatible Python hooks. Pi Agent is the reference implementation.
 
 ### 2. Signatures
 
@@ -823,7 +823,7 @@ Configurator output:
 .pi/prompts/omtre-<command>.md
 .agents/skills/<skill>/SKILL.md
 .pi/agents/omtre-<agent>.md
-.pi/extensions/trellis/index.ts
+.pi/extensions/omtre/index.ts
 ```
 
 Runtime script registry:
@@ -839,16 +839,16 @@ Extension-backed platforms MUST NOT receive `.omtre/templates/shared-hooks/*.py`
 
 For Pi Agent:
 
-| Trellis concept                    | Pi surface                                                                                                                                                                                                                                                            |
+| omtre concept                    | Pi surface                                                                                                                                                                                                                                                            |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Session start                      | `session_start` extension event (notify-only; context-key is established but no prompt mutation)                                                                                                                                                                      |
 | Per-turn workflow-state breadcrumb | `before_agent_start.message` hidden custom message — persists cached `<workflow-state>` + `<session-overview>` from `getTurnCtx()` without showing it in the UI; skipped when identical to the last persisted runtime context (dedup)                                |
 | Startup context                    | `before_agent_start` builds compact SessionStart-equivalent context (`<session-context>`, adaptive `<first-reply-notice>`, `<session-overview>`, `<omtre-workflow>`, `<ready>`) once per context key, memoizes it, and contributes the identical bytes to `systemPrompt` on every turn |
 | Per-agent-invocation context       | `before_agent_start.systemPrompt` carries a per-context-key snapshot of task context (PRD + jsonl) taken on first use; later on-disk task changes are delivered through `before_agent_start.message` as `<omtre-task-context-update>` persisted messages           |
-| Per-Bash-tool session identity     | `tool_call` extension event; mutates `event.input.command` in place via `injectTrellisContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;`                                                                                                         |
-| Sub-agent dispatch                 | custom `trellis_subagent` tool with `promptSnippet`/`promptGuidelines = SUBAGENT_DISPATCH_PROTOCOL`; resolves the Pi CLI JS entrypoint when possible, runs `--mode text -p --no-session`, sends the delegated prompt through stdin, and forwards `OMTRE_CONTEXT_ID` |
+| Per-Bash-tool session identity     | `tool_call` extension event; mutates `event.input.command` in place via `injectomtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;`                                                                                                         |
+| Sub-agent dispatch                 | custom `omtre_subagent` tool with `promptSnippet`/`promptGuidelines = SUBAGENT_DISPATCH_PROTOCOL`; resolves the Pi CLI JS entrypoint when possible, runs `--mode text -p --no-session`, sends the delegated prompt through stdin, and forwards `OMTRE_CONTEXT_ID` |
 
-The compact model-visible context injection point is `before_agent_start.message`; it uses `TurnContextCache` so the same request path does not re-spawn the default `get_context.py` session-context call unnecessarily. Pi does not register a Trellis `input` handler for runtime context injection, so user text is not rewritten. The existing Pi `context` event may establish the context key, but it must not append Trellis runtime messages because request-local messages are not persisted and can break provider prefix cache. See "Class-3 injection points (Pi extension)" below the modes table for the runtime contract.
+The compact model-visible context injection point is `before_agent_start.message`; it uses `TurnContextCache` so the same request path does not re-spawn the default `get_context.py` session-context call unnecessarily. Pi does not register an omtre `input` handler for runtime context injection, so user text is not rewritten. The existing Pi `context` event may establish the context key, but it must not append omtre runtime messages because request-local messages are not persisted and can break provider prefix cache. See "Class-3 injection points (Pi extension)" below the modes table for the runtime contract.
 
 Cache-stability invariant: everything the extension contributes to `systemPrompt` must be byte-identical across every turn of a session (provider prefix caches invalidate from byte 0 on any system prompt change). Startup context and task context are therefore memoized per context key; anything volatile (workflow breadcrumb, session overview, task-doc changes) is delivered exclusively through persisted `before_agent_start.message` custom messages, and only when its content differs from the last persisted copy.
 
@@ -859,7 +859,7 @@ If `agentCapable` is true, `task.py create` must seed `implement.jsonl` / `check
 | Condition                                                                     | Behavior                                                                                |
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `hasHooks: true` and `hasPythonHooks: false`                                  | Init does not run Windows Python hook detection for the platform                        |
-| Platform can spawn Trellis sub-agents                                         | Add config dir to `_SUBAGENT_CONFIG_DIRS`                                               |
+| Platform can spawn omtre sub-agents                                         | Add config dir to `_SUBAGENT_CONFIG_DIRS`                                               |
 | Platform cannot consume JSONL context                                         | Keep it out of `_SUBAGENT_CONFIG_DIRS` even if it has commands/skills                   |
 | Generated extension source is tracked                                         | `collectTemplates()` must include the same path written by `configure{Platform}`        |
 | Extension path contains `spec/` in a skill name such as `omtre-update-spec` | Template hash exclusion must not drop it; only `.omtre/spec/` is user-owned spec data |
@@ -870,7 +870,7 @@ If `agentCapable` is true, `task.py create` must seed `implement.jsonl` / `check
 Good:
 
 ```text
-.pi/extensions/trellis/index.ts
+.pi/extensions/omtre/index.ts
 .pi/agents/omtre-implement.md
 .agents/skills/update-spec/SKILL.md
 ```
@@ -898,9 +898,9 @@ Add or update tests that assert:
 - `collectPlatformTemplates("<platform>")` matches init output paths.
 - `init({ <flag>: true })` creates platform assets and tracks hashes for all generated templates.
 - `get_context.py --mode phase --platform <platform>` routes to sub-agent-capable workflow blocks when `agentCapable` is true.
-- Runtime script copies (`src/templates/trellis/scripts/**` and live `.omtre/scripts/**`) both recognize the platform.
-- The generated extension registers handlers for the Pi runtime surfaces (`before_agent_start`, `context`, `tool_call`) plus the `subagent` custom tool with `promptSnippet`/`promptGuidelines` set to the dispatch protocol constant, and does not register `input` for Trellis runtime context injection.
-- The TS-port workflow-state regex (`WF_RE` in `templates/pi/extensions/trellis/index.ts.txt:1072`) matches the same status names and body content as the Python `_TAG_RE` on a shared fixture from `templates/trellis/workflow.md`.
+- Runtime script copies (`src/templates/omtre/scripts/**` and live `.omtre/scripts/**`) both recognize the platform.
+- The generated extension registers handlers for the Pi runtime surfaces (`before_agent_start`, `context`, `tool_call`) plus the `subagent` custom tool with `promptSnippet`/`promptGuidelines` set to the dispatch protocol constant, and does not register `input` for omtre runtime context injection.
+- The TS-port workflow-state regex (`WF_RE` in `templates/pi/extensions/omtre/index.ts.txt:1072`) matches the same status names and body content as the Python `_TAG_RE` on a shared fixture from `templates/omtre/workflow.md`.
 
 ### 7. Wrong vs Correct
 
@@ -917,7 +917,7 @@ This installs Python hooks into a platform whose hook surface is a TypeScript ex
 #### Correct
 
 ```typescript
-files.set(".pi/extensions/trellis/index.ts", getExtensionTemplate());
+files.set(".pi/extensions/omtre/index.ts", getExtensionTemplate());
 ```
 
 Extension-backed platforms keep hook-equivalent behavior in platform-native extension files and test those files as templates.
@@ -928,7 +928,7 @@ Extension-backed platforms keep hook-equivalent behavior in platform-native exte
 
 ### 1. Scope / Trigger
 
-Use this contract when `.pi/extensions/trellis/index.ts` launches a nested Pi process for the Trellis `subagent` tool.
+Use this contract when `.pi/extensions/omtre/index.ts` launches a nested Pi process for the omtre `subagent` tool.
 
 This is Windows-sensitive runtime integration. Node `spawn("pi", ...)` can fail with `ENOENT` when Pi is installed through an npm shim instead of a real `pi.exe`, and passing the full delegated prompt as an argv value can hit platform argument-length limits.
 
@@ -971,8 +971,8 @@ spawn(
 | Output mode         | Use `--mode text`; keep final-output formatter tolerant of structured or diagnostic output                                                                                                                           |
 | Context             | Forward `OMTRE_CONTEXT_ID` into the child env when available                                                                                                                                                       |
 | Agent config        | Parse `model`, `thinking`, and `fallbackModels` from `.pi/agents/*.md` frontmatter                                                                                                                                   |
-| Per-call overrides  | `trellis_subagent` tool input may override frontmatter with `model` and `thinking`                                                                                                                                   |
-| Agent validation    | `isTrellisAgent()` checks `existsSync(.pi/agents/omtre-{agent}.md)` before spawn; invalid → returns error text listing community alternatives                                                                      |
+| Per-call overrides  | `omtre_subagent` tool input may override frontmatter with `model` and `thinking`                                                                                                                                   |
+| Agent validation    | `isomtreAgent()` checks `existsSync(.pi/agents/omtre-{agent}.md)` before spawn; invalid → returns error text listing community alternatives                                                                      |
 | Model/thinking args | If model and thinking are present and model has no thinking suffix, pass `--model <model>:<thinking>`; if model already has a suffix, pass it unchanged; if thinking exists without model, pass `--thinking <level>` |
 | Output buffers      | Bound stdout and stderr collection separately; keep the tail plus truncation notice                                                                                                                                  |
 
@@ -1032,7 +1032,7 @@ Add or update template/configurator tests that assert:
 - the generated extension writes the prompt through `child.stdin?.end(prompt)`;
 - the generated extension contains bounded stdout/stderr collectors;
 - the old argv launcher and `toPiPromptArgument` are absent;
-- `.pi/extensions/trellis/index.ts` stays byte-for-byte aligned with `src/templates/pi/extensions/trellis/index.ts.txt`;
+- `.pi/extensions/omtre/index.ts` stays byte-for-byte aligned with `src/templates/pi/extensions/omtre/index.ts.txt`;
 - the dogfood extension compiles as TypeScript independently of the package build.
 
 ### 7. Wrong vs Correct
@@ -1126,7 +1126,7 @@ Commands emitted by `resolveCommands(ctx)` / `resolveAllAsSkills(ctx)` / `resolv
 **Rule**: filter is by `ctx.agentCapable && ctx.hasHooks` — **both flags required** (changed in 0.6.4; the prior single-flag rule silently dropped `start` from Codex / ZCode / OpenCode / Reasonix). `agentCapable` alone is not a proxy for "has a session-start mechanism" because some agent-capable platforms ship without a SessionStart-equivalent hook and rely on user-invocable `start` instead.
 
 - `agentCapable && hasHooks` (13): `claude-code, cursor, kiro, gemini, qoder, codebuddy, copilot, droid, pi, zcode, trae, omp, snow`
-- `agentCapable && !hasHooks` (5): `opencode, codex, reasonix, grok, kimi` — Codex has a UserPromptSubmit hook but no SessionStart; OpenCode has a `plugins/session-start.js` plugin but registry-`hasHooks` is reserved for the SessionStart-style hook protocol; Reasonix and Grok have neither; Kimi has hooks only in the user-level `~/.kimi-code/config.toml` (no project-level hook file Trellis may write).
+- `agentCapable && !hasHooks` (5): `opencode, codex, reasonix, grok, kimi` — Codex has a UserPromptSubmit hook but no SessionStart; OpenCode has a `plugins/session-start.js` plugin but registry-`hasHooks` is reserved for the SessionStart-style hook protocol; Reasonix and Grok have neither; Kimi has hooks only in the user-level `~/.kimi-code/config.toml` (no project-level hook file omtre may write).
 - `!agentCapable` (3): `kilo, antigravity, devin`
 
 These three groups are computed from `AI_TOOLS[id].templateContext`; if you change a flag, recount rather than editing one line.
@@ -1137,23 +1137,23 @@ These three groups are computed from `AI_TOOLS[id].templateContext`; if you chan
 
 ## Subagent Context Injection: Hook-based vs Pull-based vs Extension-backed
 
-Trellis sub-agents (implement / check / research) need task context (`prd.md` + spec files listed in `implement.jsonl` / `check.jsonl`) at startup. There are **three** delivery classes depending on the platform's hook capabilities. The class-1 / class-2 / class-3 labels below are also used by the `[workflow-state:in_progress]` breadcrumb body and by the Pi `SUBAGENT_DISPATCH_PROTOCOL` constant — keep terminology stable across all three writers.
+omtre sub-agents (implement / check / research) need task context (`prd.md` + spec files listed in `implement.jsonl` / `check.jsonl`) at startup. There are **three** delivery classes depending on the platform's hook capabilities. The class-1 / class-2 / class-3 labels below are also used by the `[workflow-state:in_progress]` breadcrumb body and by the Pi `SUBAGENT_DISPATCH_PROTOCOL` constant — keep terminology stable across all three writers.
 
 | Class                          | Mechanism                                                                                                                                                                                                      | Platforms                                                     |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | **Class-1** — Hook-inject      | Native hook or plugin fires at sub-agent start and injects context before the child runs, either by rewriting the spawn prompt or adding developer context                                                        | Claude Code, Cursor, OpenCode, Kiro, CodeBuddy, Codex, Factory Droid, ZCode, Snow CLI |
-| **Class-2** — Pull-based       | Platform lacks a Trellis-supported native sub-agent context injection hook; Trellis injects a "Required: Load Trellis Context First" prelude into each definition so the sub-agent reads context at startup     | Gemini CLI, Qoder, Copilot, Reasonix, Trae IDE, Grok Build, Kimi Code  |
-| **Class-3** — Extension-backed | Platform exposes hook-equivalent events and custom tools through a project-local TypeScript extension; Trellis owns the sub-agent tool and the context injection path                                          | Pi Agent, Oh My Pi                                           |
+| **Class-2** — Pull-based       | Platform lacks an omtre-supported native sub-agent context injection hook; omtre injects a "Required: Load omtre Context First" prelude into each definition so the sub-agent reads context at startup     | Gemini CLI, Qoder, Copilot, Reasonix, Trae IDE, Grok Build, Kimi Code  |
+| **Class-3** — Extension-backed | Platform exposes hook-equivalent events and custom tools through a project-local TypeScript extension; omtre owns the sub-agent tool and the context injection path                                          | Pi Agent, Oh My Pi                                           |
 
 ### Class-1 — Hook-inject (9 platforms)
 
-Platform's native sub-agent-start hook delivers context before the child runs. Most platforms rewrite the spawn prompt; Codex emits developer context through `SubagentStart`. Trellis's `inject-subagent-context.py` (or the platform's own plugin/hook) reads `prd.md` + the JSONL-referenced spec files for that delivery.
+Platform's native sub-agent-start hook delivers context before the child runs. Most platforms rewrite the spawn prompt; Codex emits developer context through `SubagentStart`. omtre's `inject-subagent-context.py` (or the platform's own plugin/hook) reads `prd.md` + the JSONL-referenced spec files for that delivery.
 
 | Platform      | Hook event                            | Mechanism                               |
 | ------------- | ------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Claude Code   | `PreToolUse` + matcher `Task`/`Agent` | `updatedInput.prompt`                   |
 | CodeBuddy     | `PreToolUse` + matcher `Task`         | `modifiedInput.prompt` (same as Claude) |
-| Codex         | `SubagentStart` + exact Trellis-role matcher | `hookSpecificOutput.additionalContext`; child-side pull fallback |
+| Codex         | `SubagentStart` + exact omtre-role matcher | `hookSpecificOutput.additionalContext`; child-side pull fallback |
 | Cursor        | `preToolUse` + matcher `Task          | Subagent`                               | `updated_input.prompt` (Cursor staff marked Task prompt mutation fixed on 2026-04-07; current Cursor may emit native sub-agent calls as tool name `Subagent`, and native Task args may encode custom agents as `subagent_type.custom.name`) |
 | Factory Droid | `PreToolUse` + matcher `Task`         | `updatedInput.prompt`                   |
 | Kiro          | per-agent `agentSpawn` hook           | direct stdout context                   |
@@ -1168,10 +1168,10 @@ OpenCode is a hybrid class-1 platform: its main session uses `tool.execute.befor
 **Required contract** for any OpenCode `chat.message` plugin that mutates `output.parts`:
 
 ```js
-import { isTrellisSubagent } from "../lib/omtre-context.js"
+import { isomtreSubagent } from "../lib/omtre-context.js"
 
 "chat.message": async (input, output) => {
-  if (isTrellisSubagent(input)) {
+  if (isomtreSubagent(input)) {
     // input.agent matched /^omtre-(implement|check|research)$/
     // Sub-agent context is injected by inject-subagent-context.js on the
     // parent's tool.execute.before — do not double-inject here.
@@ -1181,21 +1181,21 @@ import { isTrellisSubagent } from "../lib/omtre-context.js"
 }
 ```
 
-`isTrellisSubagent()` lives in `lib/omtre-context.js`; the regex matches `omtre-implement` / `omtre-check` / `omtre-research` exactly.
+`isomtreSubagent()` lives in `lib/omtre-context.js`; the regex matches `omtre-implement` / `omtre-check` / `omtre-research` exactly.
 
 **Sub-agent task resolution order** in `inject-subagent-context.js` `tool.execute.before` (only later steps run when earlier ones miss):
 
 1. Exact session runtime context lookup for `input.sessionID` (writes a `session:<key>` source)
 2. `Active task: <path>` line parsed from `args.prompt` first non-empty line (source `prompt-hint`) — explicit per-dispatch override, beats single-session inference so multi-window users can disambiguate
-3. Single-session fallback in `TrellisContext._resolveSingleSessionFallback()` — only when exactly 1 file exists in `.omtre/.runtime/sessions/`; refuses to guess when 0 or ≥2 files exist (source `session-fallback:<context_key>`). Mirrors Python `_resolve_single_session_fallback` (`active_task.py:497-519`).
+3. Single-session fallback in `OmtreContext._resolveSingleSessionFallback()` — only when exactly 1 file exists in `.omtre/.runtime/sessions/`; refuses to guess when 0 or ≥2 files exist (source `session-fallback:<context_key>`). Mirrors Python `_resolve_single_session_fallback` (`active_task.py:497-519`).
 
-`buildPrompt()` for implement / check / finish / research **must** prepend `<!-- omtre-hook-injected -->` so generated agent definitions in `.opencode/agents/*.md` can detect a successful injection (Trellis-internal contract; OpenCode itself ignores the marker).
+`buildPrompt()` for implement / check / finish / research **must** prepend `<!-- omtre-hook-injected -->` so generated agent definitions in `.opencode/agents/*.md` can detect a successful injection (omtre-internal contract; OpenCode itself ignores the marker).
 
 `getActiveTask()` in `lib/omtre-context.js` itself includes the single-session fallback so any caller (`workflow-state` breadcrumb, `session-start` task status) sees the same resolved task as the prompt injector. The fallback only activates when the explicit context-key lookup misses, so multi-window setups remain isolated.
 
 ### Class-2 — Pull-based (7 platforms)
 
-Platform's hook either does not expose a sub-agent-start event or cannot inject Trellis context. Sub-agents must read context themselves at startup. Trellis injects a "Required: Load Trellis Context First" prelude into each sub-agent definition file.
+Platform's hook either does not expose a sub-agent-start event or cannot inject omtre context. Sub-agents must read context themselves at startup. omtre injects a "Required: Load omtre Context First" prelude into each sub-agent definition file.
 
 | Platform | Why native context injection is unavailable |
 |---|---|
@@ -1203,9 +1203,9 @@ Platform's hook either does not expose a sub-agent-start event or cannot inject 
 | Qoder | No `Task` tool concept; `SubagentStart` input has no `prompt` field; Context Isolation |
 | Copilot | `preToolUse` doesn't enforce on subagents ([#2392](https://github.com/github/copilot-cli/issues/2392), [#2540](https://github.com/github/copilot-cli/issues/2540)) |
 | Reasonix | Sub-agent skills run with `runAs: subagent`; no prompt-mutation hook exists, so workflow dispatch must carry the active task and the sub-agent skill reads task artifacts itself. |
-| Trae IDE | `SessionStart` / `UserPromptSubmit` hooks cover main-session context, but no Trellis-supported sub-agent prompt mutation surface exists; generated `.trae/agents/*.md` files receive the pull-based prelude. |
-| Grok Build | Hook stdout `additionalContext` is not consumed (verified on 0.2.x), so no Trellis hook is installed; dispatch goes through `spawn_subagent` and generated `.grok/agents/*.md` files receive the pull-based prelude. |
-| Kimi Code | Hooks exist only in the user-level `~/.kimi-code/config.toml` (no project-level hook/settings file Trellis may write), so the Trellis agent prompts keep the pull-based prelude. They ship both as `.kimi-code/skills/omtre-*/SKILL.md` (guidance/fallback) and as custom sub-agent definitions under `.kimi-code/agents/omtre-*.md` sourced from the same templates. |
+| Trae IDE | `SessionStart` / `UserPromptSubmit` hooks cover main-session context, but no omtre-supported sub-agent prompt mutation surface exists; generated `.trae/agents/*.md` files receive the pull-based prelude. |
+| Grok Build | Hook stdout `additionalContext` is not consumed (verified on 0.2.x), so no omtre hook is installed; dispatch goes through `spawn_subagent` and generated `.grok/agents/*.md` files receive the pull-based prelude. |
+| Kimi Code | Hooks exist only in the user-level `~/.kimi-code/config.toml` (no project-level hook/settings file omtre may write), so the omtre agent prompts keep the pull-based prelude. They ship both as `.kimi-code/skills/omtre-*/SKILL.md` (guidance/fallback) and as custom sub-agent definitions under `.kimi-code/agents/omtre-*.md` sourced from the same templates. |
 
 #### Active task discovery on class-2 platforms (issue #225)
 
@@ -1215,30 +1215,30 @@ Sub-agents on class-2 platforms run as **separate sessions** with their own sess
 2. **`task.py current --source`** — secondary. Resolves via the session-scoped runtime store. Returns `Source: session:<key>` on a precise match, or `Source: session-fallback:<key>` when the runtime contains exactly one session file (single-window inference; see `_resolve_single_session_fallback` in `active_task.py`). Returns nothing when ≥2 session files exist — refuses to guess across windows so 04-21's multi-session isolation contract holds.
 3. **Ask the user** — terminal fallback when both above yield nothing.
 
-When changing the prelude, the dispatch protocol, or the `session-fallback` semantics, all three layers must stay aligned. `regression.test.ts > [issue-225]` and `regression.test.ts > [session-fallback]` are the contract tests; `templates/trellis.test.ts > [issue-225]` asserts the workflow.md breadcrumb still carries the protocol. Manual e2e runbook lives in the historical task `.omtre/tasks/<archive>/05-04-fix-codex-subagent-missing-active-task/manual-verify.md`.
+When changing the prelude, the dispatch protocol, or the `session-fallback` semantics, all three layers must stay aligned. `regression.test.ts > [issue-225]` and `regression.test.ts > [session-fallback]` are the contract tests; `templates/omtre.test.ts > [issue-225]` asserts the workflow.md breadcrumb still carries the protocol. Manual e2e runbook lives in the historical task `.omtre/tasks/<archive>/05-04-fix-codex-subagent-missing-active-task/manual-verify.md`.
 
 ### Class-3 — Extension-backed (2 platforms)
 
-Platform can expose hook-equivalent events and custom tools through a project-local extension. Trellis owns the sub-agent tool and the context injection path. Unlike class-1 (which only handles sub-agent context) and class-2 (which only handles sub-agent prelude), class-3 owns hidden persistent custom-message context injection and per-Bash-tool-call session-identity prefixing through the platform extension API.
+Platform can expose hook-equivalent events and custom tools through a project-local extension. omtre owns the sub-agent tool and the context injection path. Unlike class-1 (which only handles sub-agent context) and class-2 (which only handles sub-agent prelude), class-3 owns hidden persistent custom-message context injection and per-Bash-tool-call session-identity prefixing through the platform extension API.
 
 | Platform | Extension surface                                                  | Context delivery                                                                                                                                                                                                                                                                                                                                                                                  |
 | -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pi Agent | `.pi/extensions/trellis/index.ts` events + `trellis_subagent` tool | extension builds full prompt/context from `.pi/agents/*.md`, `prd.md`, `design.md` if present, `implement.md` if present, and JSONL-referenced files via `buildContext()`; preserves startup/full task context through `before_agent_start.systemPrompt` and persists compact workflow/session context through a hidden `before_agent_start.message` custom message; agent definitions also receive the pull-based prelude as a fallback |
-| Oh My Pi | `.omp/extensions/trellis/index.ts` events                          | extension resolves a session-scoped context key from the OMP runtime, injects session/task context through extension events, and keeps JSONL-referenced files jailed inside the project root                                                                                                                                                                                                       |
+| Pi Agent | `.pi/extensions/omtre/index.ts` events + `omtre_subagent` tool | extension builds full prompt/context from `.pi/agents/*.md`, `prd.md`, `design.md` if present, `implement.md` if present, and JSONL-referenced files via `buildContext()`; preserves startup/full task context through `before_agent_start.systemPrompt` and persists compact workflow/session context through a hidden `before_agent_start.message` custom message; agent definitions also receive the pull-based prelude as a fallback |
+| Oh My Pi | `.omp/extensions/omtre/index.ts` events                          | extension resolves a session-scoped context key from the OMP runtime, injects session/task context through extension events, and keeps JSONL-referenced files jailed inside the project root                                                                                                                                                                                                       |
 
 See **"Class-3 injection points (Pi extension)"** and **"Cross-platform consistency invariant"** below for the runtime contract details.
 
 ### Class-3 injection points (Pi extension)
 
-`templates/pi/extensions/trellis/index.ts.txt` registers handlers for three platform events plus one custom tool. Each injection point has a distinct lifecycle and a distinct failure mode if dropped.
+`templates/pi/extensions/omtre/index.ts.txt` registers handlers for three platform events plus one custom tool. Each injection point has a distinct lifecycle and a distinct failure mode if dropped.
 
 | Injection point         | Handler                                              | When it fires                              | What it injects                                                                                                                                                                                                 |
 | ----------------------- | ---------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `input`                 | not registered for Trellis runtime context             | n/a                                        | Trellis must not rewrite submitted user text; context identity is resolved in `before_agent_start` and `tool_call` where it is needed                                                                          |
+| `input`                 | not registered for omtre runtime context             | n/a                                        | omtre must not rewrite submitted user text; context identity is resolved in `before_agent_start` and `tool_call` where it is needed                                                                          |
 | `before_agent_start`    | `pi.on?.("before_agent_start", …)`                   | every agent invocation (main + sub-agents) | preserves `systemPrompt` with startup/full task context only, and additionally returns `message: { customType: "omtre-runtime-context", display: false, content }` containing compact `<workflow-state>` + `<session-overview>`; Pi wraps the message as a persisted `role: "custom"` session message |
-| `context`               | `pi.on?.("context", …)`                              | before each LLM call                       | preserves existing context-key establishment only; must not append request-local Trellis runtime messages because they are not persisted and can move between turns                                           |
-| `tool_call` (Bash)      | `pi.on?.("tool_call", …)`                            | every Bash tool call                       | mutates `event.input.command` in place via `injectTrellisContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;` so child Python scripts (e.g. `task.py current`) inherit session identity      |
-| `trellis_subagent` tool | `pi.registerTool?.({ name: "trellis_subagent", … })` | extension load time (once)                 | `promptSnippet` and `promptGuidelines` carry `SUBAGENT_DISPATCH_PROTOCOL` so the model sees the dispatch contract before it ever calls the tool                                                                 |
+| `context`               | `pi.on?.("context", …)`                              | before each LLM call                       | preserves existing context-key establishment only; must not append request-local omtre runtime messages because they are not persisted and can move between turns                                           |
+| `tool_call` (Bash)      | `pi.on?.("tool_call", …)`                            | every Bash tool call                       | mutates `event.input.command` in place via `injectomtreContextIntoBash()` to prefix `export OMTRE_CONTEXT_ID=<context-key>;` so child Python scripts (e.g. `task.py current`) inherit session identity      |
+| `omtre_subagent` tool | `pi.registerTool?.({ name: "omtre_subagent", … })` | extension load time (once)                 | `promptSnippet` and `promptGuidelines` carry `SUBAGENT_DISPATCH_PROTOCOL` so the model sees the dispatch contract before it ever calls the tool                                                                 |
 
 `TurnContextCache` (in `index.ts.txt`) memoizes the per-turn context-key → `{workflowState, sessionOverview}` pair so `before_agent_start` does not double-spawn the default `get_context.py` session-context call. The cache key is the resolved context key; entries are short-lived (one turn/request window).
 
@@ -1250,7 +1250,7 @@ The body of the `<workflow-state>` breadcrumb MUST be byte-identical across clas
 
 Concrete rules:
 
-- **Regex parity**: `templates/pi/extensions/trellis/index.ts.txt:WF_RE` (`:1072`) MUST mirror `templates/shared-hooks/inject-workflow-state.py:_TAG_RE` (`:181`) byte-for-byte. Both use the closing-tag backreference `\1` (or its TS equivalent in `[\/workflow-state:\1\]`) so a tag block parses identically in Python and TypeScript.
+- **Regex parity**: `templates/pi/extensions/omtre/index.ts.txt:WF_RE` (`:1072`) MUST mirror `templates/shared-hooks/inject-workflow-state.py:_TAG_RE` (`:181`) byte-for-byte. Both use the closing-tag backreference `\1` (or its TS equivalent in `[\/workflow-state:\1\]`) so a tag block parses identically in Python and TypeScript.
 - **Breadcrumb body source**: `workflowBreadcrumb(root, key)` (`index.ts.txt:1074`) and `workflowOverview(root, key)` (`:1127`) in the Pi extension read `.omtre/workflow.md` directly — same source as the Python hook. There is no separate TS-side template for breadcrumb bodies. If the regex drifts, the TS port silently falls back to hardcoded defaults and Pi loses parity.
 - **Status writer parity**: `task.json.status` is the sole input to "which `[workflow-state:STATUS]` block fires". Both the Python hook (`get_active_task` + status read) and the TS port (the status read inside `workflowBreadcrumb()`) MUST agree on the status string. Custom statuses pass through both unchanged.
 - **`<session-overview>` parity**: Pi shells out to `python3 .omtre/scripts/get_context.py` rather than re-implementing context generation in TS, so output stays canonical. Don't replace this with an inline TS implementation — that's a parity drift waiting to happen.
@@ -1307,8 +1307,8 @@ The dispatch protocol text (the `Active task: <path>` first-line rule plus the c
 
 | Writer                | Location                                                                  | Consumed by                                                                                                                        |
 | --------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Workflow breadcrumb   | `templates/trellis/workflow.md` `[workflow-state:in_progress]` block      | Python `inject-workflow-state.py` and the Pi TS port — surfaced per-turn while a task is in progress                               |
-| Pi extension constant | `templates/pi/extensions/trellis/index.ts.txt:SUBAGENT_DISPATCH_PROTOCOL` | Pi `trellis_subagent` tool's `promptSnippet` / `promptGuidelines` — surfaced at extension load and on each tool description render |
+| Workflow breadcrumb   | `templates/omtre/workflow.md` `[workflow-state:in_progress]` block      | Python `inject-workflow-state.py` and the Pi TS port — surfaced per-turn while a task is in progress                               |
+| Pi extension constant | `templates/pi/extensions/omtre/index.ts.txt:SUBAGENT_DISPATCH_PROTOCOL` | Pi `omtre_subagent` tool's `promptSnippet` / `promptGuidelines` — surfaced at extension load and on each tool description render |
 
 When you change one, change both. The two channels exist because:
 
@@ -1319,8 +1319,8 @@ A drift between the two is silent: the model will still see _some_ dispatch guid
 
 #### Tests required
 
-- Regression test asserting the `Active task:` rule appears in `templates/trellis/workflow.md` (`templates/trellis.test.ts > [issue-225]`).
-- Regression test asserting `workflow.md` Phase 2.1 routes generated pull-based sub-agent definitions through the pull-based block, not the `The platform hook/plugin auto-handles` block (`templates/trellis.test.ts > [issue-zcode-repeat]`). The test derives generated pull-based platforms from `collectPlatformTemplates()` by looking for `Required: Load Trellis Context First`; adding a new pull-based platform without adding its workflow marker mapping must fail. Pi is excluded from this derivation because its generated agents keep the same prelude as a fallback while the primary context path is class-3 extension-backed and is covered by Pi-specific tests.
+- Regression test asserting the `Active task:` rule appears in `templates/omtre/workflow.md` (`templates/omtre.test.ts > [issue-225]`).
+- Regression test asserting `workflow.md` Phase 2.1 routes generated pull-based sub-agent definitions through the pull-based block, not the `The platform hook/plugin auto-handles` block (`templates/omtre.test.ts > [issue-zcode-repeat]`). The test derives generated pull-based platforms from `collectPlatformTemplates()` by looking for `Required: Load omtre Context First`; adding a new pull-based platform without adding its workflow marker mapping must fail. Pi is excluded from this derivation because its generated agents keep the same prelude as a fallback while the primary context path is class-3 extension-backed and is covered by Pi-specific tests.
 - Configurator test asserting the Pi extension's `SUBAGENT_DISPATCH_PROTOCOL` constant contains the same `Active task:` rule and the same class-1/class-2/class-3 platform list.
 - Cross-source parity test: when the breadcrumb text in `workflow.md` changes, the Pi extension's `SUBAGENT_DISPATCH_PROTOCOL` constant must change in the same commit. Either co-locate the parity assertion in a single regression test, or rely on diff review — but document the rule here.
 
@@ -1349,7 +1349,7 @@ some hosts can surface per-turn breadcrumbs inside sub-agent turns, while other
 hosts rely only on the agent definition text. The two channels must both be
 safe.
 
-For Cursor, `.cursor/hooks.json` must match both `Task` and `Subagent` on `preToolUse`. Current Cursor 3.2.11 emits native sub-agent spawns as `tool_name: "Subagent"` even though the docs still describe the generic Task tool under `Task`. `inject-subagent-context.py` must parse both legacy/string and native protobuf-shaped Task inputs. Custom agents can arrive as `subagent_type: "omtre-implement"`, `subagent_type: { "custom": { "name": "omtre-implement" } }`, or `subagent_type: { "type": { "case": "custom", "value": { "name": "omtre-implement" } } }`. All three forms must resolve to the Trellis agent name before deciding whether to inject context.
+For Cursor, `.cursor/hooks.json` must match both `Task` and `Subagent` on `preToolUse`. Current Cursor 3.2.11 emits native sub-agent spawns as `tool_name: "Subagent"` even though the docs still describe the generic Task tool under `Task`. `inject-subagent-context.py` must parse both legacy/string and native protobuf-shaped Task inputs. Custom agents can arrive as `subagent_type: "omtre-implement"`, `subagent_type: { "custom": { "name": "omtre-implement" } }`, or `subagent_type: { "type": { "case": "custom", "value": { "name": "omtre-implement" } } }`. All three forms must resolve to the omtre agent name before deciding whether to inject context.
 
 Extension-backed platforms must not call `collectSharedHooks()` for their config directory — they are not keys in `SHARED_HOOKS_BY_PLATFORM`, so the call would not typecheck. They generate platform-native extension files and tests must assert that no Python hook files are installed under the platform config root.
 
@@ -1383,7 +1383,7 @@ Lightweight tasks may be PRD-only. Complex tasks must have `prd.md`, `design.md`
 
 ### Signatures
 
-**Placeholder row schema** (`{"_example": "..."}`) — written by Trellis versions before this contract change. `task.py validate` rejects it, matching PR preflight, which treats it as unresolved scaffolding. Remediation: delete the line, or replace it with a curated row.
+**Placeholder row schema** (`{"_example": "..."}`) — written by omtre versions before this contract change. `task.py validate` rejects it, matching PR preflight, which treats it as unresolved scaffolding. Remediation: delete the line, or replace it with a curated row.
 
 **Curated row schema** (written by AI):
 
@@ -1482,7 +1482,7 @@ caps, binary detection, or config keys MUST be applied to **all three**
 implementations:
 
 - `packages/cli/src/templates/shared-hooks/inject-subagent-context.py`
-- `packages/cli/src/templates/pi/extensions/trellis/index.ts.txt`
+- `packages/cli/src/templates/pi/extensions/omtre/index.ts.txt`
 - `packages/cli/src/templates/opencode/lib/omtre-context.js`
 
 ### 2. Signatures
@@ -1508,9 +1508,9 @@ context_injection:
 
 - `0` disables that limit; negative / non-int → default + stderr warning.
 - Notice strings (byte-frozen, identical in all three implementations):
-  - truncation: `\n[Trellis: truncated at {cap} bytes — read {path} for the full content]`
-  - degradation: `[Trellis: not inlined (total context limit reached) — {path} ({size} bytes): {reason}]`
-  - binary reference: `[Trellis: not inlined (binary file) — {path} ({size} bytes): {reason}]`
+  - truncation: `\n[omtre: truncated at {cap} bytes — read {path} for the full content]`
+  - degradation: `[omtre: not inlined (total context limit reached) — {path} ({size} bytes): {reason}]`
+  - binary reference: `[omtre: not inlined (binary file) — {path} ({size} bytes): {reason}]`
 - Artifact reasons: `Requirements document` / `Technical design document` / `Execution plan document`.
 - Accounting: `=== path ===` headers and notices count toward `max_total_bytes`.
   Processing order unchanged: jsonl entries first, then prd → design → implement.md.
@@ -1550,7 +1550,7 @@ context_injection:
 - OpenCode: `packages/cli/test/templates/opencode.test.ts`
   `describe("opencode context injection limits (issue #441)")` — same binary
   and limit behavior through the real prompt-injection plugin seam.
-- Template: `trellis.test.ts` asserts config.yaml's `context_injection` section exists and is fully commented.
+- Template: `omtre.test.ts` asserts config.yaml's `context_injection` section exists and is fully commented.
 
 ### 7. Wrong vs Correct
 
@@ -1634,7 +1634,7 @@ This includes platform-specific `session-start.py` copies that opt out of
 `copilot/hooks/session-start.py`), because they still print JSON payloads with
 `ensure_ascii=False`.
 
-When a hook can resolve the Trellis project directory before printing, prefer
+When a hook can resolve the omtre project directory before printing, prefer
 the shared helper from `.omtre/scripts/common/__init__.py`:
 
 ```python
@@ -1687,7 +1687,7 @@ if sys.platform == "win32":
 
 #### 1. Scope / Trigger
 
-Trellis uses a one-shot visible acknowledgment as proof that otherwise-hidden
+omtre uses a one-shot visible acknowledgment as proof that otherwise-hidden
 SessionStart context loaded. This contract applies to every live implementation
 that already provides that proof: the shared Python hook used by Claude Code,
 Cursor, Gemini, Qoder, CodeBuddy, Droid, Kiro, Trae, and ZCode; the Codex hook;
@@ -1705,7 +1705,7 @@ model-visible consumption is verified end to end.
 | `shared-hooks/session-start.py` | Existing shared hook output (`hookSpecificOutput.additionalContext` plus host-specific aliases, or Kiro's plain stdout context) | Yes |
 | `codex/hooks/session-start.py` | Existing Codex SessionStart payload when hooks are enabled and approved | Yes |
 | `opencode/lib/session-utils.js` + `plugins/session-start.js` | Compact context prepended to the first user message and marked for persistence | Yes |
-| `pi/extensions/trellis/index.ts.txt` | Memoized SessionStart-equivalent context added to `before_agent_start.systemPrompt` | Yes |
+| `pi/extensions/omtre/index.ts.txt` | Memoized SessionStart-equivalent context added to `before_agent_start.systemPrompt` | Yes |
 | `copilot/hooks/session-start.py` | Microsoft's documented `SessionStart.hookSpecificOutput.additionalContext` payload | No |
 
 The **update-hint rider** (see below) is narrower still — it exists only in
@@ -1716,7 +1716,7 @@ plugin, and the Pi extension each build their own payload and do not carry it.
 
 - Put `<first-reply-notice>` near the top of model-visible startup context,
   before current-state or other orientation blocks.
-- On the first visible assistant reply, briefly acknowledge that Trellis
+- On the first visible assistant reply, briefly acknowledge that omtre
   SessionStart context loaded, then continue directly with the user's request.
 - Choose the acknowledgment language in this exact order:
   1. the language of the user's current request, meaning the user message that
@@ -1724,7 +1724,7 @@ plugin, and the Pi extension each build their own payload and do not carry it.
   2. if that request has no clear natural language, an explicitly established
      project communication language;
   3. if neither provides a language, the language-neutral fallback exactly
-     `Trellis SessionStart ✓`.
+     `omtre SessionStart ✓`.
 - The acknowledgment must not alter the language used for the remainder of the
   response.
 - Emit the acknowledgment only once per session. Do not repeat it on later
@@ -1735,9 +1735,9 @@ plugin, and the Pi extension each build their own payload and do not carry it.
   per-session deduplication unchanged.
 - OpenCode persists startup context once per session. Pi memoizes identical
   startup `systemPrompt` bytes per context key.
-- **The Trellis update reminder rides this block, and only this block.** When
+- **The omtre update reminder rides this block, and only this block.** When
   `get_update_hint()` returns a hint, exactly one line is inserted between the
-  notice head and tail: `Also relay this Trellis maintenance notice on its own
+  notice head and tail: `Also relay this omtre maintenance notice on its own
   line in that same reply: {update_hint}`. When it returns `None` the notice is
   **byte-identical** to the plain `FIRST_REPLY_NOTICE` constant — no empty
   block, no placeholder line, nothing to diff. See "SessionStart update
@@ -1749,7 +1749,7 @@ plugin, and the Pi extension each build their own payload and do not carry it.
 | --- | --- |
 | First request has a clear natural language | Acknowledgment uses that request language; the rest of the response keeps its intended language |
 | Request has no clear natural language and project instructions explicitly establish a communication language | Acknowledgment uses the explicit project language |
-| Neither request nor project instructions provide a language | Acknowledgment is exactly `Trellis SessionStart ✓` |
+| Neither request nor project instructions provide a language | Acknowledgment is exactly `omtre SessionStart ✓` |
 | Later assistant reply in the same session | No repeated acknowledgment |
 | Repeated OpenCode message in one session | Startup context is not prepended again |
 | Repeated Pi turn with the same context key | Memoized startup `systemPrompt` bytes remain stable |
@@ -1763,7 +1763,7 @@ plugin, and the Pi extension each build their own payload and do not carry it.
 - **Base:** a code-only request in a project that explicitly establishes Japanese
   as its communication language receives a brief Japanese acknowledgment.
 - **Fallback:** a request and project with no language signal receive
-  `Trellis SessionStart ✓`, then processing continues directly.
+  `omtre SessionStart ✓`, then processing continues directly.
 - **Bad:** the notice says `say once in Chinese`, requires `exactly one short
   Chinese sentence`, includes a fixed Chinese acknowledgment, or causes the
   remainder of an otherwise non-Chinese response to switch languages.
@@ -1786,13 +1786,13 @@ plugin, and the Pi extension each build their own payload and do not carry it.
 
 ```text
 # Wrong: fixed language steers the conversation
-<first-reply-notice>Say once in Chinese that Trellis loaded.</first-reply-notice>
+<first-reply-notice>Say once in Chinese that omtre loaded.</first-reply-notice>
 
 # Correct: request language -> explicit project language -> neutral fallback
 <first-reply-notice>
 Use the language of the user message that triggered this reply. If it has no
 clear natural language, use an explicitly established project communication
-language. Otherwise output exactly `Trellis SessionStart ✓`. Continue directly
+language. Otherwise output exactly `omtre SessionStart ✓`. Continue directly
 without altering the language of the remainder of the response. Emit once.
 </first-reply-notice>
 ```
@@ -1818,7 +1818,7 @@ def get_update_hint(repo_root: Path, context_key: str | None = None) -> str | No
 def _update_marker_path(repo_root: Path, context_key: str | None = None) -> Path
 
 # shared-hooks/session-start.py:322 (private)
-def _resolve_update_hint(trellis_dir: Path, context_key: str | None) -> str | None
+def _resolve_update_hint(omtre_dir: Path, context_key: str | None) -> str | None
 
 # shared-hooks/session-start.py:85 (private)
 def _build_first_reply_notice(update_hint: str | None) -> str
@@ -1826,10 +1826,10 @@ def _build_first_reply_notice(update_hint: str | None) -> str
 
 #### 3. Contracts
 
-- `get_update_hint` returns `"Trellis update available: {current} -> {latest}, run trellis update"` or `None`. It is public because two layers call it; do not re-privatize.
+- `get_update_hint` returns `"omtre update available: {current} -> {latest}, run omtre update"` or `None`. It is public because two layers call it; do not re-privatize.
 - `context_key` is **passed in, not re-resolved**. The hook already read the session id from hook stdin; that is more reliable than `session_context`'s environment-only fallback chain. Shell entry points pass nothing and keep the old behavior.
 - The once-per-session marker is `.omtre/.runtime/update-check-{safe_key}.marker`, where `safe_key` is the sanitized context key truncated to 160 chars. With no context key it falls back to `TERM_SESSION_ID`, then `ppid-{n}`. **That fallback is why the key must be threaded through**: `TERM_SESSION_ID` identifies a terminal *window*, so the marker would mute the reminder for every later session opened in the same window.
-- The marker is written before the version comparison, not after, so a probe that finds no update still costs one `trellis --version` per session rather than one per turn.
+- The marker is written before the version comparison, not after, so a probe that finds no update still costs one `omtre --version` per session rather than one per turn.
 - The whole path is best-effort. A missing scripts dir, an import error, or any exception while probing versions leaves the payload untouched (`session-start.py:341` catches bare `Exception` on purpose).
 - Scope is the shared hook only. Codex's own `session-start.py`, the OpenCode plugin, and the Pi extension build their own payloads and do not carry the rider.
 
@@ -1855,7 +1855,7 @@ def _build_first_reply_notice(update_hint: str | None) -> str
 
 - `regression.test.ts` `[session-update-hint]`: assert the hint line appears between head and tail when a newer version is available. Assertion point is the rendered payload string, not `get_update_hint`'s return value.
 - Assert byte-identity of the notice against `FIRST_REPLY_NOTICE` when no hint exists.
-- Assert a failing or hanging `trellis` CLI leaves the payload untouched **and** leaves the check for the next session (covered by "[session-update-hint] a failing or hanging trellis CLI stays silent and leaves the check for the next session").
+- Assert a failing or hanging `omtre` CLI leaves the payload untouched **and** leaves the check for the next session (covered by "[session-update-hint] a failing or hanging omtre CLI stays silent and leaves the check for the next session").
 - Assert the marker filename derives from the passed context key, not from `TERM_SESSION_ID`, when both are present.
 
 #### 7. Wrong vs Correct
@@ -1872,7 +1872,7 @@ Two problems: it emits an empty block when there is no hint (so every payload di
 ##### Correct
 
 ```python
-notice = _build_first_reply_notice(_resolve_update_hint(trellis_dir, context_key))
+notice = _build_first_reply_notice(_resolve_update_hint(omtre_dir, context_key))
 ```
 
 One line inside the block that is already contracted to become spoken output; identical bytes to the plain constant when there is nothing to say.
@@ -1901,7 +1901,7 @@ Claude Code truncates `hookSpecificOutput.additionalContext` at **~20 KB**. When
 
 Codex has even tighter limits — users report 40-80 KB payloads consuming most of the context window on large projects.
 
-### Size Budget (measured on Trellis dev repo)
+### Size Budget (measured on omtre dev repo)
 
 | Block                |       Size | Notes                                                                                                                                 |
 | -------------------- | ---------: | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1966,7 +1966,7 @@ below host truncation limits.
 
 ### Problem
 
-`SessionStart` only fires once per session. In long conversations, Claude's context compression can push the SessionStart message out of recent context, and the AI forgets the active Trellis task — resulting in workflow drift (skips `check`, forgets to `update-spec`, doesn't return to `finish` after user interruptions).
+`SessionStart` only fires once per session. In long conversations, Claude's context compression can push the SessionStart message out of recent context, and the AI forgets the active omtre task — resulting in workflow drift (skips `check`, forgets to `update-spec`, doesn't return to `finish` after user interruptions).
 
 ### Solution: `UserPromptSubmit` hook injecting per-turn breadcrumb
 
@@ -1974,13 +1974,13 @@ A lightweight hook (`shared-hooks/inject-workflow-state.py`) fires on **every us
 
 ### Skip keyword (`prompt_injection.skip_keyword`, #427)
 
-A user prompt containing the skip keyword (default `no-trellis`) mutes the per-turn
+A user prompt containing the skip keyword (default `no-omtre`) mutes the per-turn
 breadcrumb for that turn only — the hook exits 0 with empty stdout before any task
 resolution or file reads. Contract:
 
 - Match rule (frozen, identical in Python hook and OpenCode plugin):
-  case-insensitive `(?<![\w-])<keyword>(?![\w-])` — `no-trellisfoo`/`foo-no-trellis`
-  do not match; `path/no-trellis.md` does (accepted false-positive).
+  case-insensitive `(?<![\w-])<keyword>(?![\w-])` — `no-omtrefoo`/`foo-no-omtre`
+  do not match; `path/no-omtre.md` does (accepted false-positive).
 - Config: `.omtre/config.yaml` → `prompt_injection.skip_keyword`
   (ships commented; default in code via `common.config.get_prompt_injection_config()`;
   quoted `""` explicitly disables the hatch).
@@ -1994,7 +1994,7 @@ resolution or file reads. Contract:
 
 ### Single Source of Truth: `workflow.md` Tag Blocks
 
-Breadcrumb text lives in `workflow.md` as `[workflow-state:STATUS]...[/workflow-state:STATUS]` blocks (same tag style as existing `[Platform, ...]` blocks). Users who fork the Trellis workflow edit **only the markdown**; the hook script stays untouched.
+Breadcrumb text lives in `workflow.md` as `[workflow-state:STATUS]...[/workflow-state:STATUS]` blocks (same tag style as existing `[Platform, ...]` blocks). Users who fork the omtre workflow edit **only the markdown**; the hook script stays untouched.
 
 ```markdown
 [workflow-state:in_progress]
@@ -2037,7 +2037,7 @@ else:
     breadcrumb = build_breadcrumb(*task, templates=...)
 ```
 
-The same rule applies to every other hook that's positioned as "repeated reminder": if the hook isn't emitting, the reminder loop is broken. The only legitimate silent-exit case is when **the hook doesn't own this codebase at all** (e.g. `.omtre/` not found → definitely not a Trellis project → OK to no-op).
+The same rule applies to every other hook that's positioned as "repeated reminder": if the hook isn't emitting, the reminder loop is broken. The only legitimate silent-exit case is when **the hook doesn't own this codebase at all** (e.g. `.omtre/` not found → definitely not an omtre project → OK to no-op).
 
 ### Platform Support Matrix
 
@@ -2052,12 +2052,12 @@ The same rule applies to every other hook that's positioned as "repeated reminde
 | Copilot CLI     | `userPromptSubmitted` (camelCase)                                                                     | `.github/copilot/hooks.json`                                                                                       | `bash` + `powershell` dual field                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Codex           | `UserPromptSubmit`                                                                                    | `.codex/hooks.json`                                                                                                | **Requires `features.hooks = true` in user's `~/.codex/config.toml` (Codex 0.129+; legacy: `codex_hooks = true`).** Codex 0.129+ also requires running `/hooks` once to approve the installed hook before it activates — until approved, hooks never fire (the omtre-bootstrap fallback in inject-workflow-state.py covers the gap by directing the AI to read `omtre-start` skill manually)                                                                                                                                                                                                                                                                                                                                                                                        |
 | OpenCode        | `chat.message` (Bun plugin)                                                                           | `plugins/inject-workflow-state.js`                                                                                 | Equivalent JS implementation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Kiro            | CLI: `userPromptSubmit` (main `trellis` agent JSON) · IDE: `promptSubmit` (`.kiro/hooks/*.kiro.hook`) | CLI: `.kiro/agents/trellis.json` `hooks` · IDE: `.kiro/hooks/omtre-workflow-state.kiro.hook` (`then.runCommand`) | Plain stdout (NOT the `hookSpecificOutput` JSON envelope) — Kiro adds a hook's raw stdout to conversation context. `inject-workflow-state.py` has a `platform == "kiro"` branch (detected via `KIRO_PROJECT_DIR` env or `.kiro` script path) that prints the bare breadcrumb. **Activation:** CLI users must make `trellis` the active agent (`kiro-cli settings chat.defaultAgent trellis` or `/agent swap trellis`) — Kiro defaults to built-in `kiro_default`. **Real-machine note:** the plain-stdout→context contract (and whether IDE `runCommand` stdout is injected vs only `askAgent`) is per official docs, pending Kiro hardware verification; fallback is `askAgent` + static steering. Sub-agent context injection unchanged via `agentSpawn → inject-subagent-context.py` |
+| Kiro            | CLI: `userPromptSubmit` (main `omtre` agent JSON) · IDE: `promptSubmit` (`.kiro/hooks/*.kiro.hook`) | CLI: `.kiro/agents/omtre.json` `hooks` · IDE: `.kiro/hooks/omtre-workflow-state.kiro.hook` (`then.runCommand`) | Plain stdout (NOT the `hookSpecificOutput` JSON envelope) — Kiro adds a hook's raw stdout to conversation context. `inject-workflow-state.py` has a `platform == "kiro"` branch (detected via `KIRO_PROJECT_DIR` env or `.kiro` script path) that prints the bare breadcrumb. **Activation:** CLI users must make `omtre` the active agent (`kiro-cli settings chat.defaultAgent omtre` or `/agent swap omtre`) — Kiro defaults to built-in `kiro_default`. **Real-machine note:** the plain-stdout→context contract (and whether IDE `runCommand` stdout is injected vs only `askAgent`) is per official docs, pending Kiro hardware verification; fallback is `askAgent` + static steering. Sub-agent context injection unchanged via `agentSpawn → inject-subagent-context.py` |
 | Trae IDE        | `UserPromptSubmit`                                                                                    | `.trae/hooks.json`                                                                                                 | Auto; shared Python hook written under `.trae/hooks/inject-workflow-state.py`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ZCode           | `UserPromptSubmit`                                                                                    | `.zcode/config.json`                                                                                               | Shared Python hook under `.zcode/hooks/`. Hook config is read at session start with no hot-reload, so `configureZcode` prints a one-shot "open a new session" notice                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Snow CLI        | `onUserMessage`                                                                                       | `.snow/hooks/onUserMessage.json`                                                                                   | Platform-specific `write-omtre-context.py user` (not the shared hook) — Snow is absent from `SHARED_HOOKS_BY_PLATFORM` and bundles its own three inject hooks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Oh My Pi (OMP)  | extension turn hook                                                                                   | `.omp/extensions/trellis/`                                                                                         | TS extension resolves the breadcrumb per turn with its own cache; no Python hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Pi              | `before_agent_start` + `context`                                                                      | `.pi/extensions/trellis/index.ts`                                                                                  | TS port; `WF_RE` (`index.ts.txt:1072`) must match the Python `_TAG_RE`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Oh My Pi (OMP)  | extension turn hook                                                                                   | `.omp/extensions/omtre/`                                                                                         | TS extension resolves the breadcrumb per turn with its own cache; no Python hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Pi              | `before_agent_start` + `context`                                                                      | `.pi/extensions/omtre/index.ts`                                                                                  | TS port; `WF_RE` (`index.ts.txt:1072`) must match the Python `_TAG_RE`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 **Deliberately absent** — these are not gaps to close:
 
@@ -2070,9 +2070,9 @@ The same rule applies to every other hook that's positioned as "repeated reminde
 
 ### CWD Robustness
 
-The hook uses `find_trellis_root()` to walk up from CWD until it finds `.omtre/`, so it works when the terminal is in a subdirectory (monorepo package, etc.) or when sub-agent spawn inherits a drifted CWD.
+The hook uses `find_omtre_root()` to walk up from CWD until it finds `.omtre/`, so it works when the terminal is in a subdirectory (monorepo package, etc.) or when sub-agent spawn inherits a drifted CWD.
 
-ZCode hook commands must also make the script path itself CWD-robust. Use the ZCode project-root placeholder in `.zcode/config.json`, for example `{{PYTHON_CMD}} "${ZCODE_PROJECT_DIR}/.zcode/hooks/inject-workflow-state.py"`, rather than `{{PYTHON_CMD}} .zcode/hooks/inject-workflow-state.py`. The Python hook's `find_trellis_root()` only runs after Python opens the script; a cwd-relative command can fail before the hook starts if ZCode launches from a nested directory such as `.github/docs/...`.
+ZCode hook commands must also make the script path itself CWD-robust. Use the ZCode project-root placeholder in `.zcode/config.json`, for example `{{PYTHON_CMD}} "${ZCODE_PROJECT_DIR}/.zcode/hooks/inject-workflow-state.py"`, rather than `{{PYTHON_CMD}} .zcode/hooks/inject-workflow-state.py`. The Python hook's `find_omtre_root()` only runs after Python opens the script; a cwd-relative command can fail before the hook starts if ZCode launches from a nested directory such as `.github/docs/...`.
 
 ### Why No State Machine / No Extra `task.json` Fields
 
@@ -2091,7 +2091,7 @@ This keeps state minimal, avoids the "task.json drifts from filesystem reality" 
 
 ## Bootstrap & Joiner Task Auto-Generation
 
-`trellis init` generates a first-session task based on checkout state. Three branches dispatch off two filesystem flags:
+`omtre init` generates a first-session task based on checkout state. Three branches dispatch off two filesystem flags:
 
 | `.omtre/` exists? | `.omtre/.developer` exists? | Meaning                                                           | Task generated                           |
 | ------------------- | ----------------------------- | ----------------------------------------------------------------- | ---------------------------------------- |
@@ -2119,7 +2119,7 @@ This keeps state minimal, avoids the "task.json drifts from filesystem reality" 
 
 ### Gotcha: Joiner Dispatch Must Be Wired in Two Places
 
-`trellis init` has two code paths that both reach the end of initialization but through different branches of `init()`. Any new init-time trigger (joiner onboarding, future first-session tasks, etc.) must be registered in **both**:
+`omtre init` has two code paths that both reach the end of initialization but through different branches of `init()`. Any new init-time trigger (joiner onboarding, future first-session tasks, etc.) must be registered in **both**:
 
 **Path 1 — Main dispatch** (`src/commands/init.ts`, near the end of `init()`):
 
@@ -2128,7 +2128,7 @@ This keeps state minimal, avoids the "task.json drifts from filesystem reality" 
 
 **Path 2 — Re-init fast path** (`handleReinit`, inside `doAddDeveloper` branch):
 
-- Reached when `.omtre/` already exists AND user runs default `trellis init --user <name>` (no `--force`, no `--skip-existing`)
+- Reached when `.omtre/` already exists AND user runs default `omtre init --user <name>` (no `--force`, no `--skip-existing`)
 - `init()` short-circuits via `if (!isFirstInit && !options.force && !options.skipExisting) { await handleReinit(...); return; }` — main dispatch is **never executed**
 
 Both paths must capture the pre-existing `.developer` state **before** running `init_developer.py` (which writes the file), then use that snapshot to decide whether joiner generation applies.
@@ -2157,7 +2157,7 @@ if (!hadDeveloperFileBefore) {
 
 ### Forgot to add entry to PLATFORM_FUNCTIONS
 
-**Symptom**: `trellis init` configures the platform, but `trellis update` doesn't track its template files — and `getConfiguredPlatforms` never detects the platform, so it is invisible to update entirely.
+**Symptom**: `omtre init` configures the platform, but `omtre update` doesn't track its template files — and `getConfiguredPlatforms` never detects the platform, so it is invisible to update entirely.
 
 **Cause**: `collectTemplates` is optional on `PlatformFunctions`, so a registry entry that omits it compiles and fails silently.
 
@@ -2183,7 +2183,7 @@ if (!hadDeveloperFileBefore) {
 
 ### EXCLUDE_PATTERNS missing `.js` in configurator
 
-**Symptom**: In production builds (`dist/`), `trellis init` copies compiled `index.js` (and `.js.map`, `.d.ts`) into the user's config directory (e.g., `.gemini/index.js`).
+**Symptom**: In production builds (`dist/`), `omtre init` copies compiled `index.js` (and `.js.map`, `.d.ts`) into the user's config directory (e.g., `.gemini/index.js`).
 
 **Cause**: The configurator walks its template directory and its `EXCLUDE_PATTERNS` doesn't filter out `.js` files. In development (`src/`), only `.ts` files exist so the issue is invisible. In production, `tsc` compiles `index.ts` → `index.js` into `dist/templates/{platform}/` and the walk picks it up.
 
@@ -2193,13 +2193,13 @@ if (!hadDeveloperFileBefore) {
 
 ### Missing CLI flag or InitOptions field
 
-**Symptom**: `trellis init --{platform}` doesn't work.
+**Symptom**: `omtre init --{platform}` doesn't work.
 
 **Fix**: Add `--{platform}` option in `src/cli/index.ts` and `{platform}?: boolean` in `InitOptions` in `src/commands/init.ts`. These are static declarations that cannot be derived from the registry.
 
 ### Template placeholder not resolved in collectTemplates
 
-**Symptom**: `trellis update` auto-updates platform files on every run, even when nothing changed. The update summary shows hooks/settings as "changed".
+**Symptom**: `omtre update` auto-updates platform files on every run, even when nothing changed. The update summary shows hooks/settings as "changed".
 
 **Cause**: `collect{Platform}Templates()` puts a raw template into the map without calling `resolvePlaceholders()`, so `{{PYTHON_CMD}}` survives into the written file and into the update comparison.
 
@@ -2209,7 +2209,7 @@ Note this is *only* about `{{…}}` placeholders. The separate `python3` → `py
 
 ### Init-time settings.json key injection serialized differently from update's preservation
 
-**Symptom**: On a freshly initialized project that used an opt-in feature (e.g., `--with-statusline`), the very first `trellis update` reports `.claude/settings.json` as "Template updated (will auto-update)", rewrites it, and leaves a spurious backup — with zero actual changes.
+**Symptom**: On a freshly initialized project that used an opt-in feature (e.g., `--with-statusline`), the very first `omtre update` reports `.claude/settings.json` as "Template updated (will auto-update)", rewrites it, and leaves a spurious backup — with zero actual changes.
 
 **Cause**: Init injected the key at a hand-picked position in the template (e.g., `statusLine` "between `env` and `hooks`"), but update's preservation step (`preserveExistingClaudeStatusLine()` in `update.ts`) re-adds preserved keys via plain `parse → assign → stringify`, which appends at the end. The two serializations differ byte-wise, so the content comparison flags a false change.
 
@@ -2219,7 +2219,7 @@ Note this is *only* about `{{…}}` placeholders. The separate `python3` → `py
 
 ### Template listed in update but not created by init
 
-**Symptom**: `trellis update` always detects a "new file" to add, even on a freshly initialized project with the same version.
+**Symptom**: `omtre update` always detects a "new file" to add, even on a freshly initialized project with the same version.
 
 **Cause**: `collectTemplateFiles()` in `update.ts` lists a file that `createSpecTemplates()` / `createWorkflowStructure()` in init never creates. The two template lists are out of sync.
 
@@ -2227,7 +2227,7 @@ Note this is *only* about `{{…}}` placeholders. The separate `python3` → `py
 
 ### Project-type-conditional content not gated in init or update
 
-**Symptom**: Pure backend project gets empty frontend spec templates after `trellis init`. After user deletes the unwanted `spec/frontend/` dir, `trellis update` recreates it.
+**Symptom**: Pure backend project gets empty frontend spec templates after `omtre init`. After user deletes the unwanted `spec/frontend/` dir, `omtre update` recreates it.
 
 **Cause (init)**: `createSpecTemplates()` in `workflow.ts` received `projectType` but ignored it (parameter named `_projectType`). All project types got both backend and frontend spec dirs.
 
@@ -2307,7 +2307,7 @@ Note this is *only* about `{{…}}` placeholders. The separate `python3` → `py
 
 ### Added an init-time trigger but forgot the `handleReinit` fast path
 
-**Symptom**: The trigger works when users pass `--force` / `--skip-existing` / run init on an empty dir, but the default `trellis init --user <name>` on an existing checkout silently does nothing. Integration tests pass.
+**Symptom**: The trigger works when users pass `--force` / `--skip-existing` / run init on an empty dir, but the default `omtre init --user <name>` on an existing checkout silently does nothing. Integration tests pass.
 
 **Cause**: `init()` at `src/commands/init.ts` early-returns into `handleReinit` when `.omtre/` already exists and neither `--force` nor `--skip-existing` is set. Main dispatch at the end of `init()` is never reached. If the new trigger is only wired into main dispatch, the most common real-user path is uncovered.
 

@@ -1,10 +1,10 @@
 import { compareOhmyVersions } from "./compare-versions.js";
 
 /**
- * [oh-my] CLI tarballs publish as GitHub releases on
- * `ScoFan-official/omtre` under `cli-v<upstream>-ohmy.<N>` tags.
+ * omtre CLI tarballs publish as GitHub releases on
+ * `ScoFan-official/omtre` under `cli-v<version>` tags.
  *
- * That repo also ships its own pack releases tagged `vX.Y.Z`, and both tag
+ * The repository may also carry pack releases tagged `vX.Y.Z`, and both tag
  * streams share the `/releases` list — so consumers must filter on the
  * `cli-v` prefix and pick the newest match themselves instead of calling
  * `/releases/latest` (which can resolve to a pack release).
@@ -30,15 +30,14 @@ export function isCliReleaseTag(
   return typeof tagName === "string" && tagName.startsWith(CLI_TAG_PREFIX);
 }
 
-/** `cli-v0.6.17-ohmy.2` → `0.6.17-ohmy.2`. */
+/** `cli-v1.0.0` → `1.0.0` (legacy `-ohmy.N` tags also parse). */
 export function cliReleaseVersion(tagName: string): string {
   return tagName.slice(CLI_TAG_PREFIX.length);
 }
 
 /**
  * Normalize a user-supplied tag/version to the canonical `cli-v*` release
- * tag: `0.6.17-ohmy.2`, `v0.6.17-ohmy.2` and `cli-v0.6.17-ohmy.2` all resolve
- * to `cli-v0.6.17-ohmy.2`.
+ * tag: `1.0.0`, `v1.0.0` and `cli-v1.0.0` all resolve to `cli-v1.0.0`.
  */
 export function toCliReleaseTag(tag: string): string {
   if (tag.startsWith(CLI_TAG_PREFIX)) return tag;
@@ -47,8 +46,8 @@ export function toCliReleaseTag(tag: string): string {
 
 /**
  * Pick the newest `cli-v*` release from a `/releases` list payload.
- * Non-CLI tags and drafts are ignored; the winner is chosen by fork-aware
- * version order, not list position (list order is creation date).
+ * Non-CLI tags and drafts are ignored; the winner is chosen by semver order
+ * (including legacy `-ohmy.N` builds), not list position (creation date).
  */
 export function pickLatestCliRelease(
   releases: GithubReleasePayload[],

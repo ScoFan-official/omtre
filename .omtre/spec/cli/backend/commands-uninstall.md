@@ -1,17 +1,17 @@
-# `trellis uninstall` Command
+# `omtre uninstall` Command
 
 Source: `packages/cli/src/commands/uninstall.ts`
 
-How the uninstall command removes every Trellis-written file from a project, scrubs structured config files in place, and prunes empty managed directories — without ever touching user-authored neighbors.
+How the uninstall command removes every omtre-written file from a project, scrubs structured config files in place, and prunes empty managed directories — without ever touching user-authored neighbors.
 
 ---
 
 ## Overview
 
-`trellis uninstall` is the inverse of `trellis init` / `trellis update`: it removes everything Trellis wrote and leaves everything Trellis did not.
+`omtre uninstall` is the inverse of `omtre init` / `omtre update`: it removes everything omtre wrote and leaves everything omtre did not.
 
-- **Manifest is authoritative.** The single source of truth for "what trellis wrote" is `.omtre/.template-hashes.json`. Files outside that manifest are never touched, regardless of where they live (e.g. user-added scripts under `.claude/hooks/`, custom commands under `.cursor/commands/`).
-- **No user-modification gate.** Whether the user has edited a manifest-listed file or not, it is removed. `update` semantics (warn / preserve modified files) do not apply here — the user's intent is to remove Trellis entirely.
+- **Manifest is authoritative.** The single source of truth for "what omtre wrote" is `.omtre/.template-hashes.json`. Files outside that manifest are never touched, regardless of where they live (e.g. user-added scripts under `.claude/hooks/`, custom commands under `.cursor/commands/`).
+- **No user-modification gate.** Whether the user has edited a manifest-listed file or not, it is removed. `update` semantics (warn / preserve modified files) do not apply here — the user's intent is to remove omtre entirely.
 - **Two file classes.** Manifest entries fall into:
   1. *Opaque content files* (most `.py`, `.md`, `.toml`, `.json` agents, etc.) — unlinked outright.
   2. *Structured config files* (`settings.json`, `hooks.json`, `package.json`, `config.toml`, and mixed-ownership markdown like `AGENTS.md`) — passed through a scrubber that removes only the omtre-owned fields/block and writes the trimmed result back. If nothing meaningful remains, the scrubber returns `fullyEmpty: true` and the file is deleted instead of rewritten.
@@ -19,7 +19,7 @@ How the uninstall command removes every Trellis-written file from a project, scr
 - **Idempotent.** Re-running on a project that has no `.omtre/` is a friendly no-op. Re-running after a partial failure picks up whatever is still on disk and converges.
 - **Best-effort cleanup.** Permission errors on individual `unlink`/`rmdir` calls are swallowed; the command never aborts halfway. The summary at the end reports counts but does not enumerate per-file failures.
 
-For the *content* of each scrubber (which fields are stripped from `.claude/settings.json`, what counts as a trellis comment in `.codex/config.toml`, etc.), see `uninstall-scrubbers.md` for per-file scrubbing rules.
+For the *content* of each scrubber (which fields are stripped from `.claude/settings.json`, what counts as an omtre comment in `.codex/config.toml`, etc.), see `uninstall-scrubbers.md` for per-file scrubbing rules.
 
 ---
 
@@ -28,7 +28,7 @@ For the *content* of each scrubber (which fields are stripped from `.claude/sett
 Wired in `cli/index.ts` near other top-level subcommands:
 
 ```
-trellis uninstall [-y|--yes] [--dry-run]
+omtre uninstall [-y|--yes] [--dry-run]
 ```
 
 | Flag | Type | Effect |
@@ -36,7 +36,7 @@ trellis uninstall [-y|--yes] [--dry-run]
 | `-y, --yes` | boolean | Skip the `Continue?` confirmation prompt. |
 | `--dry-run` | boolean | Print the plan and exit without modifying anything. |
 
-There are no `--platform <name>` or `--keep-config` flags. The design is intentionally all-or-nothing: partial uninstall (e.g. "remove Trellis from Cursor only, leave Claude Code") is **out of scope** because the manifest does not partition by platform — see *Common Pitfalls* below.
+There are no `--platform <name>` or `--keep-config` flags. The design is intentionally all-or-nothing: partial uninstall (e.g. "remove omtre from Cursor only, leave Claude Code") is **out of scope** because the manifest does not partition by platform — see *Common Pitfalls* below.
 
 The command surface lives in `commands/uninstall.ts:uninstall` and is the only export consumed by `cli/index.ts`. The `UninstallOptions` interface in the same file mirrors the two CLI flags 1:1.
 
@@ -67,13 +67,13 @@ For every POSIX path in `hashes`:
    - If the scrubber returns `fullyEmpty: true`, record as `PlannedDeletion { missing: false }`. The file will be unlinked just like any other manifest entry.
    - Otherwise, record as `PlannedModification` carrying the pre-computed `ScrubResult` (the post-scrub content) plus the `reason` string for the human-readable plan output.
 
-`removeTrellisDir` is set to `true` unconditionally — by the time
+`removeomtreDir` is set to `true` unconditionally — by the time
 `buildManagedRemovalPlan` runs, we have already verified `.omtre/` exists.
 
 The shared planner also supports `strictPaths: true` for reversible ablation.
 `uninstall` deliberately uses the default compatibility mode so this extraction
 does not change its established best-effort behavior; strict containment,
-leaf-symlink, and malformed-mixed-file refusal belong to `trellis ablate`.
+leaf-symlink, and malformed-mixed-file refusal belong to `omtre ablate`.
 
 ### Structured-file dispatch table — `utils/managed-removal.ts:buildStructuredFileSpecs`
 
@@ -94,7 +94,7 @@ A `Map<posixPath, StructuredFileSpec>` built once per command invocation. Each e
 | `.codex/config.toml` | `scrubCodexConfigToml` | n/a |
 | `AGENTS.md` | `scrubManagedMarkdownBlock` | n/a |
 
-`AGENTS.md` is not a hooks-JSON file — it's a mixed-ownership markdown file. Trellis owns only the `<!-- OMTRE:START/END -->` block (markers exported from `update.ts`); the user owns everything outside it. It shares `scrubManagedMarkdownBlock` with the Copilot-instructions scrubber: strip the block, keep the rest, and only fall through to deletion (`fullyEmpty`) when nothing user-authored remains. Before this spec was added, `AGENTS.md` had no dispatch-table row and was `unlinkSync`'d whole by the plain-deletion path, destroying any pre-existing user content outside the block.
+`AGENTS.md` is not a hooks-JSON file — it's a mixed-ownership markdown file. omtre owns only the `<!-- OMTRE:START/END -->` block (markers exported from `update.ts`); the user owns everything outside it. It shares `scrubManagedMarkdownBlock` with the Copilot-instructions scrubber: strip the block, keep the rest, and only fall through to deletion (`fullyEmpty`) when nothing user-authored remains. Before this spec was added, `AGENTS.md` had no dispatch-table row and was `unlinkSync`'d whole by the plain-deletion path, destroying any pre-existing user content outside the block.
 
 Adding a new platform that ships a structured config file means adding one row to this table — the planner picks it up automatically. **Per-file scrub semantics live in `uninstall-scrubbers.md`; do not duplicate them here.**
 
@@ -122,7 +122,7 @@ After printing the plan:
 
 ### Non-TTY guard
 
-If `process.stdin.isTTY` is false **and** neither `--yes` nor `--dry-run` is set, the command refuses to prompt and exits non-zero with a red message instructing the user to pass `--yes` or `--dry-run`. This is a deliberate fail-closed UX choice that mirrors `trellis update` in scripted environments. The brief `readline.createInterface(...).close()` call before exit is a defensive ref-release in case anything else opened stdin (mostly defensive — the process is about to exit anyway).
+If `process.stdin.isTTY` is false **and** neither `--yes` nor `--dry-run` is set, the command refuses to prompt and exits non-zero with a red message instructing the user to pass `--yes` or `--dry-run`. This is a deliberate fail-closed UX choice that mirrors `omtre update` in scripted environments. The brief `readline.createInterface(...).close()` call before exit is a defensive ref-release in case anything else opened stdin (mostly defensive — the process is about to exit anyway).
 
 If the user answers "no" at the prompt, print a yellow "Uninstall cancelled. No files modified." and return. **No partial execution; no rollback needed.**
 
@@ -134,7 +134,7 @@ Five ordered phases. The order matters for partial-failure recovery (an interrup
 
 ### Phase 1 — Modifications first
 
-Write each `PlannedModification.result.content` to its `absPath` via `fs.writeFileSync`. Doing this **before** deletions means that if a later step crashes, structured config files have at least had their trellis fragments stripped. User data inside those files (other deps in `package.json`, other hooks in `settings.json`, custom keys) is preserved.
+Write each `PlannedModification.result.content` to its `absPath` via `fs.writeFileSync`. Doing this **before** deletions means that if a later step crashes, structured config files have at least had their omtre fragments stripped. User data inside those files (other deps in `package.json`, other hooks in `settings.json`, custom keys) is preserved.
 
 ### Phase 2 — File deletions
 
@@ -144,7 +144,7 @@ While deleting, the parent directory of each deleted file is added to a `Set<str
 
 ### Phase 3 — Drop `.omtre/` recursively
 
-`fs.rmSync(trellisDir, { recursive: true, force: true })`. Whole directory tree gone in one call. This is unconditional within `executeManagedRemovalPlan`; the gates all live earlier in `uninstall()` — the pre-checks that the directory exists and a manifest is present, the confirmation prompt (or `--yes`), and the *Dirty-Data Guard* below.
+`fs.rmSync(omtreDir, { recursive: true, force: true })`. Whole directory tree gone in one call. This is unconditional within `executeManagedRemovalPlan`; the gates all live earlier in `uninstall()` — the pre-checks that the directory exists and a manifest is present, the confirmation prompt (or `--yes`), and the *Dirty-Data Guard* below.
 
 ### Phase 4 — Prune empty managed sub-directories
 
@@ -181,11 +181,11 @@ Returns `{ deletedFiles, modifiedFiles, deletedDirs }` for the green summary lin
 
 This is **deliberately destructive** for user data inside `.omtre/`. Users are responsible for backing up `spec/`, `tasks/`, or `workspace/` before running `uninstall` if they want history preserved — the command does not create a backup itself. The plan output prints `WORKFLOW/  (entire directory — including your specs, task PRDs, journals, and memory)` so this is visible before the confirmation prompt.
 
-> Rationale: a "soft uninstall" that leaves orphan `.omtre/` content behind is a worse state than either fully-installed or fully-uninstalled — the leftover files reference removed scripts (`.omtre/scripts/`) and broken sub-agent configs (`.omtre/tasks/<id>/implement.jsonl` pointing at deleted spec files). Either keep Trellis or remove it cleanly. There is no half-Trellis mode.
+> Rationale: a "soft uninstall" that leaves orphan `.omtre/` content behind is a worse state than either fully-installed or fully-uninstalled — the leftover files reference removed scripts (`.omtre/scripts/`) and broken sub-agent configs (`.omtre/tasks/<id>/implement.jsonl` pointing at deleted spec files). Either keep omtre or remove it cleanly. There is no half-omtre mode.
 
-### Dirty-Data Guard — `collectUncommittedTrellisData`
+### Dirty-Data Guard — `collectUncommittedomtreData`
 
-`.omtre/spec/`, `.omtre/tasks/`, `.omtre/workspace/`, and `.omtre/domains/` are the same subdirectories `update.ts` marks PROTECTED (user-authored specs, task PRDs, journals, domain boards). Because Phase 3 deletes them with no backup, `uninstall()` calls `collectUncommittedTrellisData(cwd)` right after `renderPlan` (before the dry-run exit and before the confirmation prompt). It shells out to `git status --porcelain -- .omtre/spec .omtre/tasks .omtre/workspace .omtre/domains` and returns the list of modified/staged/untracked paths under those dirs. A non-git repo, or `git` being unavailable, makes it return `[]` — the guard is a no-op in that case, and uninstall proceeds exactly as it did before this fix.
+`.omtre/spec/`, `.omtre/tasks/`, `.omtre/workspace/`, and `.omtre/domains/` are the same subdirectories `update.ts` marks PROTECTED (user-authored specs, task PRDs, journals, domain boards). Because Phase 3 deletes them with no backup, `uninstall()` calls `collectUncommittedomtreData(cwd)` right after `renderPlan` (before the dry-run exit and before the confirmation prompt). It shells out to `git status --porcelain -- .omtre/spec .omtre/tasks .omtre/workspace .omtre/domains` and returns the list of modified/staged/untracked paths under those dirs. A non-git repo, or `git` being unavailable, makes it return `[]` — the guard is a no-op in that case, and uninstall proceeds exactly as it did before this fix.
 
 - **Any hits** print a red warning (up to 20 paths, then a "`… and N more`" tail) before the prompt/dry-run message.
 - **Interactive runs** (no `--yes`) only see the warning; the existing `Continue? [Y/n]` prompt is the abort point.
@@ -235,7 +235,7 @@ The corollary: when adding a new platform/template that emits a structured confi
 
 There is no `--platform claude-code` flag. Reason: the manifest does not partition by platform — it is a flat `Record<posixPath, sha256>`. Inferring "this entry belongs to Claude Code" would mean prefix-matching `.claude/`, which is fragile (`.agents/skills/` is shared by Codex and Pi; `.github/copilot/` lives outside the platform-name pattern).
 
-If a user wants to remove just one platform's files, the path is `trellis update` after editing `config.yaml`'s platform list — that flow knows how to deconfigure platforms cleanly. `uninstall` is a single-shot full removal.
+If a user wants to remove just one platform's files, the path is `omtre update` after editing `config.yaml`'s platform list — that flow knows how to deconfigure platforms cleanly. `uninstall` is a single-shot full removal.
 
 ### 2. Adding a new structured config file without a scrubber
 
@@ -255,7 +255,7 @@ If a user wants to remove just one platform's files, the path is `trellis update
 
 ### 4. Manifest drift after manual edits
 
-**Symptom**: User manually deleted some Trellis files, then runs `uninstall`. Plan shows "skipped N entries" for those files (they were missing on disk), but the unrelated structured-config phase still works correctly.
+**Symptom**: User manually deleted some omtre files, then runs `uninstall`. Plan shows "skipped N entries" for those files (they were missing on disk), but the unrelated structured-config phase still works correctly.
 
 **Cause**: Working as designed. The planner records `missing: true` for any manifest-listed file that is gone, then skips it during execution.
 
@@ -263,9 +263,9 @@ If a user wants to remove just one platform's files, the path is `trellis update
 
 ### 5. Codex `[features] hooks = true` survives uninstall
 
-**Symptom**: User uninstalls Trellis but `~/.codex/config.toml` still has `[features]\nhooks = true`.
+**Symptom**: User uninstalls omtre but `~/.codex/config.toml` still has `[features]\nhooks = true`.
 
-**Cause**: That flag is in the **user-level** Codex config, not project-local. Trellis never wrote to it (the README+the project `.codex/config.toml` comment block instruct the user to add it manually). `uninstall` therefore does not remove it.
+**Cause**: That flag is in the **user-level** Codex config, not project-local. omtre never wrote to it (the README+the project `.codex/config.toml` comment block instruct the user to add it manually). `uninstall` therefore does not remove it.
 
 **Fix**: Document this in the future — add a closing reminder to the green summary if Codex was one of the configured platforms. Currently silent.
 
@@ -279,7 +279,7 @@ If you ever need to extend the scrubber to match different command shapes (e.g. 
 
 ## Test Conventions
 
-Tests live in `packages/cli/test/commands/uninstall.integration.test.ts`. The file pattern: each test runs `init({ ..., force: true })` in a fresh tmpdir to set up a real Trellis install, then exercises one path through `uninstall()`.
+Tests live in `packages/cli/test/commands/uninstall.integration.test.ts`. The file pattern: each test runs `init({ ..., force: true })` in a fresh tmpdir to set up a real omtre install, then exercises one path through `uninstall()`.
 
 Two behaviors documented above have their own dedicated integration test files rather than living in the main table below: the `AGENTS.md` block-scrub fix is covered by `test/commands/init-uninstall-overdelete.integration.test.ts`, and the *Dirty-Data Guard* is covered by `test/commands/uninstall-dirty-guard.integration.test.ts` (skipped when `git`/`python3` are unavailable, since it shells out to real `git status`).
 
@@ -294,7 +294,7 @@ Reference cases (number = test ID in the file):
 | 5 | Prompt `n` | Aborts with no mutation. |
 | 6 | User-modified manifest file is still removed | Manifest membership trumps modification state. |
 | 7 | User-added file in managed dir survives | Manifest is the scope boundary. |
-| 8 | `.claude/settings.json` with extra user fields | Scrubber preserves user fields, strips trellis hooks. |
+| 8 | `.claude/settings.json` with extra user fields | Scrubber preserves user fields, strips omtre hooks. |
 | 8a | Empty managed dirs pruned (Kilo case, no structured config) | Phase 4+5 cleanup. |
 | 8b | Platform root survives when scrubbing leaves residual content | Phase 5 only prunes empty roots. |
 
@@ -302,7 +302,7 @@ When adding a new structured-config platform:
 
 1. Add a row to the dispatch table.
 2. Write a unit test in `test/utils/uninstall-scrubbers.test.ts` for the scrubber itself.
-3. Add an integration test in this file mirroring `#8` — init that platform, write some user-owned fields into the structured config, uninstall, assert the user fields survive and the trellis fields are gone.
+3. Add an integration test in this file mirroring `#8` — init that platform, write some user-owned fields into the structured config, uninstall, assert the user fields survive and the omtre fields are gone.
 
 Do **not** mock `fs` for these tests; they all use real tmpdirs. The pattern is: `beforeEach` makes a tmpdir and `chdir`'s into it, `afterEach` restores `cwd` and `rmSync` the tmpdir. This catches Windows path bugs, permission issues, and unintended side effects that a mocked fs would hide.
 
@@ -325,6 +325,6 @@ Do **not** mock `fs` for these tests; they all use real tmpdirs. The pattern is:
 | `cleanupEmptyDirs` | `commands/update.ts:cleanupEmptyDirs` (re-exported) |
 | `ALL_MANAGED_DIRS` / `isManagedRootDir` | `configurators/index.ts` |
 | `DIR_NAMES.WORKFLOW` | `constants/paths.ts:DIR_NAMES` |
-| `collectUncommittedTrellisData` | `commands/uninstall.ts:collectUncommittedTrellisData` (exported) |
+| `collectUncommittedomtreData` | `commands/uninstall.ts:collectUncommittedomtreData` (exported) |
 | `OMTRE_ALLOW_DIRTY_UNINSTALL` (env bypass) | checked via `dirtyUninstallBypassEnabled` in `commands/uninstall.ts` |
 | Scrubbers (`scrubHooksJson`, `scrubOpencodePackageJson`, `scrubPiSettings`, `scrubCodexConfigToml`, `scrubManagedMarkdownBlock`) | `utils/uninstall-scrubbers.ts` — see `uninstall-scrubbers.md` |

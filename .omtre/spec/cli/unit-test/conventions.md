@@ -37,7 +37,7 @@ reason — which is what makes the "when to extend" rule easy to get wrong.
 delete process.env.OMTRE_CONTEXT_ID;
 ```
 
-`TrellisContext.getContextKey` treats it as the highest-priority override —
+`OmtreContext.getContextKey` treats it as the highest-priority override —
 production behavior, by design. When the suite runs inside a Claude Code or
 OpenCode session it leaks in from the parent shell and hijacks the resolver,
 ignoring the test's mocked `platformInput`. Symptom: a test expecting
@@ -351,7 +351,7 @@ it("safe-file-delete respects update.skip", () => {
   // So collectSafeFileDeletes() returns "skip-modified" BEFORE checking update.skip
   // Even if update.skip logic is completely broken, this test passes
   fs.writeFileSync(deprecatedFile, "some content");
-  config.update.skip = [".claude/commands/trellis/"];
+  config.update.skip = [".claude/commands/omtre/"];
   await update({ force: true });
   expect(fs.existsSync(deprecatedFile)).toBe(true); // Always true!
 });
@@ -361,7 +361,7 @@ it("safe-file-delete respects update.skip", () => {
   // Write content whose hash IS in allowed_hashes
   // Without update.skip, the file WOULD be deleted
   fs.writeFileSync(deprecatedFile, originalTemplateContent);
-  config.update.skip = [".claude/commands/trellis/"];
+  config.update.skip = [".claude/commands/omtre/"];
   await update({ force: true });
   expect(fs.existsSync(deprecatedFile)).toBe(true); // Proves update.skip works
 });
@@ -436,7 +436,7 @@ If production code starts using `tasks/.length === 0` as the discriminator betwe
 
 ```typescript
 /**
- * Helper: simulate a fresh clone of an existing Trellis project...
+ * Helper: simulate a fresh clone of an existing omtre project...
  *
  * NOTE: the seeded `tasks/archive/` is load-bearing for the joiner branch.
  * If you change the `tasksEmpty` predicate in init.ts (currently

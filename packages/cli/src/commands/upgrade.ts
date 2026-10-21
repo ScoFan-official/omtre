@@ -11,11 +11,10 @@ import {
 } from "../utils/github-releases.js";
 
 /**
- * [oh-my] CLI releases ship as GitHub release tarballs on
- * `ScoFan-official/omtre` under `cli-v*` tags (channel A), not on
- * npm. `omtre upgrade` resolves the requested release tag to its `.tgz`
- * asset and installs it with `npm install -g <url>` — the same mechanism the
- * devin `oh-my-update` workflow uses.
+ * CLI releases ship on npm as `omtre` and as GitHub release tarballs under
+ * `cli-v*` tags. `omtre upgrade` resolves the requested release tag to its
+ * `.tgz` asset and installs it with `npm install -g <url>` — the same
+ * mechanism the devin update workflow uses.
  */
 
 export interface UpgradeOptions {
@@ -55,7 +54,8 @@ const RELEASE_TAG_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 /**
  * Resolve the GitHub release tag to install. `latest` (the default) resolves
  * to the newest `cli-v*` release; anything else must look like a release tag
- * or version (`0.6.17-ohmy.2`, `v0.6.17-ohmy.2`, `cli-v0.6.17-ohmy.2`).
+ * or version (`1.0.0`, `v1.0.0`, `cli-v1.0.0`). Legacy `-ohmy.N` tags still
+ * resolve for older installations.
  */
 export function resolveUpgradeTag(requestedTag?: string): string {
   if (!requestedTag || requestedTag === "latest") {
@@ -63,7 +63,7 @@ export function resolveUpgradeTag(requestedTag?: string): string {
   }
   if (!RELEASE_TAG_RE.test(requestedTag)) {
     throw new Error(
-      `Invalid release tag/version "${requestedTag}". Use 'latest' or a release tag such as cli-v0.6.17-ohmy.1.`,
+      `Invalid release tag/version "${requestedTag}". Use 'latest' or a release tag such as cli-v1.0.0.`,
     );
   }
   return requestedTag;

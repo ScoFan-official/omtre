@@ -16,7 +16,7 @@ This CLI project uses **chalk** for colored console output. Since this is a user
 |-------|--------------|-------|---------|
 | **Cyan** | `chalk.cyan()` | Headers, banners, section titles | `"Next steps:"` |
 | **Blue** | `chalk.blue()` | Action in progress, step indicators | `"Creating workflow structure..."` |
-| **Green** | `chalk.green()` | Success messages | `"Trellis initialized successfully!"` |
+| **Green** | `chalk.green()` | Success messages | `"omtre initialized successfully!"` |
 | **Yellow** | `chalk.yellow()` | Warnings, coming soon, skipped items | `"Coming soon: update command"` |
 | **Red** | `chalk.red()` | Errors | `"Error:"` prefix |
 | **Gray** | `chalk.gray()` | Secondary info, hints, paths | Descriptions, file paths |
@@ -52,7 +52,7 @@ console.log(chalk.gray("   - Creating hook configurations..."));
 ### Success (Green with Emoji)
 
 ```typescript
-console.log(chalk.green("\n✅ Trellis initialized successfully!\n"));
+console.log(chalk.green("\n✅ omtre initialized successfully!\n"));
 ```
 
 ### Warnings (Yellow with Emoji)
@@ -95,7 +95,7 @@ console.log(
 
 ```typescript
 // ASCII art banner (cyan)
-const banner = figlet.textSync("Trellis", { font: "Rebel" });
+const banner = figlet.textSync("omtre", { font: "Rebel" });
 console.log(chalk.cyan(`\n${banner.trimEnd()}`));
 
 // Tagline (gray)
@@ -125,7 +125,7 @@ console.log(chalk.blue("📝 Configuring Cursor commands..."));
 
 ```typescript
 // Success message
-console.log(chalk.green("\n✅ Trellis initialized successfully!\n"));
+console.log(chalk.green("\n✅ omtre initialized successfully!\n"));
 
 // Next steps
 console.log(chalk.cyan("Next steps:"));
@@ -226,7 +226,7 @@ console.log(chalk.blue("🤖 Configuring Multi-Agent Pipeline..."));
 console.log(chalk.gray("   - Creating agent configurations..."));
 
 // 6. Success
-console.log(chalk.green("\n✅ Trellis initialized successfully!\n"));
+console.log(chalk.green("\n✅ omtre initialized successfully!\n"));
 
 // 7. Next steps
 console.log(chalk.cyan("Next steps:"));

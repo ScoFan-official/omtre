@@ -1,164 +1,145 @@
 <p align="center">
-<picture>
-<source srcset="assets/hero.png" media="(prefers-color-scheme: dark)">
-<source srcset="assets/hero.png" media="(prefers-color-scheme: light)">
-<img src="assets/hero.png" alt="omtre Logo" width="500" style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
-</picture>
+  <img src="assets/hero.svg" alt="omtre — the contract-enforced workflow harness for AI coding agents" width="100%">
 </p>
 
-> **omtre** — this repo is the source/build workspace of [omtre](https://github.com/ScoFan-official/omtre), a standalone framework hard-forked from [mindfold-ai/trellis](https://github.com/mindfold-ai/trellis) (AGPL-3.0) with mattpocock-flavored role cards, Devin sub-agent dispatch, the `oh-my` workflow template, and `oh-my-update` self-update. Versions are `UPSTREAM-ohmy.N`; install from [omtre releases](https://github.com/ScoFan-official/omtre/releases) (`cli-v*` tags): `npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v<ver>/omtre-<ver>.tgz`.
+<h1 align="center">omtre</h1>
 
 <p align="center">
-<strong>An out-of-the-box engineering framework for AI coding.</strong><br/>
-<sub>AI writes code fast, but every session it starts from scratch — no memory of your project, your conventions, or your team's requirements. omtre persists specs, tasks, and memory into your repo, so any coding agent works to your engineering standards.</sub>
+  <strong>The contract-enforced workflow harness for AI coding agents.</strong><br/>
+  <sub>One <code>.omtre/</code> spine for specs, tasks, and project memory — across 22 coding agents.</sub>
 </p>
 
 <p align="center">
-<a href="./README_CN.md">简体中文</a> •
-<a href="./README.pack.md">Docs</a> •
-<a href="#quick-start">Quick Start</a> •
-<a href="./README.pack.md#platform-support-22">Supported Platforms</a> •
-<a href="./marketplace/README.md">Marketplace</a>
+  <a href="https://github.com/ScoFan-official/omtre/releases"><img src="https://img.shields.io/github/v/release/ScoFan-official/omtre?style=flat-square&color=2563eb" alt="release version" /></a>
+  <a href="https://www.npmjs.com/package/omtre"><img src="https://img.shields.io/npm/v/omtre?style=flat-square&color=cb3837" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/omtre"><img src="https://img.shields.io/npm/dw/omtre?style=flat-square&color=cb3837&label=downloads" alt="npm downloads" /></a>
+  <a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat-square&color=eab308" alt="stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-16a34a.svg?style=flat-square" alt="license" /></a>
 </p>
 
 <p align="center">
-<a href="https://github.com/ScoFan-official/omtre/releases"><img src="https://img.shields.io/github/v/release/ScoFan-official/omtre?style=flat-square&color=2563eb" alt="release version" /></a>
-<a href="https://github.com/mindfold-ai/Trellis/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-16a34a.svg?style=flat-square" alt="license" /></a>
-<a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat-square&color=eab308" alt="stars" /></a>
-<a href="https://discord.com/invite/tWcCZ3aRHc"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord" /></a>
-<a href="https://github.com/mindfold-ai/Trellis/issues"><img src="https://img.shields.io/github/issues/mindfold-ai/Trellis?style=flat-square&color=e67e22" alt="open issues" /></a>
-<a href="https://github.com/mindfold-ai/Trellis/pulls"><img src="https://img.shields.io/github/issues-pr/mindfold-ai/Trellis?style=flat-square&color=9b59b6" alt="open PRs" /></a>
-<a href="https://deepwiki.com/mindfold-ai/Trellis"><img src="https://img.shields.io/badge/Ask-DeepWiki-blue?style=flat-square" alt="Ask DeepWiki" /></a>
-<a href="https://chatgpt.com/?q=Explain+the+project+mindfold-ai/Trellis+on+GitHub"><img src="https://img.shields.io/badge/Ask-ChatGPT-74aa9c?style=flat-square&logo=openai&logoColor=white" alt="Ask ChatGPT" /></a>
+  English · <a href="./README.zh-CN.md">简体中文</a> · <a href="./docs/pack.md">Skills &amp; marketplace</a> · <a href="./docs/design.md">Design</a> · <a href="./CHANGELOG.md">Changelog</a>
 </p>
 
-<p align="center">
-<img src="assets/workflow.png" alt="omtre workflow demo" width="100%">
-</p>
+## Install
+
+```bash
+npm install -g omtre
+omtre init -u your-name
+```
+
+Prefer a standalone tarball? Install the latest release asset:
+
+```bash
+npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v1.0.0/omtre-1.0.0.tgz
+```
+
+Requirements: **Node.js >= 18.17** and **Python >= 3.9**.
 
 ## Why omtre?
 
-| Capability | What it changes |
+AI coding agents are fast, but each new session starts from zero. omtre makes the project itself the source of truth: specs describe how work should be done, tasks carry the context for a change, and journals preserve what happened last time. The agent reads the same contracts your team does.
+
+| Principle | What it means in practice |
 | --- | --- |
-| **Auto-injected specs** | Write conventions once in `.omtre/spec/`, then let omtre inject the relevant context into each session instead of repeating yourself. |
-| **Task-centered workflow** | Keep PRDs, implementation context, review context, and task status in `.omtre/tasks/` so AI work stays structured. |
-| **Project memory** | Journals in `.omtre/workspace/` preserve what happened last time, so each new session starts with real context. |
-| **Team-shared standards** | Specs live in the repo, so one person's hard-won workflow or rule can benefit the whole team. |
-| **Multi-platform setup** | Bring the same omtre structure to 22 AI coding platforms instead of rebuilding your workflow per tool. |
+| **Contracts, not suggestions** | Specs and gates live in `.omtre/spec/`; the workflow refuses to skip them. |
+| **One spine, any agent** | The same `.omtre/` layout works across 22 coding agents and IDEs. |
+| **Repo-native state** | Tasks, decisions, and memory stay in the repo. No hidden service, no vendor lock-in. |
+| **Batteries included** | 43 first-party skills, a marketplace, and 1,700+ catalog assets. |
+| **Independent cadence** | omtre has its own release line and design principles; upstream changes are inputs, not the roadmap. |
 
-## Prerequisites:
-
-- **Node.js** >= 18
-- **Python** >= 3.9
-
-## Quick Start
+## Quick start
 
 ```bash
-# 1. Install omtre
-npm install -g omtre@latest
+# 1. Initialize the platforms you use
+omtre init --claude --cursor --codex -u your-name
 
-# 2. Initialize in your repo
-omtre init -u your-name
+# 2. Ask your agent to start a task.
+#    The session hook injects the relevant specs and the active task.
 
-# 3. Or initialize with the platforms you actually use
-omtre init --cursor --opencode --codex -u your-name
+# 3. Finish the task when the work is done.
+/omt:finish-work
 ```
 
-See the [Quick Start](#quick-start) and [Supported Platforms](./README.pack.md#platform-support-22) guides for setup details.
+For an unattended loop:
 
-## How to Use
+```bash
+omtre run --until-empty
+```
 
-The workflow is simple:
+`omtre run` takes the frontier head, implements it in its own worktree, verifies it, and records a run ledger. Delivery is opt-in.
 
-1. **Describe what you want** in natural language.
-2. **Brainstorm** with the AI one question at a time until the PRD is clear, then implementation begins.
-3. **Let it run** — the AI calls omtre Implement and auto-checks the result against specs, lint, type-check, and tests.
-4. **Type `/omt:finish-work`** when the work is done or the session context fills up. omtre archives the task and updates journals.
+## How it works
 
-## How It Works
+<img src="assets/workflow.svg" alt="omtre workflow — session start, plan, implement, check, finish" width="100%">
 
-omtre runs a 4-phase loop with auto-invoked skills and sub-agents:
+1. **Session start** — the hook injects the relevant `.omtre/spec/` contracts and the active task context.
+2. **Plan** — the agent turns the request into `prd.md`, `design.md`, and `implement.md` under `.omtre/tasks/`, one question at a time.
+3. **Implement** — an `omtre-implement` sub-agent writes the scoped diff. No auto-commit.
+4. **Check** — an `omtre-check` sub-agent reviews the diff against standards and the spec, then runs lint, type-check, and tests. Mechanical fixes are allowed; spec findings are report-only.
+5. **Finish** — the task is archived, journals are updated, and durable learnings are promoted back into `.omtre/spec/`.
 
-1. **Plan** — `omtre-brainstorm` walks through requirements one question at a time and writes `prd.md`. Research-heavy items go to an `omtre-research` sub-agent. The result is curated specs + research files referenced from `implement.jsonl` / `check.jsonl`.
-2. **Implement** — an `omtre-implement` sub-agent writes code from the PRD with the curated context auto-injected, no git commit.
-3. **Verify** — an `omtre-check` sub-agent reviews the diff against specs and runs lint, type-check, and tests, self-fixing where it can.
-4. **Finish** — a final check runs, then `omtre-update-spec` promotes new learnings back into `.omtre/spec/` so the next session starts smarter.
+## What lives in `.omtre/`
 
-## Resources
+| Path | Purpose |
+| --- | --- |
+| `.omtre/spec/` | Team contracts: architecture, conventions, quality gates, domain rules. |
+| `.omtre/tasks/` | One directory per change: PRD, design, implementation context, check context. |
+| `.omtre/workspace/` | Per-developer journals and shared project memory. |
+| `.omtre/agents/` | Role cards for implement, check, research, plan, and orchestration. |
+| `.omtre/domains/` | Board protocols for multi-ticket delivery and worklog. |
 
-| Need                            | Link                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| Install omtre in a repo         | [Quick Start](#quick-start)                                                    |
-| Understand platform differences | [Supported Platforms](./README.pack.md#platform-support-22)                    |
-| See the workflow in practice    | [Pack & Workflow Guide](./README.pack.md)                                      |
-| Start from spec templates       | [Marketplace Templates](./marketplace/README.md)                               |
-| Track releases                  | [Changelog](./CHANGELOG.md)                                                    |
+## Platforms
 
-## FAQ
+omtre ships adapters for 22 coding agents and IDEs, including Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Devin, Qoder, CodeBuddy, Kiro, Kilo, Droid, Trae, Grok, Kimi, and Snow. See [supported platforms](./docs/pack.md#platform-support-22) for the full list and per-platform setup.
 
-<details>
-<summary><strong>How is omtre different from <code>CLAUDE.md</code>, <code>AGENTS.md</code>, or <code>.cursorrules</code>?</strong></summary>
+## Skills & marketplace
 
-Those files are useful entry points, but they tend to become monolithic. omtre adds scoped specs, task PRDs, workflow gates, workspace memory, and platform-aware generated files around them.
+- **43 first-party skills** — including `omtre-run`, `omtre-domains`, `dispatch-roster`, `hygiene-sweep`, `rules-audit`, `code-review`, `tdd`, and the `omtre-meta` guide.
+- **1,700+ catalog assets** — vendored with attribution; see the [marketplace](./marketplace/README.md).
 
-</details>
+Install the recommended skill set:
 
-<details>
-<summary><strong>Is omtre only for Claude Code?</strong></summary>
+```bash
+npx skills add ScoFan-official/omtre --agent <your-platform> --copy
+```
 
-No. omtre is a project layer that works across multiple coding agents and IDEs.
+Install the spec contracts:
 
-</details>
+```bash
+omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append
+```
 
-<details>
-<summary><strong>Is omtre for solo developers or teams?</strong></summary>
+<!-- omtre:upstream-attribution:start -->
+## Migrating from Trellis
 
-Both. Solo developers use it for memory and repeatable workflow. Teams get the larger benefit: shared standards, task boundaries, reviewable context, and platform portability.
+omtre can coexist with Trellis: the CLI is `omtre`/`omt`, the directory is `.omtre/`, and the `trellis` binary is untouched. For an existing Trellis 0.6.x project, `omtre migrate` moves managed files to `.omtre/`, keeps user data, and writes `.backup` copies for modified managed files.
+<!-- omtre:upstream-attribution:end -->
 
-</details>
+```bash
+omtre migrate --dry-run
+omtre migrate
+```
 
-<details>
-<summary><strong>Do I have to write every spec file manually?</strong></summary>
+## Temporary ablation
 
-No. Many teams start by letting AI draft specs from existing code and then tighten the important parts by hand. omtre works best when you keep the high-signal rules explicit and versioned.
+`omtre ablate` temporarily removes all project-owned omtre surfaces after creating a verified recovery transaction outside the project. Start a fresh agent session for the comparison, then `omtre restore` to recover the exact prior state. `--dry-run` previews either operation.
 
-</details>
+This is different from `omtre uninstall` (permanent removal) and `OMTRE_HOOKS=0` (hooks only). Ablation does not launch agents, manage worktrees, hide Git changes, or remove the global CLI, channel logs, or host transcripts. If a managed path changes while ablated, restore refuses all writes until the conflict is resolved.
 
-<details>
-<summary><strong>Can teams use this without constant conflicts?</strong></summary>
+## Design
 
-Yes. Personal workspace journals stay separate per developer, while shared specs and tasks stay in the repo where they can be reviewed and improved like any other project artifact.
+omtre is built around five commitments: contracts over advice, repo-native state, agent-agnostic adapters, a small core with an absorbable edge, and an independent release cadence. Read [the design notes](./docs/design.md) for the longer version.
 
-</details>
+## Origins & license
 
-<details>
-<summary><strong>Can I temporarily compare a project with and without omtre?</strong></summary>
+<!-- omtre:upstream-attribution:start -->
+omtre is an independent project derived from [Trellis](https://github.com/mindfold-ai/trellis). The upstream project and its copyright remain with Mindfold LLC; omtre's modifications are released under the same AGPL-3.0 license. See [NOTICE](./NOTICE) and [upstream notes](./docs/upstream.md) for the lineage and sync policy.
+<!-- omtre:upstream-attribution:end -->
 
-Yes. `omtre ablate` temporarily removes all supported project-owned omtre
-surfaces after creating a verified recovery transaction outside the project.
-Start a fresh agent session for the comparison, then run `omtre restore` to
-recover the exact prior state. Use `--dry-run` to preview either operation.
-The private recovery transaction includes exact `.omtre` task, spec, and
-workspace bytes, which may contain user-authored sensitive text, and is kept
-until restore verifies successfully.
+## Community
 
-This is different from `omtre uninstall` (permanent removal) and
-`OMTRE_HOOKS=0` (hooks only). Ablation does not launch agents, manage
-worktrees, hide Git changes, or remove the global CLI, channel logs, or host
-transcripts. If a managed path changes while ablated, restore refuses all
-writes until the conflict is resolved.
-
-</details>
-
-## Community & Resources
-
-- [Pack & Workflow Guide](./README.pack.md)
-- [GitHub Issues](https://github.com/mindfold-ai/Trellis/issues)
-- [Discord](https://discord.com/invite/tWcCZ3aRHc)
+- [Issues](https://github.com/ScoFan-official/omtre/issues)
 - [Marketplace](./marketplace/README.md)
-
-<p align="center">
-<a href="https://github.com/mindfold-ai/Trellis">Upstream Repository</a> •
-<a href="https://github.com/mindfold-ai/Trellis/blob/main/LICENSE">AGPL-3.0 License</a> •
-Originally built by <a href="https://github.com/mindfold-ai">Mindfold</a>
-</p>
+- [Contributing](./CONTRIBUTING.md)
+- [Changelog](./CHANGELOG.md)

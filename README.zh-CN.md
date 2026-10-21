@@ -1,332 +1,145 @@
 <p align="center">
-  <img src="assets/hero.png" alt="omtre — mattpocock × ECC × impeccable，一条 omtre 主轴">
+  <img src="assets/hero.svg" alt="omtre — 面向 AI 编码代理的合约式工作流 harness" width="100%">
+</p>
+
+<h1 align="center">omtre</h1>
+
+<p align="center">
+  <strong>面向 AI 编码代理的合约式工作流 harness。</strong><br/>
+  <sub>一套 <code>.omtre/</code> 主轴，承载规范、任务与项目记忆，覆盖 22 个编码代理。</sub>
 </p>
 
 <p align="center">
-  <strong>有工作流脊梁的 agent 技能包。</strong>
+  <a href="https://github.com/ScoFan-official/omtre/releases"><img src="https://img.shields.io/github/v/release/ScoFan-official/omtre?style=flat-square&color=2563eb" alt="release version" /></a>
+  <a href="https://www.npmjs.com/package/omtre"><img src="https://img.shields.io/npm/v/omtre?style=flat-square&color=cb3837" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/omtre"><img src="https://img.shields.io/npm/dw/omtre?style=flat-square&color=cb3837&label=downloads" alt="npm downloads" /></a>
+  <a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat-square&color=eab308" alt="stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-16a34a.svg?style=flat-square" alt="license" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ScoFan-official/omtre/stargazers"><img src="https://img.shields.io/github/stars/ScoFan-official/omtre?style=flat&colorA=222222&colorB=CB3837" alt="Stars"></a>
-  <img src="https://img.shields.io/badge/catalog-1%2C741%20assets-3FB950?style=flat&colorA=222222" alt="1,741 catalog assets">
-  <img src="https://img.shields.io/badge/platforms-22-58A6FF?style=flat&colorA=222222" alt="22 agent platforms">
-  <img src="https://img.shields.io/badge/upstreams-3-E05735?style=flat&colorA=222222" alt="3 vendored upstreams">
-  <a href="https://github.com/ScoFan-official/omtre/commits"><img src="https://img.shields.io/github/last-commit/ScoFan-official/omtre?style=flat&colorA=222222" alt="Last commit"></a>
+  <a href="./README.md">English</a> · 简体中文 · <a href="./docs/pack.zh-CN.md">技能与市场</a> · <a href="./docs/design.md">设计</a> · <a href="./CHANGELOG.md">更新日志</a>
 </p>
-
-<p align="center">
-  <a href="./README.md">English</a> · <strong>简体中文</strong> · vendored 遵循 MIT &amp; Apache-2.0 —— 见 <a href="catalog/ATTRIBUTION.md">ATTRIBUTION</a>
-</p>
-
-advisory 技能运不出设计系统——合约可以。omtre 把
-[mattpocock/skills](https://github.com/mattpocock/skills)、
-[Everything Claude Code](https://github.com/davila7/claude-code-templates) 和
-[pbakaus/impeccable](https://github.com/pbakaus/impeccable) vendor 进同一个仓库，
-再把它们嘴里的抽象名词——"the issue tracker"、"PRODUCT.md"、"DESIGN.md"——
-绑进 omtre 的 `.omtre/` 主轴，把工作流从"建议执行"变成"强制执行"。
-
-**3** 个 vendored 上游 · **1,741** 个目录资产 · **43** 个默认技能 · **22** 个平台 · **1** 层合约——对 vendored 文件零 patch。
-
----
 
 ## 安装
 
-| 你想要… | 运行 |
+```bash
+npm install -g omtre
+omtre init -u your-name
+```
+
+也可以安装 GitHub Release 里的独立 tgz：
+
+```bash
+npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v1.0.0/omtre-1.0.0.tgz
+```
+
+要求：**Node.js >= 18.17**，**Python >= 3.9**。
+
+## 为什么是 omtre？
+
+AI 编码代理写得很快，但每次新会话都从零开始。omtre 把项目本身变成事实来源：规范说明“应该怎么做”，任务承载“这次改什么”，日志保留“上次发生了什么”。代理读到的合约，和团队读到的是同一份。
+
+| 原则 | 落地方式 |
 | --- | --- |
-| 只要 omtre 合约规范 | `omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append` |
-| 推荐技能集（mp 全量 37 个 + impeccable + 本包自建 `mp-omtre-bridge` / `oh-my-update` / `omtre-domains` / `omtre-run` / `dispatch-roster` / `hygiene-sweep` / `rules-audit`） | `npx skills add ScoFan-official/omtre --agent <platform> --copy` |
-| 1741 资产目录库里的任何东西 | `python scripts/install.py --platform <platform> --target <repo>` |
+| **合约，不是建议** | 规范与闸门放在 `.omtre/spec/`，工作流不能跳过。 |
+| **一条主轴，任意代理** | 同一套 `.omtre/` 布局，适配 22 个编码代理与 IDE。 |
+| **状态留在仓库** | 任务、决策与记忆都在仓库里；没有隐藏服务，也没有供应商锁定。 |
+| **开箱即用** | 43 个一线技能、一个市场、1,700+ 目录资产。 |
+| **独立节奏** | omtre 有自己的版本线与设计原则；上游变更是输入，不是路线图。 |
 
-仓库已公开，三条通道均无需认证，可自由组合。
+## 快速开始
 
-### 一句话安装提示词（直接发给 agent）
+```bash
+# 1. 初始化你实际使用的平台
+omtre init --claude --cursor --codex -u your-name
 
-把下面这段贴给 Devin / Codex / ZCode / Claude / Cursor，它会自己完成全部初始化：
+# 2. 让代理开始一个任务。
+#    会话钩子会注入相关规范与当前任务上下文。
 
-> 在本仓库安装 omtre：① 装我们的 omtre CLI 并初始化——`npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.18-ohmy.5/omtre-0.6.18-ohmy.5.tgz`，然后 `omtre init --devin`——registry 与默认 workflow 已内嵌在 CLI 里；② 跑 `omtre init --template agent-workflow --append` 安装 spec 合约；③ 给你的平台装技能——优先 `npx skills add ScoFan-official/omtre --agent <你的平台> --copy`；若你的平台不被覆盖，改用 `git clone --depth 1 https://github.com/ScoFan-official/omtre /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <你的平台> --target . --only-core`；④ 调用 `mp-omtre-bridge` 技能完成 `AGENTS.md` 播种，然后读 `.omtre/spec/agents/issue-tracker.md`，向我汇报你对 spec、ticket、triage、实现分别会用哪些 tracker 动词。之后要更新，调用 `oh-my-update` 技能。
+# 3. 任务完成时收尾。
+/omt:finish-work
+```
 
-非 omtre 仓库、只要技能时用这个短版：
+无人值守循环：
 
-> 在本仓库安装 mattpocock 技能集：`npx skills add ScoFan-official/omtre --agent <你的平台> --copy`；装好后浏览 https://github.com/ScoFan-official/omtre 的 `catalog/INDEX.md`，如需更多组件用 `scripts/install.py` 按本机平台补装。
+```bash
+omtre run --until-empty
+```
 
----
+`omtre run` 取 frontier 头部，在独立工作树里实现、验证，并记录运行账本。交付默认需要显式开启。
 
-## 01 · 合约 —— omtre spec registry
+## 工作方式
 
-技能说 "publish to the issue tracker"，指向 `.omtre/tasks/`；
-说 "更新 PRODUCT.md / DESIGN.md"，指向 `.omtre/spec/`。
-交付是清单驱动的：omtre session-start 钩子注入各 spec 包的 `index.md`，
-agent 顺清单读合约（先读 `agents/index.md`）——没有按文件路径的自动注入。
-前端闸门是机械的：前端票的 `implement.md` 缺 `## Design review` 小节，
-CLI 在 archive 时直接拒绝。
+<img src="assets/workflow.svg" alt="omtre 工作流 —— 会话开始、计划、实现、检查、收尾" width="100%">
+
+1. **会话开始** —— 钩子注入相关的 `.omtre/spec/` 合约与当前任务上下文。
+2. **计划** —— 代理把需求写成 `.omtre/tasks/` 下的 `prd.md`、`design.md`、`implement.md`，一次问一个问题。
+3. **实现** —— `omtre-implement` 子代理写出范围明确的 diff，不自动提交。
+4. **检查** —— `omtre-check` 子代理按标准与规范审查 diff，再跑 lint、类型检查和测试。机械问题可以自修；规范问题只报告，不改写。
+5. **收尾** —— 任务归档、日志更新，可复用的经验回写到 `.omtre/spec/`。
+
+## `.omtre/` 里有什么
+
+| 路径 | 用途 |
+| --- | --- |
+| `.omtre/spec/` | 团队合约：架构、约定、质量闸门、领域规则。 |
+| `.omtre/tasks/` | 每个变更一个目录：PRD、设计、实现上下文、检查上下文。 |
+| `.omtre/workspace/` | 每位开发者的日志与共享项目记忆。 |
+| `.omtre/agents/` | implement、check、research、plan、orchestrator 的角色卡。 |
+| `.omtre/domains/` | 多票交付与工作日志的看板协议。 |
+
+## 平台
+
+omtre 为 22 个编码代理与 IDE 提供适配，包括 Claude Code、Cursor、Codex、OpenCode、Gemini CLI、GitHub Copilot、Devin、Qoder、CodeBuddy、Kiro、Kilo、Droid、Trae、Grok、Kimi、Snow 等。完整列表与各平台设置见[支持平台](./docs/pack.zh-CN.md)。
+
+## 技能与市场
+
+- **43 个一线技能** —— 包括 `omtre-run`、`omtre-domains`、`dispatch-roster`、`hygiene-sweep`、`rules-audit`、`code-review`、`tdd`，以及 `omtre-meta` 指南。
+- **1,700+ 目录资产** —— 以 vendored 方式引入并保留出处；见[模板市场](./marketplace/README.md)。
+
+安装推荐技能集：
+
+```bash
+npx skills add ScoFan-official/omtre --agent <your-platform> --copy
+```
+
+安装规范合约：
 
 ```bash
 omtre init --registry gh:ScoFan-official/omtre/marketplace --template agent-workflow --append
 ```
 
-安装到 `.omtre/spec/`：
+<!-- omtre:upstream-attribution:start -->
+## 从 Trellis 迁移
 
-```
-.omtre/spec/
-├── agents/
-│   ├── index.md
-│   ├── issue-tracker.md      # 核心合约——向 tracker 发布任何东西前先读
-│   ├── triage-labels.md      # 五角色 → meta.triage / Status: 行
-│   ├── frontend-craft.md     # impeccable 绑定 + 机械 Design review 闸门
-│   ├── domain.md             # GLOSSARY.md + docs/adr/ 约定
-│   └── voice.md              # 双语技术语音规范（STC + STE 契约）
-└── guides/
-    └── mp-integration.md     # 阶段映射、泳道规则、技能优先级（拉取式文档；guides/index.md 归项目所有）
-```
-
-每个 spec 包带 `index.md`；session-start 钩子注入这些清单，
-agent 顺清单读合约——合约本身是拉取式文档，没有解析按文件路径的 glob。
-`voice.md` 确立了沟通与文档撰写的双语语调规范（中文遵循简化技术中文 STC，
-英文遵循简化技术英文 STE）；本包所有自建技能与模板均以此改造对齐。
-`--append` 只补缺省文件，对已有 spec 树安全。
-安装后文件归项目所有（omtre 项目所有权模型），可自行修改。
-
-## 02 · 技能集 —— skills CLI
+omtre 可以与 Trellis 并存：命令是 `omtre`/`omt`，目录是 `.omtre/`，不会覆盖 `trellis` 二进制。已有的 Trellis 0.6.x 项目可以运行 `omtre migrate` 把受管文件迁到 `.omtre/`，保留用户数据，并为改动过的受管文件写 `.backup` 副本。
+<!-- omtre:upstream-attribution:end -->
 
 ```bash
-npx skills add ScoFan-official/omtre --agent <platform> --copy
+omtre migrate --dry-run
+omtre migrate
 ```
 
-安装 **43 个技能**——mattpocock 全集
-（engineering / productivity / misc / in-progress）+ `impeccable` 前端设计工作流
-+ 本包七大自建技能：`mp-omtre-bridge`、`oh-my-update`、`omtre-domains`、`omtre-run`、`dispatch-roster`、`hygiene-sweep` 与 `rules-audit`。
-`--agent` 支持 `devin`、`codex`、`claude`、`cursor` 等 skills CLI 识别的平台。
+## 临时消融
 
-`mp-omtre-bridge` 是自举器 + 路由合约：首次加载时验证 `.omtre/`、
-安装通道 1 的 spec 合约（registry 优先、内置模板兜底）、向 `AGENTS.md`
-幂等追加 `## Agent skills` 块、检查 mp 技能是否就位，并在规划技能收尾时将
-无人值守运行引导给 `dispatch-roster`。之后是 no-op。
+`omtre ablate` 会在项目外创建一份可验证的恢复事务，然后临时移除所有项目内的 omtre 表面。开一个新的代理会话做对比，结束后运行 `omtre restore` 恢复原状；两个操作都支持 `--dry-run` 预览。
 
-## 03 · 目录库 —— install.py
+这和 `omtre uninstall`（永久移除）以及 `OMTRE_HOOKS=0`（只关钩子）不同。消融不会启动代理、管理工作树、隐藏 Git 变更，也不会删除全局 CLI、通道日志或宿主会话记录。消融期间如果受管路径发生变化，`restore` 会拒绝写入，直到冲突被处理。
 
-`scripts/install.py` 把目录库中任意子集物化到目标仓库，
-并转换成该平台的原生格式。
+## 设计
 
-```bash
-# 盘点
-python scripts/install.py --list
-python scripts/install.py --list --platform codex      # 附带落地位置
+omtre 围绕五个承诺构建：合约优先、状态留在仓库、代理无关的适配层、小核心与可吸收的边缘、独立的发布节奏。更完整的说明见[设计笔记](./docs/design.md)。
 
-# 全量装某个平台
-python scripts/install.py --platform codex --target /path/to/repo
-python scripts/install.py --platform devin --target /path/to/repo
-python scripts/install.py --platform zcode --target /path/to/repo
+## 来源与许可证
 
-# 只装推荐核心（bridge + mp 主技能，不含 in-progress/misc）
-python scripts/install.py --platform zcode --target . --only-core
+<!-- omtre:upstream-attribution:start -->
+omtre 是一个独立项目，源自 [Trellis](https://github.com/mindfold-ai/trellis)。上游项目及其版权归 Mindfold LLC 所有；omtre 的修改同样以 AGPL-3.0 发布。来源与同步策略见 [NOTICE](./NOTICE) 与[上游说明](./docs/upstream.md)。
+<!-- omtre:upstream-attribution:end -->
 
-# 精确挑选——按 id、名称或 glob
-python scripts/install.py --platform claude --target . \
-  --component "ecc:agents/security/*" "ecc:commands/git-workflow/commit" "mp:engineering/tdd"
+## 社区
 
-# 按类型或来源过滤
-python scripts/install.py --platform cursor --target . --type skill agent
-python scripts/install.py --platform copilot --target . --source mp
-
-# 预览
-python scripts/install.py --platform devin --target . --dry-run
-```
-
-参数：`--platform`（必填）、`--target`（仓库根，默认 `.`）、
-`--type skill|agent|command|mcp`、`--source mp|ecc`、
-`--component <id|名称|glob>`、`--only-core`、`--dry-run`、`--list`。
-
-**资产 ID** 形如 `来源:类型-路径`：`mp:engineering/tdd`、
-`ecc:skills/development/api-design-principles`、
-`ecc:agents/security/security-auditor`、`ecc:commands/git-workflow/commit`、
-`ecc:mcps/database/dbhub`。完整 ID 见 `catalog/manifest.json`。
-
-### 每类资产落到哪（按平台）
-
-- **skills** → `<平台技能目录>/<name>/`——文件夹直拷（跨平台通用格式）
-- **agents** → 平台 sub-agent 文件 + 转换后的 frontmatter
-- **commands** → 平台的 command/workflow/prompt 文件；无命令原语的平台
-  包装为用户触发技能（`ecc-<name>/SKILL.md`，`disable-model-invocation`）
-- **mcps** → 合并进平台 MCP JSON 配置；Codex 生成
-  `.codex/mcp-<name>.toml` 片段供合入 `config.toml`
-
-## 组件如何被触发
-
-| 类型 | 触发模型 | 你说… |
-| --- | --- | --- |
-| skills（889） | **语义自动匹配**：平台把每个 SKILL.md 的 `name`+`description` 注入 agent 的可用技能清单，任务命中描述时自行加载（"出问题了"→`diagnosing-bugs`）；也可显式点名。 | "帮我查这个 bug" 或 "用 `api-design-principles`" |
-| commands（288） | **显式触发**：有命令原语的平台走原生命令语法；没有的平台（codex/devin/kiro）包装为 `disable-model-invocation` 技能，按名调用。 | "/ecc-commit" 或 "跑 `ecc-commit`" |
-| agents（422） | **分派触发**：走平台 sub-agent 机制（Claude 的 `Task`、Codex 子代理），描述命中自动分派或点名委派。**devin/kilo/antigravity 无此原语不安装**（manifest 标 n/a；可把 body 当 inline 角色提示用）。 | "让 `security-auditor` 复审这段" |
-| mcps（104） | **配置激活**：合入平台 MCP 配置，重启握手后工具进工具箱。多数需要凭据——先填 `<your-...>` 占位符。 | 工具自动出现 |
-
-**不要一次全装 889 个技能**——每个 name+description 都占系统提示位，全装会稀释匹配精度。推荐 `--only-core` 或 `--component` 按需选装；把 `catalog/INDEX.md` 当货架，用时再取。
-
-## 平台支持（22 个）
-
-| 平台 | skills 目录 | sub-agents | commands | mcp | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| claude | `.claude/skills` | `.claude/agents/*.md` | `.claude/commands/ecc/*` | `.mcp.json` | ✅ 已验证 |
-| cursor | `.cursor/skills` | `.cursor/agents/*.md` | `.cursor/commands/ecc-*` | `.cursor/mcp.json` | ✅ |
-| opencode | `.opencode/skills` | `.opencode/agents/*.md`（+`permission:`） | `.opencode/commands/ecc/*` | `opencode.json` | ✅ |
-| **codex** | `.agents/skills` | `.codex/agents/*.toml`（`developer_instructions`） | → 技能包装 | `.codex/mcp-*.toml` | ✅ |
-| kiro | `.kiro/skills` | `.kiro/agents/*.json` | → 技能包装 | `.kiro/settings/mcp.json` | ✅ |
-| gemini | `.agents/skills` | `.gemini/agents/*.md` | `.gemini/commands/ecc/*.toml` | `.gemini/settings.json` | ✅ |
-| qoder | `.qoder/skills` | `.qoder/agents/*.md` | `.qoder/commands/ecc-*` | `.qoder/mcp.json` | ✅ |
-| codebuddy | `.codebuddy/skills` | `.codebuddy/agents/*.md` | `.codebuddy/commands/ecc/*` | `mcp.json` | ✅ |
-| copilot | `.github/skills` | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md` | `.vscode/mcp.json` | ✅ |
-| droid | `.factory/skills` | `.factory/droids/*.md` | `.factory/commands/ecc/*` | `.factory/mcp.json` | ✅ |
-| pi | `.agents/skills` | `.pi/agents/*.md` | `.pi/prompts/ecc-*` | `.pi/mcp.json` | ✅ |
-| **devin** | `.devin/skills` | —（无原语，inline） | `.devin/workflows/ecc-*.md` | `.devin/mcp.json` | ✅ |
-| kilo | `.kilocode/skills` | —（inline） | `.kilocode/workflows/ecc-*` | `.kilocode/mcp.json` | ✅ |
-| **zcode** | `.zcode/skills` | `.zcode/agents/*.md`（无 `tools:`） | `.zcode/commands/ecc-*` | `.zcode/mcp.json` | ⚠️ 部分验证 |
-| omp / reasonix / trae / grok / kimi / snow / dsh / antigravity | 各自 `.X/skills` | `.X/agents/*.md`（约定） | `.X/commands|workflows/ecc-*` | `.X/mcp.json` | ⚠️ 约定推断 |
-
-✅ = 文件位置遵循 omtre 官方 per-platform 文档表。
-⚠️ = 约定推断（`scripts/platforms.py` / `manifest.json` 中标
-`verified: false`）——生成的 agent/command 文件视为待复核草稿。
-`zcode` 的 agents 格式已对照 omtre 官方 zcode 模板验证；
-commands/MCP 路径为约定推断。
-
----
-
-## 资产目录明细
-
-**每个组件的"何时使用"**：见 [`catalog/INDEX.md`](catalog/INDEX.md)——
-自动生成的索引，1,741 个组件每个都带自己的 description
-（"use when…"），抽取自源文件 frontmatter。
-重新生成：`python scripts/build_index.py`。
-
-### mattpocock 技能 —— 37 个（+ 本包自建）
-
-本包的工程主干。主线流程：*grill → spec → tickets → implement → retro*，
-外加两条入口匝道和独立工具。
-
-| 技能 | 何时使用 |
-| --- | --- |
-| `ask-matt` | 路由器——"我这个情况该用哪个技能？"不确定时先问它。 |
-| `grill-with-docs` | 对齐想法：agent 按设计树连续追问你，术语落 `GLOSSARY.md`、决策落 `docs/adr/`。仓库内一律用它（优于 `grill-me`）。 |
-| `grill-me` / `grilling` | 同款追问但无文档副作用（无工作目录时用）；`grilling` 是引擎，`grill-me` 是用户入口。 |
-| `to-spec` | 把 grill 完的对话固化成 spec（Problem/Solution/User Stories/Decisions）→ omtre 任务 + `prd.md`。 |
-| `to-tickets` | 把 spec 纵切成 tracer-bullet 工单 → 子任务 + `blocked_by` meta，写入前先确认拆法。 |
-| `implement` | 实现一张工单：预约定接缝内 TDD 红绿 → 类型检查/测试 → code-review → 提交。一张工单一个会话。 |
-| `implement-spec` | 批量编排整个 spec 的工单图（integration 分支 + 并行 worktree）。Devin 下顺序执行或手动 `run_subagent`。 |
-| `tdd` | 红-绿-重构循环，嵌在 `implement` 内部用。 |
-| `code-review` | 双轴评审（Standards + Spec）ref 以来的改动，与 `omtre-check` 互补。 |
-| `codebase-design` | 深模块词汇表（interface/depth/seam/deletion test），设计讨论用。 |
-| `improve-codebase-architecture` | 扫描浅模块 → HTML 可视化报告 → 挑一个 grill 细化。成长期代码库建议隔几天跑一次。 |
-| `diagnosing-bugs` | 硬 bug/性能回退：先建必红复现回路，再假设-插桩-修复-回归。 |
-| `domain-modeling` | 建/磨 `GLOSSARY.md` + ADR；在 grill/wayfinder 内部惰性触发。 |
-| `research` | 把问题派给高信源做调研 → 落 markdown 发现文件。 |
-| `prototype` | 一次性原型验证设计问题（grill↔prototype 往返）。 |
-| `triage` | 分诊外部报单：`needs-triage→needs-info/ready-for-agent/ready-for-human/wontfix`；`.scratch/` 收件、升格为任务。 |
-| `wayfinder` | 迷雾级工程：父任务 + `map.md` + 决策工单（research/prototype/grilling/task），每会话最多 resolve 一张。 |
-| `retro` | 构建后环境调优：导航指针、确定性检查、评审清单。 |
-| `handoff` | 压缩会话 → 交接文档给下一个 agent/会话；自动脱敏。 |
-| `teach` | 把目录变成多会话教学 workspace（使命→资源→课程→记录）。 |
-| `to-questionnaire` | 把卡住你的决策变成发给真人的 markdown 问卷。 |
-| `wait-what` | "没看懂，重讲"——简化技术英语 + 术语表重述。 |
-| `writing-for-agents` | 撰写/编辑技能、AGENTS.md、CLAUDE.md。 |
-| `pr` / `wizard` | 写 PR body；为只能人做的事（基础设施、控制台）生成交互式 bash 向导。 |
-| `setup-matt-pocock-skills` | 面向非 omtre 仓库的旧自举器——本包中由 `mp-omtre-bridge` 取代。 |
-| `claude-handoff`、`loop-me`、`setup-ts-deep-modules`、`writing-beats`、`writing-fragments`、`writing-shape` | in-progress 合集——可用但打磨度低。 |
-| `git-guardrails-claude-code`、`migrate-to-shoehorn`、`scaffold-exercises`、`setup-pre-commit` | misc——平台特定或小众。 |
-| `mp-omtre-bridge` | **本包自建**。把以上全部绑定到 omtre 的合约 + 路由器：首次加载验证 `.omtre/`、写入 `AGENTS.md` 块、检查 mp 技能是否就位，并在规划技能收尾时将无人值守运行引导给 `dispatch-roster`。 |
-| `oh-my-update` | **本包自建**。确认门后的整栈更新——omtre CLI、`.omtre/` 模板、已装技能、`.omtre/spec/` 合约——升到 ScoFan-official 最新 release（过滤 `cli-v*` tag）。 |
-| `omtre-domains` | **本包自建**。`.omtre/domains/` 板块层的薄壳——归口、插旗顺序判据、接手读档链、worklog/收工、对账检查清单，逐条指回仓内 `DISCIPLINE.md` / `WORKLOG-PROTOCOL.md` / `REGISTRY.md`（协议正文不住这里）。 |
-| `omtre-run` | **本包自建**。`omtre run`（frontier 无人值守循环）的薄壳——什么时候该交给循环、档位与 `delivery.auto_push_refs` 要先允许什么、run ledger 在哪（以及它为何不是对账源）、五种停线原因、`always_stop` 闸门，以及与 `dispatch-roster` 的 orchestrator 模式协同边界。 |
-| `dispatch-roster` | **本包自建**。为无人值守执行装配派工表（roster）：通过轻量握手与凭据检测（3 种状态）探测 ACP 目标（grok-build / codex / claude），敲定 4 项决策（orchestrator、角色默认目标、逐票覆盖、max_parallel），落盘至卡片 frontmatter、ticket meta 与 config.yaml，并移交 `omtre-run` 开跑。 |
-| `hygiene-sweep` | **本包自建**。声明范围前缀内的只读存量审计——死代码、重复逻辑、超阈值文件——先产出落盘的发现清单再谈改动。自带 `scope_check.py` 机械闸（范围白名单 + 800 行拆分阈），清扫票按 `spec/agents/hygiene.md` 验收。 |
-| `rules-audit` | **本包自建**。常驻规则文件（AGENTS.md / CLAUDE.md）对账：逐条取证、无证据的删、保留的补一句存在理由。 |
-
-### impeccable —— 1 个技能，24 条命令（前端设计）
-
-[pbakaus/impeccable](https://github.com/pbakaus/impeccable)，Apache-2.0——
-前端精工工作流。本包只 vendor **markdown 层**：`/impeccable <cmd>` 技能
-（`shape`、`craft`、`critique`、`audit`、`polish`、`bolder`、`typeset`…）
-在所有平台可用；61 条确定性检测规则、`live`、`generate`、`hooks`、`doctor`
-及 `impeccable context` 启动器需要上游引擎——在目标项目跑
-`npx impeccable install`。没装引擎时命令走技能自带的 degraded 降级模式。
-
-在 omtre 仓库里，`agents/frontend-craft.md` 绑定 impeccable 的产物：
-PRODUCT.md → `.omtre/spec/product.md`、DESIGN.md → `.omtre/spec/design-system.md`；
-把 `shape → craft → audit+critique → polish` 接进各相位；并给前端任务上闸门——
-`implement.md` 没有 `## Design review` 小节就不能记 READY。
-
-### ECC（Everything Claude Code）—— 1,703 个组件
-
-最大的社区 agent 组件目录库（aitmpl.com）。以下为 `install.py --list`
-真实统计：
-
-| 类型 | 数量 | 主要分类 | 说明 |
-| --- | --- | --- | --- |
-| skills | **889** | development 230、scientific 135、ai-research 131、productivity 50、business-marketing 48、security 47、creative-design 33、enterprise-communication 33、web-development 30、career 21… | SKILL.md 目录（含 references/scripts），拷到任意平台技能目录即可 |
-| agents | **422** | expert-advisors 52、programming-languages 50、devops-infrastructure 40、data-ai 40、development-tools 35、security 25、business-marketing 21、development-team 18、deep-research-team 16、web-tools 16… | Claude md → 按平台转换 |
-| commands | **288** | google-workspace 47、utilities 21、project-management 20、testing 17、svelte 16、orchestration 15、git-workflow 14、sync 14、team 14、deployment 11… | Claude 命令 → 转换/包装 |
-| mcps | **104** | devtools 49、web-data 10、database 8、integration 8、browser_automation 6、web 6、productivity 5… | `mcpServers` JSON 片段 |
-
-未移植（保留在 `catalog/` 作参考，Claude Code 私有格式）：
-**hooks 81**、**settings 75**、**mods ~40**、**sandbox 23**（cloudflare/docker/e2b）、**loops 18**。
-
-每个组件的使用场景：[`catalog/INDEX.md`](catalog/INDEX.md)。
-
-## 仓库结构
-
-```
-marketplace/            # 通道 1：omtre spec registry（index.json + agent-workflow 含 voice.md）
-skills/                 # 通道 2：npx-skills 安装面——5 本包自建技能 + 37 mp 技能 + impeccable
-catalog/
-├── INDEX.md            # 生成：每个组件 + 使用场景
-├── manifest.json       # 生成：每个资产 → 各平台目标路径
-├── upstream.json       # 上游 pin 的 SHA
-├── ATTRIBUTION.md      # MIT 出处
-├── mattpocock/         # skills(4 合集) + docs + .claude-plugin + .agents + LICENSE
-├── impeccable/         # skills/impeccable + docs + LICENSE + NOTICE.md（Apache-2.0）
-├── ecc/                # skills agents commands mcps hooks loops mods settings sandbox + LICENSE
-└── voice/              # 双语技术语音审查工具链（voice_lint.py、stc/、ste/）
-scripts/
-├── platforms.py        # 22 平台位置表（单一真源）
-├── install.py          # 目录库 → 平台原生文件
-├── build_manifest.py   # 重新生成 manifest.json
-├── build_index.py      # 重新生成 INDEX.md
-└── sync_upstream.py    # 重新 vendor 上游（--check = 漂移报告）
-```
-
-## 更新方式
-
-使用侧：单一入口——**`/oh-my-update`** workflow（Devin）或 `oh-my-update`
-技能（`skills/oh-my-update/`）。它检查 omtre CLI 在本仓库 `cli-v*` release
-下的最新版本（CLI tarball 通道与 pack `v*` release 同页共存）、刷新已装
-技能并补装 spec 合约，动手前有确认闸门。分层兜底：
-`npx skills add ScoFan-official/omtre --agent <平台> --copy`。
-
-本包维护侧（重新 vendor 上游）：
-
-```bash
-python scripts/sync_upstream.py --check   # 上游动了吗？
-python scripts/sync_upstream.py           # 重新 vendor catalog/（只覆盖 catalog）
-python scripts/build_manifest.py && python scripts/build_index.py
-```
-
-已安装 spec 归项目所有（omtre 模型）——上游 spec 变更需人工合并。
-`catalog/` 是 vendor 副本，不要在原地改。
-
-## 依赖
-
-- Python 3.8+、git
-- `npx skills`（Node.js）用于通道 2
-- omtre 管理的仓库仅在通道 1（spec registry）需要
-- Claude 私有格式扩展（hooks/settings 等）需 Claude Code 才能原样使用
-
-## FAQ
-
-**私有/分叉副本？** 仓库已公开，三条通道均无需认证。分叉可 pin 自己的
-快照；把 `--registry` 改成 `gh:you/fork` 即可。
-
-**我在哪个平台？** `install.py --list --platform X` 会打印该平台下
-每类资产的落地位置，装之前先看。
-
-**技能太多？** 通道 3 默认装你显式选择的子集；`--only-core` 给出
-~28 个推荐技能。`npx skills add --skill <name>` 可从 `skills/` 单装。
-
-**发现平台路径不对？** 改 `scripts/platforms.py`（单一真源），
-然后重跑 `install.py` 和 `build_manifest.py`。
+- [Issues](https://github.com/ScoFan-official/omtre/issues)
+- [模板市场](./marketplace/README.md)
+- [参与贡献](./CONTRIBUTING_CN.md)
+- [更新日志](./CHANGELOG.md)

@@ -1,6 +1,6 @@
-# `trellis workflow` Command
+# `omtre workflow` Command
 
-`trellis workflow` lists and switches the project's active `.omtre/workflow.md`
+`omtre workflow` lists and switches the project's active `.omtre/workflow.md`
 template. It is the only command that deliberately replaces an existing
 workflow variant in-place after init.
 
@@ -26,15 +26,15 @@ This spec applies when editing:
 CLI signatures:
 
 ```text
-trellis workflow
-trellis workflow --list
-trellis workflow --template <id>
-trellis workflow --marketplace <source> --template <id>
-trellis workflow --template <id> --force
-trellis workflow --template <id> --create-new
+omtre workflow
+omtre workflow --list
+omtre workflow --template <id>
+omtre workflow --marketplace <source> --template <id>
+omtre workflow --template <id> --force
+omtre workflow --template <id> --create-new
 
-trellis init --workflow <id>
-trellis init --workflow-source <source> --workflow <id>
+omtre init --workflow <id>
+omtre init --workflow-source <source> --workflow <id>
 ```
 
 Resolver signatures:
@@ -92,7 +92,7 @@ Marketplace entries use `type: "workflow"` and point to one markdown file:
   "id": "tdd",
   "type": "workflow",
   "name": "TDD Workflow",
-  "description": "Trellis workflow variant that drives Phase 2 with one red / green / refactor behavior slice at a time",
+  "description": "omtre workflow variant that drives Phase 2 with one red / green / refactor behavior slice at a time",
   "path": "workflows/tdd/workflow.md",
   "tags": ["workflow", "tdd", "testing"]
 }
@@ -106,13 +106,13 @@ Required built-ins:
 
 Ownership contract:
 
-- `native` is Trellis-managed. After writing it, refresh the
+- `native` is omtre-managed. After writing it, refresh the
   `.omtre/workflow.md` hash with `updateHashes`.
 - Every non-native workflow is user-managed local content. After writing it,
   remove `.omtre/workflow.md` from `.omtre/.template-hashes.json` with
   `removeHash`.
 - Do not add `workflow.variant` or any other long-lived config field to make
-  `trellis update` chase a selected variant. Switching is an explicit project
+  `omtre update` chase a selected variant. Switching is an explicit project
   action.
 
 Runtime parser contract:
@@ -126,7 +126,7 @@ Runtime parser contract:
 
 Native source-of-truth contract:
 
-- `packages/cli/src/templates/trellis/workflow.md` is the source of truth for
+- `packages/cli/src/templates/omtre/workflow.md` is the source of truth for
   native workflow.
 - If `marketplace/workflows/native/workflow.md` exists, tests must enforce byte
   identity with the bundled native template.
@@ -135,8 +135,8 @@ Native source-of-truth contract:
 
 | Condition | Behavior |
 |---|---|
-| `trellis workflow --template <id>` and current workflow is modified | Exit 1 with guidance to use `--force` or `--create-new`; do not prompt, even on a TTY |
-| Interactive `trellis workflow` picker and current workflow is modified | Prompt for overwrite, create-new, or skip |
+| `omtre workflow --template <id>` and current workflow is modified | Exit 1 with guidance to use `--force` or `--create-new`; do not prompt, even on a TTY |
+| Interactive `omtre workflow` picker and current workflow is modified | Prompt for overwrite, create-new, or skip |
 | `--create-new` | Write a generated `workflow.md.new` file beside `.omtre/workflow.md`; do not change active workflow or hash file |
 | `--force` | Overwrite active workflow and apply the native/non-native hash contract |
 | Missing workflow id | Throw `WorkflowResolveError` / command error; CLI exits non-zero |
@@ -144,17 +144,17 @@ Native source-of-truth contract:
 | Workflow entry path is missing, not `.md`, absolute, or contains `..` | Fail with workflow-specific error |
 | `init --workflow missing-id` | Reject; do not print and return success |
 | `init --workflow tdd` | Write marketplace content and remove `.omtre/workflow.md` hash |
-| `trellis update` after switching to non-native | Treat workflow as modified/user-managed; never silently restore native |
+| `omtre update` after switching to non-native | Treat workflow as modified/user-managed; never silently restore native |
 
 ### 5. Good/Base/Bad Cases
 
-- Good: `trellis workflow --template tdd` replaces a pristine native workflow,
-  removes the workflow hash, and later `trellis update` leaves TDD content in
+- Good: `omtre workflow --template tdd` replaces a pristine native workflow,
+  removes the workflow hash, and later `omtre update` leaves TDD content in
   place.
-- Base: `trellis init --workflow native` writes bundled native workflow and
+- Base: `omtre init --workflow native` writes bundled native workflow and
   keeps `.omtre/workflow.md` hash-tracked.
-- Bad: `trellis workflow --template tdd` writes TDD content and records the TDD
-  hash. The next `trellis update` sees a pristine file and overwrites it with
+- Bad: `omtre workflow --template tdd` writes TDD content and records the TDD
+  hash. The next `omtre update` sees a pristine file and overwrites it with
   native workflow.
 
 ### 6. Tests Required
@@ -172,13 +172,13 @@ Integration tests:
 - `init --workflow tdd` writes marketplace content and removes the hash.
 - `init --workflow-source <source> --workflow custom-id` writes custom content.
 - `init --workflow missing-id` rejects.
-- `trellis workflow --template tdd` writes marketplace content and removes the
+- `omtre workflow --template tdd` writes marketplace content and removes the
   hash.
 - Explicit `--template` with modified workflow fails even when `stdin.isTTY` is
   true.
 - `--create-new` writes a generated `workflow.md.new` file beside `.omtre/workflow.md` and does not touch the active
   workflow or hash.
-- `trellis update` after switching to non-native does not restore native.
+- `omtre update` after switching to non-native does not restore native.
 - Marketplace native mirror matches bundled native workflow when the mirror file
   exists.
 - Real `marketplace/workflows/tdd/workflow.md` planning breadcrumbs include the
@@ -205,7 +205,7 @@ fs.writeFileSync(".omtre/workflow.md", tddContent);
 updateHashes(cwd, new Map([[PATHS.WORKFLOW_GUIDE_FILE, tddContent]]));
 ```
 
-This makes `trellis update` auto-replace TDD with bundled native workflow later.
+This makes `omtre update` auto-replace TDD with bundled native workflow later.
 
 #### Correct
 
@@ -225,7 +225,7 @@ if (isInteractive()) {
 }
 ```
 
-An explicit `trellis workflow --template tdd` can hang in a TTY even though it is
+An explicit `omtre workflow --template tdd` can hang in a TTY even though it is
 a scriptable command path.
 
 #### Correct

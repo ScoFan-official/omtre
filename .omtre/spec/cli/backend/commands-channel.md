@@ -1,4 +1,4 @@
-# `trellis channel` — Multi-Agent Collaboration Runtime (Code Spec)
+# `omtre channel` — Multi-Agent Collaboration Runtime (Code Spec)
 
 Executable contracts for `packages/cli/src/commands/channel/`. Read this
 before editing any file under that path. Trigger qualifies for mandatory
@@ -47,10 +47,10 @@ migration glue.
 ### CLI commands (`commands/channel/index.ts`)
 
 ```
-trellis channel create <name> [opts]
+omtre channel create <name> [opts]
   --scope <scope>        : project | global (default project)
   --type <type>          : chat | forum (default chat)
-  --task <path>          : associated Trellis task directory (string)
+  --task <path>          : associated omtre task directory (string)
   --project <slug>       : project metadata tag (string; NOT the bucket key)
   --labels <csv>         : comma-separated labels
   --description <text>   : stable channel description
@@ -64,7 +64,7 @@ trellis channel create <name> [opts]
   → stderr (if --ephemeral): hint about list --all / prune --ephemeral
   → exit 0 success; throw if --force=false and channel exists
 
-trellis channel spawn <name> [opts]
+omtre channel spawn <name> [opts]
   --scope <scope>        : project | global
   --agent <name>         : load .omtre/agents/<name>.md (sets provider / as / system prompt)
   --provider <p>         : claude | codex (overrides agent)
@@ -97,7 +97,7 @@ trellis channel spawn <name> [opts]
   → throws if worker name in use, agent not found, provider missing, channel not found,
     or live-worker budget exhausted after expired idle cleanup
 
-trellis channel send <name> [text] [opts]
+omtre channel send <name> [text] [opts]
   --as <agent>           : sender identity (REQUIRED)
   --scope <scope>        : project | global
   --to <agents>          : CSV of target worker names (default: broadcast)
@@ -108,7 +108,7 @@ trellis channel send <name> [text] [opts]
   → stdout: appended event as JSON
   → throws if none of stdin/textFile/[text] provided
 
-trellis channel interrupt <name> [text] [opts]
+omtre channel interrupt <name> [text] [opts]
   --as <agent>           : requester identity (REQUIRED)
   --to <agent>           : target worker name (REQUIRED)
   --scope <scope>        : project | global
@@ -118,7 +118,7 @@ trellis channel interrupt <name> [text] [opts]
   → stdout: appended `interrupt_requested` event as JSON
   → supervisor appends `interrupted` and sends the replacement instruction to the worker
 
-trellis channel wait <name> [opts]
+omtre channel wait <name> [opts]
   --as <agent>           : caller identity (REQUIRED, also default --to)
   --scope <scope>        : project | global
   --timeout <duration>   : max wait (no timeout = wait indefinitely)
@@ -133,7 +133,7 @@ trellis channel wait <name> [opts]
   → exit 0 satisfied; exit 124 timeout
   → on --all timeout: stderr "timeout: still waiting on <csv>"
 
-trellis channel messages <name> [opts]
+omtre channel messages <name> [opts]
   --scope <scope>        : project | global
   --raw                  : one JSON event per line
   --follow               : tail new events after history (Ctrl-C to stop)
@@ -147,7 +147,7 @@ trellis channel messages <name> [opts]
   --no-progress          : hide progress events
   → stdout: formatted (default) or raw JSON event stream; forum channels default to thread list view unless event filters are set
 
-trellis channel list [opts]
+omtre channel list [opts]
   --scope <scope>        : project | global
   --json                 : emit JSON array instead of table
   --project <slug>       : filter by `task` field substring
@@ -156,29 +156,29 @@ trellis channel list [opts]
   → stdout: table or JSON
   → footer (if hidden ephemerals): "(N ephemeral channels hidden — use --all to show)"
 
-trellis channel kill <name> [opts]
+omtre channel kill <name> [opts]
   --as <agent>           : worker name (REQUIRED)
   --scope <scope>        : project | global
   --force                : SIGKILL immediately (skip graceful)
   → exit 0 sent; non-zero if no such worker
 
-trellis channel rm <name> [opts]
+omtre channel rm <name> [opts]
   --scope <scope>        : project | global
   → kill any live workers, rmrf channel dir
   → exit 0 removed; throws if not found
 
-trellis channel title set <name> [opts]
+omtre channel title set <name> [opts]
   --scope <scope>        : project | global
   --as <agent>           : author identity (default "main")
   --title <text>         : display title; does not change channel address
   → stdout: appended `channel` title event as JSON
 
-trellis channel title clear <name> [opts]
+omtre channel title clear <name> [opts]
   --scope <scope>        : project | global
   --as <agent>           : author identity (default "main")
   → stdout: appended `channel` title clear event as JSON
 
-trellis channel prune [opts]
+omtre channel prune [opts]
   --scope <scope>        : project | global
   --all                  : remove all channels (except live + --keep)
   --empty                : remove channels with only the create event
@@ -190,7 +190,7 @@ trellis channel prune [opts]
   → throws if --all/--empty/--idle/--ephemeral specified more than one
   → stdout: list of candidates + "(dry-run) would remove N" or "Removed N"
 
-trellis channel run [name] [opts]
+omtre channel run [name] [opts]
   (auto-generates name "run-<8hex>" if not provided, --ephemeral implied)
   --agent / --provider / --as / --cwd / --model / --file / --jsonl  : same as spawn
   --message <text>       : inline prompt
@@ -200,7 +200,7 @@ trellis channel run [name] [opts]
   → on success: stdout = worker's final message body, channel auto-rm'd, exit 0
   → on failure (error/killed/timeout): channel preserved, stderr "channel kept for inspection: <path>", exit 1
 
-trellis channel post <name> <action> [opts]
+omtre channel post <name> <action> [opts]
   --as <agent>           : author identity (REQUIRED)
   --scope <scope>        : project | global
   --thread <key>         : thread key (required except action=opened)
@@ -218,7 +218,7 @@ trellis channel post <name> <action> [opts]
   → stdout: appended `thread` event as JSON
   → throws unless channel `type` is `forum`
 
-trellis channel context add <name> [opts]
+omtre channel context add <name> [opts]
   --scope <scope>        : project | global
   --as <agent>           : author identity (default "main")
   --thread <key>         : mutate thread-level context instead of channel-level context
@@ -226,7 +226,7 @@ trellis channel context add <name> [opts]
   --raw <text>           : raw context text (repeatable)
   → stdout: appended `context` event as JSON
 
-trellis channel context delete <name> [opts]
+omtre channel context delete <name> [opts]
   --scope <scope>        : project | global
   --as <agent>           : author identity (default "main")
   --thread <key>         : mutate thread-level context instead of channel-level context
@@ -234,24 +234,24 @@ trellis channel context delete <name> [opts]
   --raw <text>           : raw context text (repeatable)
   → stdout: appended `context` event as JSON
 
-trellis channel context list <name> [opts]
+omtre channel context list <name> [opts]
   --scope <scope>        : project | global
   --thread <key>         : show thread-level context instead of channel-level context
   --raw                  : one context entry JSON per line
   → stdout: projected current context
 
-trellis channel forum <name> [opts]
+omtre channel forum <name> [opts]
   --scope <scope>        : project | global
   --status <status>      : filter reduced thread list by status
   --raw                  : one reduced thread state JSON per line
   → stdout: thread list summary
 
-trellis channel thread <name> <thread> [opts]
+omtre channel thread <name> <thread> [opts]
   --scope <scope>        : project | global
   --raw                  : one raw `thread` event per line
   → stdout: one thread timeline summary
 
-trellis channel thread rename <name> <old-thread> <new-thread> [opts]
+omtre channel thread rename <name> <old-thread> <new-thread> [opts]
   --as <agent>           : author identity (REQUIRED)
   --scope <scope>        : project | global
   → stdout: appended `thread` rename event as JSON
@@ -399,13 +399,13 @@ type ChannelEventKind = "create" | "join" | "leave" | "message" | "thread" | "co
   backlog compatible), `requireKnownWorker`, `requireRunningWorker`. Strict modes
   append the `message` event first, then append `undeliverable` for targeted
   workers failing the selected condition. Broadcast messages never produce
-  `undeliverable`. CLI exposes this through `trellis channel send
+  `undeliverable`. CLI exposes this through `omtre channel send
   --delivery-mode <mode>`.
 - Interrupt is a first-class API, not a magic tag. `requestInterrupt` appends
   `interrupt_requested` only; `interruptWorker(input, runtime)` appends
   `interrupt_requested`, calls the injected `WorkerRuntime`, then appends
   `interrupted` with `method` / `outcome`. CLI exposes this through
-  `trellis channel interrupt`; message tags are not an interrupt path.
+  `omtre channel interrupt`; message tags are not an interrupt path.
 - Worker inbox read/watch is owned by core. `readWorkerInbox(input)` returns
   the matching `message` events for a worker by composing
   `resolveChannelRef`, `readChannelEvents`, `reduceWorkerRegistry`, and
@@ -581,7 +581,7 @@ type WorkerGuardConfig = {
 CLI additions:
 
 ```
-trellis channel spawn <name>
+omtre channel spawn <name>
   --idle-timeout <duration>  # "5m" default; "0" disables idle cleanup
   --max-live-workers <n>     # 6 default; 0 disables live-worker budget
 ```
@@ -638,7 +638,7 @@ OMTRE_CHANNEL_MAX_LIVE_WORKERS=6
 | `--max-live-workers <n>` is negative / non-integer | commander rejects with an argument error |
 | `idle_timeout: 0` or `OMTRE_CHANNEL_WORKER_IDLE_TIMEOUT=0` | idle cleanup disabled; workers are still counted for budget unless budget is also disabled |
 | `max_live_workers: 0` or `OMTRE_CHANNEL_MAX_LIVE_WORKERS=0` | budget check disabled; supervisor idle self-termination still works if TTL > 0 |
-| Live count after expired-idle cleanup is `>= maxLiveWorkers` | reject `spawn` with live worker list, `trellis channel kill` hints, and override hint |
+| Live count after expired-idle cleanup is `>= maxLiveWorkers` | reject `spawn` with live worker list, `omtre channel kill` hints, and override hint |
 | Idle worker pid is live but command line is unverified | count it; do not auto-signal it |
 | Worker is running a turn when idle TTL expires | do nothing until it returns to idle |
 | Supervisor receives external SIGTERM with `shutdown-reason=idle-timeout` | append `killed` with `reason:"idle-timeout"` and `idle_timeout_ms` |
@@ -837,15 +837,15 @@ type ChannelEventBase = {
   `wait --from`; it is not a user table key, org id, or permission claim.
 - `to` stays a routing handle for channel workers / agents.
 - `origin` records the public write entrypoint: `cli` for
-  `trellis channel ...`, `api` for the future channel core/library, and
+  `omtre channel ...`, `api` for the future channel core/library, and
   `worker` for supervisor / worker runtime writes.
-- `meta` is a pass-through JSON object for Trellis runtime details and
-  external systems. Trellis persists it, emits it in `--raw`, and may support
+- `meta` is a pass-through JSON object for omtre runtime details and
+  external systems. omtre persists it, emits it in `--raw`, and may support
   simple path equality filters; it does not validate business semantics.
 
 External products should put tenant, user, project, task, server,
 or permission snapshots under their own namespace, for example
-`meta.external.authorId`. Trellis must not define `user`, `org`, or
+`meta.external.authorId`. omtre must not define `user`, `org`, or
 `displayName` schemas in the channel protocol.
 
 The existing create-event optional `origin: "run"` is a legacy mode marker,
@@ -917,7 +917,7 @@ only applies to per-worker supervisor cleanup.
 | `OMTRE_CHANNEL_AS` | optional | `"main"` | `spawn.ts` — default for `spawnedBy` on `spawned` event (lets workers spawning workers record correct lineage) |
 | `OMTRE_CHANNEL_WORKER_IDLE_TIMEOUT` | optional | `.omtre/config.yaml` then `5m` | worker OOM guard idle-cleanup TTL; duration string, `0` disables |
 | `OMTRE_CHANNEL_MAX_LIVE_WORKERS` | optional | `.omtre/config.yaml` then `6` | worker OOM guard live-worker budget; non-negative integer, `0` disables |
-| `OMTRE_HOOKS` | set to `"0"` by supervisor | n/a | supervised workers — disables trellis hooks inside the worker process (prevents recursive hook injection) |
+| `OMTRE_HOOKS` | set to `"0"` by supervisor | n/a | supervised workers — disables omtre hooks inside the worker process (prevents recursive hook injection) |
 
 **Env precedence**:
 - `OMTRE_CHANNEL_PROJECT` set externally → that bucket (advanced)
@@ -989,7 +989,7 @@ only applies to per-worker supervisor cleanup.
 
 **Good** (typical short task):
 ```bash
-$ OMTRE_CHANNEL_ROOT=/tmp/test trellis channel run --provider codex --message "say hi in 3 words"
+$ OMTRE_CHANNEL_ROOT=/tmp/test omtre channel run --provider codex --message "say hi in 3 words"
 Hi, glad you're here.
 $ echo $?
 0
@@ -999,7 +999,7 @@ ls: ... No such file or directory
 
 **Base** (normal CR with single worker):
 ```bash
-$ trellis channel run --agent check --message-file /tmp/cr-brief.md --timeout 15m
+$ omtre channel run --agent check --message-file /tmp/cr-brief.md --timeout 15m
 ## Files Checked
 ...
 Issues Found
@@ -1010,7 +1010,7 @@ $ echo $?
 
 **Bad** (provider missing → spawn-fail → channel kept for inspection):
 ```bash
-$ PATH=/usr/bin trellis channel run --provider claude --message "hi" --timeout 30s
+$ PATH=/usr/bin omtre channel run --provider claude --message "hi" --timeout 30s
 channel kept for inspection: /Users/.../-.../-run-4a520e0f
 (ephemeral — will be removed by `channel prune --ephemeral`)
 Error: timeout waiting for cx done
@@ -1023,19 +1023,19 @@ $ echo $?
 
 **Good**:
 ```bash
-trellis channel create cr-feature --ephemeral
-trellis channel spawn cr-feature --agent check
-trellis channel spawn cr-feature --agent check --provider codex --as check-cx
-trellis channel send cr-feature --as main --to check --text-file brief.md
-trellis channel send cr-feature --as main --to check-cx --text-file brief.md
-trellis channel wait cr-feature --as main --kind done --from check,check-cx --all --timeout 15m
+omtre channel create cr-feature --ephemeral
+omtre channel spawn cr-feature --agent check
+omtre channel spawn cr-feature --agent check --provider codex --as check-cx
+omtre channel send cr-feature --as main --to check --text-file brief.md
+omtre channel send cr-feature --as main --to check-cx --text-file brief.md
+omtre channel wait cr-feature --as main --kind done --from check,check-cx --all --timeout 15m
 # stdout: two done event JSON lines (one per worker)
 # exit 0 (both finished)
 ```
 
 **Bad** (one worker times out):
 ```bash
-trellis channel wait cr-feature --as main --kind done --from check,check-cx --all --timeout 30s
+omtre channel wait cr-feature --as main --kind done --from check,check-cx --all --timeout 30s
 # stdout: only `done` from check (if any)
 # stderr: "timeout: still waiting on check-cx"
 # exit 124
@@ -1043,41 +1043,41 @@ trellis channel wait cr-feature --as main --kind done --from check,check-cx --al
 
 ### Case C — Cross-cwd addressing
 
-**Good** (channel created in trellis repo, accessed from /tmp via unique-match fallback):
+**Good** (channel created in omtre repo, accessed from /tmp via unique-match fallback):
 ```bash
-$ cd /Users/me/work/trellis && trellis channel create unique-name
-$ cd /tmp && trellis channel send unique-name --as main --text "hi"
+$ cd /Users/me/work/omtre && omtre channel create unique-name
+$ cd /tmp && omtre channel send unique-name --as main --text "hi"
 # selectExistingChannelProject finds unique-name in only one bucket → mutates env → succeeds
 ```
 
 **Bad** (same name exists in multiple buckets):
 ```bash
-$ cd /tmp && trellis channel send cr-r1 --as main --text "hi"
-Error: Channel 'cr-r1' exists in multiple project buckets: -Users-me-work-trellis, -Users-me-work-app. Run from the owning project cwd or use --scope.
+$ cd /tmp && omtre channel send cr-r1 --as main --text "hi"
+Error: Channel 'cr-r1' exists in multiple project buckets: -Users-me-work-omtre, -Users-me-work-app. Run from the owning project cwd or use --scope.
 ```
 
 ### Case D — Global forum channel
 
 **Good** (local feedback channel shared across projects):
 ```bash
-trellis channel create omtre-issue --scope global --type forum \
-  --description "Local Trellis feedback channel" \
-  --context-file /Users/me/work/Trellis/.omtre/spec/cli/backend/commands-channel.md
-trellis channel post omtre-issue opened --scope global --as main \
+omtre channel create omtre-issue --scope global --type forum \
+  --description "Local omtre feedback channel" \
+  --context-file /Users/me/work/omtre/.omtre/spec/cli/backend/commands-channel.md
+omtre channel post omtre-issue opened --scope global --as main \
   --thread forum-mode \
   --title "Forum mode" \
   --description "Track forum feedback." \
   --labels channel,ux
-trellis channel post omtre-issue comment --scope global --as arch \
+omtre channel post omtre-issue comment --scope global --as arch \
   --thread forum-mode \
   --text "Reviewed the functional shape."
-trellis channel messages omtre-issue --scope global
+omtre channel messages omtre-issue --scope global
 # forum-mode [open] Forum mode labels=channel,ux
 ```
 
 **Bad** (`send` is not a thread primitive):
 ```bash
-trellis channel send omtre-issue --scope global --as main --thread forum-mode "hi"
+omtre channel send omtre-issue --scope global --as main --thread forum-mode "hi"
 # Error: unknown option '--thread'
 ```
 
@@ -1124,7 +1124,7 @@ trellis channel send omtre-issue --scope global --as main --thread forum-mode "h
 | `withLock` stale-lock recovery | unit | write lockfile with dead-pid contents; subsequent `withLock` call recovers and proceeds |
 | `watchEvents` modes | integration | (a) default reads from EOF, (b) `fromStart:true` reads from byte 0, (c) `sinceSeq:N` skips events with seq ≤ N |
 | `matchesFilter` `to` semantics | unit | (a) event with no `to` passes when filter.to set (broadcast OK), (b) event with `to=X` only passes filter.to=X, (c) `filter.to="exclusive"` requires explicit `to` |
-| Spawn-fail path (ENOENT) | e2e | `PATH=/no/claude trellis channel spawn ...` → events.jsonl has ONE error event, no spawned, no killed; supervisor exited; pid file removed |
+| Spawn-fail path (ENOENT) | e2e | `PATH=/no/claude omtre channel spawn ...` → events.jsonl has ONE error event, no spawned, no killed; supervisor exited; pid file removed |
 | Happy turn (claude / codex) | e2e | spawn → send "hi" → wait done; assert events sequence is `create → spawned → message(to) → ...progress... → message(by:worker) → done` with no synthesised events |
 | Codex streamed delta metadata | unit/fixture | `parseCodexLine` stores `item/started` metadata; deltas keep `text_delta`, add `kind`, add `stream_id` from `itemId`, and route interleaved `final_answer` / `commentary` streams into different lanes |
 | Cold-exit fallback synthesis | e2e | kill worker child PID directly (bypassing supervisor); assert `finalizeOnExit` synthesises terminal event with `by=workerName`, `synthesized:true` |
@@ -1286,5 +1286,5 @@ commands/channel/
 
 - **`StorageAdapter` abstraction** for cloud-backed stores (S3 / DynamoDB / Redis). Today `store/*` calls `fs.*` directly; adapter pattern is the prerequisite for any non-local backend.
 - **events.jsonl rotation** — triggers when single file > 100MB OR > 100k events. Schema split + reader-merge is the open design question.
-- **Event attribution + pass-through metadata** — keep `by` as a lightweight alias, add `origin: "cli"|"api"|"worker"` for the write entrypoint, and store business identity/context in `meta` without teaching Trellis user/org semantics.
+- **Event attribution + pass-through metadata** — keep `by` as a lightweight alias, add `origin: "cli"|"api"|"worker"` for the write entrypoint, and store business identity/context in `meta` without teaching omtre user/org semantics.
 - **GUI frontend** consuming `events.jsonl` via fs.watch (Electron) or polling. CLI render rules in `messages.ts` translate directly.

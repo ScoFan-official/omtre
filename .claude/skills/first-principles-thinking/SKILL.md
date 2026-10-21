@@ -226,9 +226,9 @@ Maintain a running checklist throughout the analysis. After each phase completio
 
 ---
 
-## Trellis Integration
+## omtre Integration
 
-When used within a Trellis-managed project, the analysis artifacts integrate with the task system.
+When used within a omtre-managed project, the analysis artifacts integrate with the task system.
 
 ### File Placement
 

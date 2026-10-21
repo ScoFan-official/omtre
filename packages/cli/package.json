@@ -1,7 +1,7 @@
 {
   "name": "omtre",
-  "version": "0.6.18-ohmy.5",
-  "description": "AI capabilities grow like ivy — omtre provides the structure to guide them along a disciplined path",
+  "version": "1.0.0",
+  "description": "Contract-enforced workflow harness for AI coding agents",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,9 +28,9 @@
     "typecheck": "tsc --noEmit",
     "lint:py": "basedpyright",
     "lint:all": "pnpm lint && pnpm lint:py",
-    "prepack": "node scripts/bundle-core.js prepack",
-    "postpack": "node scripts/bundle-core.js postpack",
-    "prepublishOnly": "pnpm test && pnpm run build && cp ../../README.md ../../LICENSE .",
+    "prepack": "node scripts/copy-package-assets.js && node scripts/bundle-core.js prepack",
+    "postpack": "node scripts/bundle-core.js postpack && node scripts/clean-package-assets.js",
+    "prepublishOnly": "pnpm test && pnpm run build",
     "release": "node scripts/release.js patch",
     "release:minor": "node scripts/release.js minor",
     "release:major": "node scripts/release.js major",
@@ -41,17 +41,22 @@
   },
   "keywords": [
     "ai",
+    "ai-agents",
     "workflow",
     "cursor",
-    "claude",
-    "iflow",
+    "claude-code",
+    "codex",
+    "spec-driven-development",
+    "agent-skills",
     "cli",
     "developer-tools",
-    "agent",
-    "memory",
     "omtre"
   ],
-  "author": "Mindfold LLC",
+  "author": "ScoFan (https://github.com/ScoFan-official)",
+  "homepage": "https://github.com/ScoFan-official/omtre#readme",
+  "bugs": {
+    "url": "https://github.com/ScoFan-official/omtre/issues"
+  },
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@omtre/core": "workspace:*",
@@ -86,7 +91,8 @@
     "dist",
     "bin",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "repository": {
     "type": "git",

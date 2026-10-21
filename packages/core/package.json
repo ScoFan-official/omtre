@@ -1,6 +1,6 @@
 {
   "name": "@omtre/core",
-  "version": "0.6.18-ohmy.5",
+  "version": "1.0.0",
   "description": "omtre core SDK — channel and task domain primitives consumed by the omtre CLI and downstream Node services",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,7 +34,10 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "sideEffects": false,
   "publishConfig": {
@@ -42,6 +45,7 @@
     "provenance": true
   },
   "scripts": {
+    "prepublishOnly": "cp ../../LICENSE ../../NOTICE .",
     "build": "pnpm run clean && tsc",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "dev": "tsc --watch",
@@ -58,7 +62,11 @@
     "agent",
     "events"
   ],
-  "author": "Mindfold LLC",
+  "author": "ScoFan (https://github.com/ScoFan-official)",
+  "homepage": "https://github.com/ScoFan-official/omtre#readme",
+  "bugs": {
+    "url": "https://github.com/ScoFan-official/omtre/issues"
+  },
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
