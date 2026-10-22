@@ -50,7 +50,7 @@ src/migrations/
   "breaking": true,
   "recommendMigrate": true,
   "migrationGuide": "## 0.4.x → 0.5.x: What This Release Actually Changes\n\n0.5.0-beta.0 is a breaking release...\n\n### 1. Skills got renamed: ...\n\n### 2. Six commands retired...",
-  "aiInstructions": "When helping a user migrate from 0.4.x to 0.5.x:\n\n1. Check for retired commands first...\n2. Run trellis update --migrate...",
+  "aiInstructions": "When helping a user migrate from 0.4.x to 0.5.x:\n\n1. Check for retired commands first...\n2. Run omtre update --migrate...",
   "migrations": [ /* ... */ ]
 }
 ```
@@ -95,21 +95,21 @@ src/migrations/
 - 自动批量更新 hash 追踪
 - 移动后自动清理空的源目录
 - 嵌套目录按深度优先处理（避免父目录先移动导致子目录找不到）
-- 目标目录不存在时，是否自动执行取决于归属：只有当 manifest 记录了 `from` 目录下的文件（即这个目录是 trellis 自己建的）才会 `auto`；否则视为可能是用户自建的同名目录（例如真实的 `.windsurf/` 编辑器配置），路由到 `skip`（即使 `--force` 也不执行）。详见下方分类逻辑与 [Filesystem Safety](./filesystem-safety.md)。
+- 目标目录不存在时，是否自动执行取决于归属：只有当 manifest 记录了 `from` 目录下的文件（即这个目录是 omtre 自己建的）才会 `auto`；否则视为可能是用户自建的同名目录（例如真实的 `.windsurf/` 编辑器配置），路由到 `skip`（即使 `--force` 也不执行）。详见下方分类逻辑与 [Filesystem Safety](./filesystem-safety.md)。
 
 ### safe-file-delete 示例
 
 ```json
 {
   "type": "safe-file-delete",
-  "from": ".claude/commands/trellis/before-backend-dev.md",
-  "description": "Replaced by before-dev.md",
+  "from": ".claude/commands/<old-cli>/before-backend-dev.md",
+  "description": "Historical example: replaced by before-dev.md",
   "allowed_hashes": ["7e35444de2a5779ef39944f17f566ea21d2ed7f4994246f4cfe6ebf9a11dd3e3"]
 }
 ```
 
 **工作机制**：
-- **无需 `--migrate`** — 在每次 `trellis update` 时自动执行
+- **无需 `--migrate`** — 在每次 `omtre update` 时自动执行
 - **Hash 校验** — 只有当文件内容的 SHA256 匹配 `allowed_hashes` 中的某个值时才删除
 - **版本无关** — 从所有 manifest 收集 safe-file-delete 条目，不受版本范围限制
 - 删除后自动清理 hash 记录和空目录
@@ -128,14 +128,14 @@ src/migrations/
 
 | 分类 | 条件 | 行为 |
 |------|------|------|
-| `auto` | 文件未被用户修改 / rename-dir 目标不存在且源目录有 manifest 记录（trellis 建的）/ rename-dir 目标存在且只含未修改模板文件 | 自动迁移 |
+| `auto` | 文件未被用户修改 / rename-dir 目标不存在且源目录有 manifest 记录（omtre 建的）/ rename-dir 目标存在且只含未修改模板文件 | 自动迁移 |
 | `confirm` | 文件已被用户修改 | 默认询问，`-f` 强制，`-s` 跳过 |
 | `conflict` | 新旧路径都存在且新路径含用户修改内容 | 跳过并提示手动解决 |
 | `skip` | 旧路径不存在 / 路径受保护 / rename-dir 目标不存在且源目录无 manifest 记录（疑似用户自建同名目录，即使 `--force` 也不执行） | 无需操作 |
 
 ## `configSectionsAdded`（追加式 config.yaml 节）
 
-可选 manifest 字段，声明本版本在 `.omtre/config.yaml` 引入的新顶层 section。`trellis update` 走完文件写入循环后会再扫一遍 `getConfigSectionsAddedBetween(fromVersion, toVersion)`，每条 entry 命中"目标文件存在 + sentinel 不在文件里"才会从打包模板里抽对应 section 追加到末尾。仅追加，幂等（重跑时 sentinel 已在）。
+可选 manifest 字段，声明本版本在 `.omtre/config.yaml` 引入的新顶层 section。`omtre update` 走完文件写入循环后会再扫一遍 `getConfigSectionsAddedBetween(fromVersion, toVersion)`，每条 entry 命中"目标文件存在 + sentinel 不在文件里"才会从打包模板里抽对应 section 追加到末尾。仅追加，幂等（重跑时 sentinel 已在）。
 
 ```jsonc
 {
@@ -158,7 +158,7 @@ src/migrations/
 
 **为什么不直接覆盖 config.yaml**：用户基本都改过 `session_commit_message` / `packages` 等字段，hash 不匹配，常规 file-write 流程会触发 `y/n/d` 询问 —— `y` 丢自定义，`n` 拿不到新 section。`configSectionsAdded` 走 sentinel-gated 追加路径，绕过这个二选一。
 
-**未来加新 section**：在对应版本 manifest 加一条 entry 即可，`update.ts` 不需要改。`packages/cli/src/templates/trellis/config.yaml` 模板里加对应 `#---` 分隔块和 section 内容，`trellis init` 走默认写入路径自然会拿到新 section。
+**未来加新 section**：在对应版本 manifest 加一条 entry 即可，`update.ts` 不需要改。`packages/cli/src/templates/omtre/config.yaml` 模板里加对应 `#---` 分隔块和 section 内容，`omtre init` 走默认写入路径自然会拿到新 section。
 
 ## 受保护路径
 
@@ -179,7 +179,7 @@ src/migrations/
 ```yaml
 update:
   skip:
-    - .claude/commands/trellis/my-custom.md
+    - .claude/commands/omtre/my-custom.md
     - .cursor/commands/
 ```
 
@@ -191,12 +191,12 @@ update:
 - 存储位置：`.omtre/.template-hashes.json`
 - 用途：检测用户是否修改过模板文件
 - 原理：比较当前文件 SHA256 与存储的哈希值
-- 初始化：`trellis init` 时自动创建
-- 更新：`trellis update` 后自动更新被覆盖文件的哈希
+- 初始化：`omtre init` 时自动创建
+- 更新：`omtre update` 后自动更新被覆盖文件的哈希
 
 ### Manifest ownership contract (CRITICAL — data loss prevention)
 
-`.template-hashes.json` is the **single source of truth** for `trellis uninstall`. Every key listed there gets `fs.unlinkSync`'d at uninstall time. Therefore the manifest must contain **only files trellis actually wrote during init / update — never files that merely happen to exist under a managed directory**.
+`.template-hashes.json` is the **single source of truth** for `omtre uninstall`. Every key listed there gets `fs.unlinkSync`'d at uninstall time. Therefore the manifest must contain **only files omtre actually wrote during init / update — never files that merely happen to exist under a managed directory**.
 
 #### Why this matters
 
@@ -210,7 +210,7 @@ If `initializeHashes` walks these dirs and hashes everything, uninstall faithful
 
 #### Required contract
 
-**`initializeHashes(cwd, opts)`** must derive the manifest set from `opts.trackedPaths` (a `Set<string>` of paths trellis **actually wrote this run**), NOT from `fs.readdirSync` walks of platform dirs.
+**`initializeHashes(cwd, opts)`** must derive the manifest set from `opts.trackedPaths` (a `Set<string>` of paths omtre **actually wrote this run**), NOT from `fs.readdirSync` walks of platform dirs.
 
 The set is produced by `startRecordingWrites()` / `stopRecordingWrites()` instrumentation inside `utils/file-writer.ts`. `writeFile()` records `recordWrite(absPath)` ONLY when:
 
@@ -227,11 +227,11 @@ Every configurator that wants its writes tracked must funnel through `writeFile(
 
 #### `.omtre/` walk exemption
 
-`.omtre/` files are still hashed via recursive walk (existing `collectFiles` behavior + `EXCLUDE_FROM_HASH` filters). Rationale: `trellis uninstall` step 3 does `fs.rmSync('.omtre/', { recursive: true, force: true })` regardless of manifest content, so the walk's blast radius is contained. Over-hashing inside `.omtre/` only affects `trellis update` 3-way-merge accuracy, not uninstall safety.
+`.omtre/` files are still hashed via recursive walk (existing `collectFiles` behavior + `EXCLUDE_FROM_HASH` filters). Rationale: `omtre uninstall` step 3 does `fs.rmSync('.omtre/', { recursive: true, force: true })` regardless of manifest content, so the walk's blast radius is contained. Over-hashing inside `.omtre/` only affects `omtre update` 3-way-merge accuracy, not uninstall safety.
 
 #### Self-heal contract: `pruneOrphanManifestKeys`
 
-Existing users may have poisoned manifests from older trellis versions. `pruneOrphanManifestKeys(cwd, configuredPlatforms, hashes, opts)` runs at the top of both `trellis update` AND `trellis uninstall` (before plan classification) and prunes orphan keys.
+Existing users may have poisoned manifests from older omtre versions. `pruneOrphanManifestKeys(cwd, configuredPlatforms, hashes, opts)` runs at the top of both `omtre update` AND `omtre uninstall` (before plan classification) and prunes orphan keys.
 
 **Preserve set** (a key is kept iff one of):
 
@@ -252,7 +252,7 @@ for (const dir of ALL_MANAGED_DIRS) {
   }
 }
 
-// Correct — manifest reflects exactly what trellis wrote this run
+// Correct — manifest reflects exactly what omtre wrote this run
 startRecordingWrites();
 await runConfigurators(cwd);       // each writeFile() calls recordWrite()
 const written = stopRecordingWrites();
@@ -261,7 +261,7 @@ initializeHashes(cwd, { trackedPaths: written });
 
 #### Homedir guard (R2 — defense in depth)
 
-Even with the manifest contract above, `trellis init` and `trellis uninstall` refuse to run when `process.cwd()` is exactly the user's home directory. Use `isCwdHomedir()` from `utils/cwd-guard.ts` — it compares via `fs.realpathSync.native()` on both sides, Windows-lowercases for case-insensitivity, try/catch defaults permissive on lookup failure. Override via `OMTRE_ALLOW_HOMEDIR=1` only; `--force` does NOT bypass.
+Even with the manifest contract above, `omtre init` and `omtre uninstall` refuse to run when `process.cwd()` is exactly the user's home directory. Use `isCwdHomedir()` from `utils/cwd-guard.ts` — it compares via `fs.realpathSync.native()` on both sides, Windows-lowercases for case-insensitivity, try/catch defaults permissive on lookup failure. Override via `OMTRE_ALLOW_HOMEDIR=1` only; `--force` does NOT bypass.
 
 #### Tests required for any change in this area
 
@@ -278,7 +278,7 @@ Even with the manifest contract above, `trellis init` and `trellis uninstall` re
 `get_context.py`, `workflow_phase.py`, SessionStart strippers, and per-turn
 workflow-state hooks.
 
-`trellis update` must therefore keep `workflow.md` on the normal whole-file
+`omtre update` must therefore keep `workflow.md` on the normal whole-file
 template path:
 
 - If the installed file's current hash matches the tracked hash, update the
@@ -295,7 +295,7 @@ of `[codex-inline]` / `[codex-sub-agent]`, causing `get_context.py --mode phase
 
 Regression coverage for this belongs in versioned update integration tests,
 not only fresh-init template tests: write the older `.omtre/.version`, stage
-older hash-tracked template files, run `trellis update`, then assert the
+older hash-tracked template files, run `omtre update`, then assert the
 installed files reach the current packaged shape and the version stamp advances.
 For runtime templates such as `workflow.md`, the scenario must also assert that
 runtime markers such as Codex virtual platform blocks are present after update.
@@ -303,10 +303,10 @@ runtime markers such as Codex virtual platform blocks are present after update.
 ## CLI 使用
 
 ```bash
-trellis update              # 显示迁移提示
-trellis update --migrate    # 执行迁移（修改过的文件会提示确认）
-trellis update --migrate -f # 强制迁移（备份后执行）
-trellis update --migrate -s # 跳过修改过的文件
+omtre update              # 显示迁移提示
+omtre update --migrate    # 执行迁移（修改过的文件会提示确认）
+omtre update --migrate -f # 强制迁移（备份后执行）
+omtre update --migrate -s # 跳过修改过的文件
 ```
 
 ## 相关文件

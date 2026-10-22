@@ -20,7 +20,7 @@ This project uses **Mintlify** as the documentation platform. All content is wri
 | [Plugin Guidelines](./plugin-guidelines.md)     | Claude Code plugin manifest patterns     | Ready  |
 | [Style Guide](./style-guide.md)                 | Writing style + changelog/release-notes voice | Ready  |
 | [ASCII-Art Alignment](./ascii-art-alignment.md) | Box-drawing & CJK alignment in diagrams  | Ready  |
-| [Sync on Change](./sync-on-change.md)           | Which docs-site pages to update when Trellis workflow / platforms / commands / skills change | Ready  |
+| [Sync on Change](./sync-on-change.md)           | Which docs-site pages to update when omtre workflow / platforms / commands / skills change | Ready  |
 | [Release Lifecycle](./release-lifecycle.md)     | `docs-site/scripts/` lifecycle (release-only / +beta / +rc), when and how to use them        | Ready  |
 
 ---

@@ -70,10 +70,11 @@
 ### 运行检查
 
 ```bash
-pnpm lint        # TypeScript ESLint 检查
-pnpm lint:py     # Python 类型检查 (basedpyright)
-pnpm lint:all    # 同时运行以上两者
-pnpm typecheck   # TypeScript 类型检查
+pnpm lint               # TypeScript ESLint 检查 + 旧名门禁
+pnpm lint:py            # Python 类型检查 (basedpyright)
+pnpm lint:all           # 同时运行以上两者
+pnpm typecheck          # TypeScript 类型检查
+pnpm check:legacy-names # 品牌/旧名门禁
 ```
 
 > **注意：** 提交时 pre-commit hook 会自动对暂存的 `.ts` 文件运行 `eslint --fix` 和 `prettier --write`。
@@ -82,20 +83,16 @@ pnpm typecheck   # TypeScript 类型检查
 
 ```
 omtre/
-├── src/                    # TypeScript 源代码
-│   ├── cli/                # CLI 入口
-│   ├── commands/           # CLI 命令 (init, update)
-│   ├── configurators/      # 模板应用逻辑
-│   ├── templates/          # 安装到用户项目的模板 ←
-│   └── utils/              # 工具函数
+├── packages/
+│   ├── cli/                # CLI 二进制、命令、配置器与模板
+│   └── core/               # 打包进 CLI 的 channel/task/memory SDK
+├── skills/                 # 一线技能
+├── marketplace/            # 技能、Spec 模板、工作流与注册表
+├── catalog/                # vendored 目录资产（不要原地修改）
 ├── .claude/                # Claude Code 配置（项目自用）←
-│   ├── agents/             # Agent 定义
-│   ├── commands/           # 斜杠命令
-│   └── hooks/              # Python Hook 脚本
 ├── .omtre/                 # omtre 工作流（项目自用）←
-│   ├── scripts/            # Bash 脚本
-│   └── spec/               # Spec 文件模板
-└── docs/                   # 文档
+├── docs/                   # 产品与维护者文档
+└── scripts/                # 仓库工具
 ```
 
 > **重要：** 修改 `.claude/`、`.omtre/` 或 `.cursor/` 时，请检查是否需要同步更新 `src/templates/`。项目使用自己的配置文件，但模板才是安装到用户项目的内容。
@@ -148,6 +145,10 @@ docs(readme): update quick start instructions
    - UI 变更请附截图
 
 6. **根据反馈进行修改**
+
+## 发布
+
+维护者请见 [docs/release.md](./docs/release.md)：npm 与 GitHub Release 的发布流程、版本策略与 token 配置。
 
 ## 感谢
 

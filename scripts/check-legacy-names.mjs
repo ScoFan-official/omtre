@@ -3,12 +3,13 @@
  * Repository-wide legacy identifier gate (R8).
  *
  * Scans managed source, templates, tests, skills, marketplace, scripts, CI,
- * and docs for forbidden pre-rename Trellis identifiers, enforcing a two-tier
- * explicit allowlist:
- *   1. Permanent allowlist (copyright/license, upstream attribution URLs,
- *      catalog, historical changelogs, historical 0.3.x-0.6.x migration
- *      manifests + explicitly marked historical manifest test lines, this
- *      script, and `omtre migrate` implementation/tests).
+ * and docs for forbidden legacy identifiers and bare upstream product names,
+ * enforcing a two-tier explicit allowlist:
+ *   1. Permanent allowlist (copyright/license, upstream attribution URLs and
+ *      explicit `omtre:upstream-attribution` blocks, catalog, historical
+ *      changelogs, historical task records/journals, historical 0.3.x-0.6.x
+ *      migration manifests + explicitly marked historical manifest test lines,
+ *      this script, and `omtre migrate` implementation/tests).
  *   2. Pre-bootstrap temporary allowlist (active ONLY when `<root>/.omtre`
  *      does not yet exist; automatically deactivates once `.omtre/` is created).
  */
@@ -39,6 +40,11 @@ export const FORBIDDEN_TOKEN_SOURCE = [
   "\\/trellis:[A-Za-z0-9_-]*",
   "oh-my-trellis",
   "@mindfoldhq\\/trellis(?:-core)?",
+  // Bare product names. Specific tokens above win so the reported match is the
+  // most useful one; these catch leftover prose, headings, and ASCII art.
+  "\\bTrellis\\b",
+  "\\bTRELLIS\\b",
+  "\\btrellis\\b",
 ].join("|");
 
 export const FORBIDDEN_REGEX = new RegExp(`(${FORBIDDEN_TOKEN_SOURCE})`, "g");
@@ -80,7 +86,6 @@ const BINARY_EXTENSIONS = new Set([
   ".jpeg",
   ".webp",
   ".ico",
-  ".svg",
   ".pdf",
   ".woff",
   ".woff2",
@@ -101,12 +106,20 @@ const BINARY_EXTENSIONS = new Set([
 const PERMANENT_EXACT_FILES = new Set([
   "COPYRIGHT",
   "LICENSE",
-  "docs/fork-sync.md",
-  "CHANGELOG.md",
-  "CHANGELOG.pack.md",
+  "NOTICE",
+  "docs/upstream.md",
+  "docs/changelog-fork.md",
+  "docs/pack-changelog.md",
   "scripts/check-legacy-names.mjs",
   "packages/cli/test/scripts/check-legacy-names.test.ts",
   "packages/cli/src/commands/migrate.ts",
+  // Generated copies of the root README/LICENSE/NOTICE during `pnpm pack`;
+  // postpack removes them, but a concurrent gate scan may see them mid-pack.
+  "packages/cli/README.md",
+  "packages/cli/LICENSE",
+  "packages/cli/NOTICE",
+  // Active planning map: decisions and historical notes, not product surface.
+  ".omtre/tasks/10-19-omtre-standalone/map.md",
 ]);
 
 const PERMANENT_DIR_PREFIXES = [
@@ -114,6 +127,8 @@ const PERMANENT_DIR_PREFIXES = [
   "catalog/",
   "drafts/", // Historical v0.5.0 release announcement drafts
   "packages/cli/src/commands/migrate/",
+  ".omtre/tasks/archive/", // Historical task records
+  ".omtre/workspace/", // Historical journals
 ];
 
 const HISTORICAL_MANIFEST_TEST_FILES = new Set([
@@ -219,11 +234,28 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
 
   let inHistoricalManifestBlock = false;
   let inPreBootstrapBlock = false;
+  let inAttributionBlock = false;
+  let attributionStartLine = 0;
 
   const lines = content.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const lineNumber = i + 1;
+
+    // Explicit lineage/attribution blocks are exempt: they are the one place
+    // where the upstream name is allowed to appear in an active surface.
+    if (line.includes("omtre:upstream-attribution:start")) {
+      inAttributionBlock = true;
+      attributionStartLine = lineNumber;
+      continue;
+    }
+    if (line.includes("omtre:upstream-attribution:end")) {
+      inAttributionBlock = false;
+      continue;
+    }
+    if (inAttributionBlock) {
+      continue;
+    }
 
     if (allowHistoricalManifestMarkers) {
       if (line.includes("historical-manifest-fixture:start")) {
@@ -270,6 +302,15 @@ export function scanFileContent(relPath, content, { isBootstrapped }) {
         text: line.trim(),
       });
     }
+  }
+
+  if (inAttributionBlock) {
+    violations.push({
+      file: norm,
+      line: attributionStartLine,
+      match: "omtre:upstream-attribution:start",
+      text: "Unclosed omtre:upstream-attribution block",
+    });
   }
 
   return violations;

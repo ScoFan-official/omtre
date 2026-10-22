@@ -281,7 +281,7 @@ make the intended decision. Otherwise a transient sandbox/network failure hides
 the hint for the rest of the session.
 
 **Rule 2**: If a local command can provide the needed value, try it with a short
-timeout and captured output. For example, `trellis --version` already runs the
+timeout and captured output. For example, `omtre --version` already runs the
 CLI's version comparison logic and can support an actionable update prompt
 without duplicating npm registry parsing.
 
@@ -547,7 +547,7 @@ python3 script.py  # Works!
 python3 script.py  # 'python3' is not recognized
 python script.py   # Works!
 
-# Trellis docs/config should say the rule, not guess one alias everywhere
+# omtre docs/config should say the rule, not guess one alias everywhere
 {{PYTHON_CMD}} script.py
 ```
 
@@ -603,7 +603,7 @@ console.log('From 0.2.12:', getMigrationsForVersion('0.2.12', 'CURRENT').length)
 ## Release Checklist: Bundled Assets
 
 When release notes or docs claim an asset is bundled, installed automatically, or
-included with Trellis, verify the whole distribution path:
+included with omtre, verify the whole distribution path:
 
 - [ ] Source file exists in the branch being tagged, not only in another branch,
   docs submodule, or marketplace tree.
@@ -611,7 +611,7 @@ included with Trellis, verify the whole distribution path:
 - [ ] `npm pack --dry-run --json` includes the expected `dist/**` path.
 - [ ] The built binary installs the asset in a fresh temp repository.
 - [ ] `.omtre/.template-hashes.json` tracks the generated asset path.
-- [ ] `trellis update --dry-run` reports `Already up to date!` in that temp
+- [ ] `omtre update --dry-run` reports `Already up to date!` in that temp
   repository.
 
 **Why this matters**: docs/changelog text can move independently from the code
@@ -630,10 +630,10 @@ printf '{"name":"omtre-smoke","version":"0.0.0"}\n' > "$tmpdir/package.json"
 git -C "$tmpdir" init -q
 (
   cd "$tmpdir"
-  node /path/to/Trellis/packages/cli/bin/trellis.js init -u smoke --yes --claude --codex
+  node /path/to/omtre/packages/cli/bin/omtre.js init -u smoke --yes --claude --codex
   test -f .claude/skills/<skill>/SKILL.md
   test -f .agents/skills/<skill>/SKILL.md
   grep -q '<skill>' .omtre/.template-hashes.json
-  node /path/to/Trellis/packages/cli/bin/trellis.js update --dry-run
+  node /path/to/omtre/packages/cli/bin/omtre.js update --dry-run
 )
 ```

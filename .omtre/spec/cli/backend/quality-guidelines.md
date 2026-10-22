@@ -348,16 +348,16 @@ The task `04-21-task-schema-unify` ran a retroactive audit on the 0.5.0-beta.0 d
 **Three lessons added to the audit discipline**:
 
 1. **Cross-language grep**: when a field is removed, grep must span `.py`, `.ts`, `.js`, AND `.json` (migration manifest changelogs can leak field names that get copy-pasted). Restrict by `--include="*.py" --include="*.ts"` plus checking manifest `.json` files.
-2. **Shipped-but-unused code counts**: any file enumerated in a template registry (`packages/cli/src/templates/trellis/index.ts`, `templates/markdown/index.ts`) is a writer of user expectations even if no command invokes it. Orphan = still writes.
+2. **Shipped-but-unused code counts**: any file enumerated in a template registry (`packages/cli/src/templates/omtre/index.ts`, `templates/markdown/index.ts`) is a writer of user expectations even if no command invokes it. Orphan = still writes.
 3. **Type declarations count as writers of the reader-side contract**: a TypedDict / TS interface that still declares the deprecated field misleads consumers the same way a runtime writer does. Prune declarations in the same PR as runtime writers.
 
 **Consolidation outcome**: the canonical TypeScript task shape now lives in
-`@omtre/core/task` as `TrellisTaskRecord` +
+`@omtre/core/task` as `OmtreTaskRecord` +
 `emptyTaskRecord(overrides)`. `packages/cli/src/utils/task-json.ts` only
 re-exports those under the legacy `TaskJson` / `emptyTaskJson` names for CLI
 call sites. Both `init.ts` and `update.ts` route through that shared factory.
 The audit set for future schema changes is now: canonical Python `cmd_create`
-(runtime) + core `TrellisTaskRecord` / `emptyTaskRecord` (TS schema + factory) +
+(runtime) + core `OmtreTaskRecord` / `emptyTaskRecord` (TS schema + factory) +
 CLI `utils/task-json.ts` re-export users (bootstrap + migration) + `TaskData`
 TypedDict (Python declaration).
 
@@ -430,10 +430,10 @@ if (hasExplicitTools) {
 
 #### 2. Signatures
 
-- `trellis update --force`
-- `trellis update --skip-all`
-- `trellis update --create-new`
-- `trellis update --force --migrate`
+- `omtre update --force`
+- `omtre update --skip-all`
+- `omtre update --create-new`
+- `omtre update --force --migrate`
 - `update({ force?: boolean, skipAll?: boolean, createNew?: boolean, migrate?: boolean })`
 
 #### 3. Contracts
@@ -462,7 +462,7 @@ if (hasExplicitTools) {
 
 - Good: `node dist/cli/index.js update --force --migrate` can run as a smoke
   test with closed stdin and either update files or report already up to date.
-- Base: `trellis update --migrate` in a terminal asks the user how to handle
+- Base: `omtre update --migrate` in a terminal asks the user how to handle
   modified migrated files.
 - Bad: `--force` resolves file conflicts but still asks `Proceed?`, then
   crashes in CI with `ERR_USE_AFTER_CLOSE`.
@@ -614,7 +614,7 @@ fetchedTemplates = []; // Clear stale data from previous source
 
 #### 1. Scope / Trigger
 
-When a CLI registry flow probes one backend to decide marketplace vs direct-download mode, and then downloads content later, the chosen backend is part of the control-flow contract. This applies to `trellis init --registry`, especially private/self-hosted Git registries.
+When a CLI registry flow probes one backend to decide marketplace vs direct-download mode, and then downloads content later, the chosen backend is part of the control-flow contract. This applies to `omtre init --registry`, especially private/self-hosted Git registries.
 
 #### 2. Signatures
 
@@ -764,7 +764,7 @@ Create a format table covering every combination of:
 
 ## Routing Fixes: Audit ALL Entry Paths Before Claiming a Fix Is Complete
 
-**Trigger**: Modifying any decision/dispatch logic in a command that has multiple entry paths into the same downstream behavior — `trellis init` (handleReinit fast-path + main dispatch), `trellis update` (force vs interactive), or any function with early-return guards above the change point.
+**Trigger**: Modifying any decision/dispatch logic in a command that has multiple entry paths into the same downstream behavior — `omtre init` (handleReinit fast-path + main dispatch), `omtre update` (force vs interactive), or any function with early-return guards above the change point.
 
 **Common mistake**: Patch the dispatch you grepped for, manually verify on one fixture, ship. The other entry path stays broken because (a) it short-circuits before reaching your fix, (b) the manual fixture happened to use a flag combination that bypassed the unfixed path, and (c) the test you wrote also used that convenient bypass flag.
 
@@ -834,7 +834,7 @@ it("empty tasks/ → bootstrap", async () => {
 });
 ```
 
-Net: ship lands with the user's exact command (`trellis init -u alice --codex --yes`) still broken.
+Net: ship lands with the user's exact command (`omtre init -u alice --codex --yes`) still broken.
 
 #### Correct — make all entry paths converge, test each path
 
@@ -871,7 +871,7 @@ Multi-entry dispatch is a structural force-multiplier for bugs: every entry path
 
 ### Case Study (2026-04-30): issue #204 `--yes` + bootstrap recovery
 
-The first commit (`346003d`) added a `tasksEmpty` fallback only in `init()`'s main dispatch. It made the `--yes` log line correct, made `--force --yes` recover bootstrap, and added a passing test (`#2b` with `force: true`). It did NOT fix the user's literal reported command — `trellis init -u <name> --codex --yes` — because that command goes through `handleReinit` (defined at `init.ts:740`, called at `init.ts:1081`), which short-circuits before reaching the patched dispatch. Caught by `omtre-check` sub-agent doing a live CLI repro on the dist build. Fixed in `589f753` by adding `!tasksEmptyEarly` to the reinit guard, plus splitting the test into `#2b` (no force, reported case) and `#2c` (with force, parity check).
+The first commit (`346003d`) added a `tasksEmpty` fallback only in `init()`'s main dispatch. It made the `--yes` log line correct, made `--force --yes` recover bootstrap, and added a passing test (`#2b` with `force: true`). It did NOT fix the user's literal reported command — `omtre init -u <name> --codex --yes` — because that command goes through `handleReinit` (defined at `init.ts:740`, called at `init.ts:1081`), which short-circuits before reaching the patched dispatch. Caught by `omtre-check` sub-agent doing a live CLI repro on the dist build. Fixed in `589f753` by adding `!tasksEmptyEarly` to the reinit guard, plus splitting the test into `#2b` (no force, reported case) and `#2c` (with force, parity check).
 
 ---
 
@@ -885,7 +885,7 @@ The first commit (`346003d`) added a `tasksEmpty` fallback only in `init()`'s ma
 2. CDN times out (China network reliability for `github.com/.../releases/download/...` is poor).
 3. `node-gyp` source-build fallback kicks in.
 4. Source build needs Visual Studio 2017+ Build Tools, which most Windows users don't have installed.
-5. Install fails — **`trellis` itself can no longer be installed at all**.
+5. Install fails — **`omtre` itself can no longer be installed at all**.
 
 Time to detect: ~4 hours after publish. Fix: emergency revert in 0.6.0-beta.4 (removed `better-sqlite3`, marked the OpenCode 1.2+ SQLite reader as degraded with a soft-degrade fallback). The OpenCode SQLite section in `commands-mem.md` is now a stub describing the degraded state.
 
@@ -893,9 +893,9 @@ The lesson: **a native dep that fails to install fails the entire CLI**, not jus
 
 ### Rules
 
-#### 1. Avoid native deps in the trellis CLI by default
+#### 1. Avoid native deps in the omtre CLI by default
 
-Trellis is a productivity / scaffolding tool. Install reliability across all OS / network conditions matters more than per-call perf. The default answer to "should we add this native dep?" is **no**.
+omtre is a productivity / scaffolding tool. Install reliability across all OS / network conditions matters more than per-call perf. The default answer to "should we add this native dep?" is **no**.
 
 #### 2. If absolutely needed, use `optionalDependencies` + soft-degrade
 
@@ -908,7 +908,7 @@ try {
   nativeReader = (await import("better-sqlite3")).default as NativeReader;
 } catch {
   process.stderr.write(
-    "[trellis] OpenCode 1.2+ SQLite session reader unavailable " +
+    "[omtre] OpenCode 1.2+ SQLite session reader unavailable " +
     "(better-sqlite3 not installed). Falling back to JSONL-only mode.\n"
   );
 }
@@ -979,7 +979,7 @@ If any answer is "no", the dep doesn't ship.
 2. CDN times out (China network reliability for `github.com/.../releases/download/...` is poor).
 3. `node-gyp` source-build fallback kicks in.
 4. Source build needs Visual Studio 2017+ Build Tools, which most Windows users don't have installed.
-5. Install fails — **`trellis` itself can no longer be installed at all**.
+5. Install fails — **`omtre` itself can no longer be installed at all**.
 
 Time to detect: ~4 hours after publish. Fix: emergency revert in 0.6.0-beta.4 (removed `better-sqlite3`, marked the OpenCode 1.2+ SQLite reader as degraded with a soft-degrade fallback). The OpenCode SQLite section in `commands-mem.md` is now a stub describing the degraded state.
 
@@ -987,9 +987,9 @@ The lesson: **a native dep that fails to install fails the entire CLI**, not jus
 
 ### Rules
 
-#### 1. Avoid native deps in the trellis CLI by default
+#### 1. Avoid native deps in the omtre CLI by default
 
-Trellis is a productivity / scaffolding tool. Install reliability across all OS / network conditions matters more than per-call perf. The default answer to "should we add this native dep?" is **no**.
+omtre is a productivity / scaffolding tool. Install reliability across all OS / network conditions matters more than per-call perf. The default answer to "should we add this native dep?" is **no**.
 
 #### 2. If absolutely needed, use `optionalDependencies` + soft-degrade
 
@@ -1002,7 +1002,7 @@ try {
   nativeReader = (await import("better-sqlite3")).default as NativeReader;
 } catch {
   process.stderr.write(
-    "[trellis] OpenCode 1.2+ SQLite session reader unavailable " +
+    "[omtre] OpenCode 1.2+ SQLite session reader unavailable " +
     "(better-sqlite3 not installed). Falling back to JSONL-only mode.\n"
   );
 }

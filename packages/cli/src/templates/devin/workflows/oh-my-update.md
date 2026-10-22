@@ -1,5 +1,5 @@
 ---
-description: Update omtre (CLI, Omtre templates, skills, specs) to the latest fork release.
+description: Update omtre (CLI, Omtre templates, skills, specs) to the latest release.
 ---
 
 # omtre Update
@@ -13,12 +13,12 @@ omtre --version
 gh api repos/ScoFan-official/omtre/releases
 ```
 
-CLI releases live on `ScoFan-official/omtre` tagged `cli-v<ver>` (e.g. `cli-v0.6.17-ohmy.2`). The repo's own pack releases (`vX.Y.Z`) share the same list — filter `tag_name` on the `cli-v` prefix and pick the newest match. Do NOT use `/releases/latest`: it can resolve to a pack release.
+CLI releases live on `ScoFan-official/omtre` tagged `cli-v<ver>` (e.g. `cli-v1.0.0`). The repository's pack releases (`vX.Y.Z`) share the same list — filter `tag_name` on the `cli-v` prefix and pick the newest match. Do NOT use `/releases/latest`: it can resolve to a pack release. Legacy `-ohmy.N` tags may still appear; semver order picks the newest.
 
 Record:
 
-- `current` = the version `omtre --version` prints (e.g. `0.6.17-ohmy.2`)
-- `latest` = the newest `cli-v*` `tag_name`, minus the `cli-v` prefix (e.g. `0.6.17-ohmy.2`)
+- `current` = the version `omtre --version` prints (e.g. `1.0.0`)
+- `latest` = the newest `cli-v*` `tag_name`, minus the `cli-v` prefix (e.g. `1.0.0`)
 - `tarball` = `https://github.com/ScoFan-official/omtre/releases/download/cli-v<latest>/omtre-<latest>.tgz` (or the `.tgz` asset's `browser_download_url` from the release response)
 
 If `gh` is unavailable or the API call fails, stop and report — do not guess the latest version.

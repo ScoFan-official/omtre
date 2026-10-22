@@ -37,7 +37,7 @@ For command-level integration tests, this is the minimal set:
 ```typescript
 // Placed at top of file — vitest hoists vi.mock calls
 vi.mock("figlet", () => ({
-  default: { textSync: vi.fn(() => "TRELLIS") },
+  default: { textSync: vi.fn(() => "OMTRE") },
 }));
 
 vi.mock("inquirer", () => ({

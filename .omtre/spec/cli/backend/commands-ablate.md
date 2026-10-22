@@ -1,4 +1,4 @@
-# `trellis ablate` and `trellis restore`
+# `omtre ablate` and `omtre restore`
 
 Sources:
 
@@ -6,7 +6,7 @@ Sources:
 - `packages/cli/src/utils/ablation-store.ts`
 - `packages/cli/src/utils/managed-removal.ts`
 
-These commands temporarily subtract every supported project-owned Trellis
+These commands temporarily subtract every supported project-owned omtre
 activation surface and later restore the exact pre-ablation state. The first
 public scope is full-only: capability selection and release baselines are not
 supported.
@@ -14,8 +14,8 @@ supported.
 ## Command contract
 
 ```text
-trellis ablate [--dry-run] [-y|--yes]
-trellis restore [--dry-run] [-y|--yes]
+omtre ablate [--dry-run] [-y|--yes]
+omtre restore [--dry-run] [-y|--yes]
 ```
 
 - `--dry-run` performs planning and conflict checks without project or state
@@ -26,18 +26,18 @@ trellis restore [--dry-run] [-y|--yes]
   reservation shared with restore. Only one concurrent invocation may proceed;
   it holds the reservation through staging, apply/rollback, and final state
   transition, then releases it on every success and failure path.
-- Missing install prints `Trellis is not installed in this project.` and exits
+- Missing install prints `omtre is not installed in this project.` and exits
   with status 0 without writes. Missing state and repeated successful restore
-  print `No Trellis ablation transaction exists for this project.` and also
+  print `No omtre ablation transaction exists for this project.` and also
   exit 0 without writes.
 - Successful ablate/restore tells the user to start a fresh agent session.
 
 This differs from:
 
-- `trellis uninstall`: permanent, best-effort removal with no recovery state;
+- `omtre uninstall`: permanent, best-effort removal with no recovery state;
 - `OMTRE_HOOKS=0`: disables supported hooks only, leaving skills, agents,
   commands, specs, workflow, and memory present;
-- `no-trellis`: a prompt convention, not filesystem subtraction;
+- `no-omtre`: a prompt convention, not filesystem subtraction;
 - a benchmark runner: ablation does not create worktrees, launch agents,
   dispatch prompts, score results, hide Git changes, or downgrade releases.
 
@@ -52,11 +52,11 @@ scrubbers for mixed JSON, TOML, and Markdown files.
 Full ablation removes/scrubs:
 
 1. every current manifest-owned platform file;
-2. only Trellis fields/blocks in registered mixed files;
+2. only omtre fields/blocks in registered mixed files;
 3. the visible `.omtre/` path, including tasks/specs/workspace state;
 4. managed directories proven empty after planned deletions.
 
-Files outside the pruned manifest and non-Trellis mixed-file content are not
+Files outside the pruned manifest and non-omtre mixed-file content are not
 owned and must remain untouched. A malformed mixed file that cannot be proven
 scrubbed makes ablation fail before backup or mutation.
 
@@ -80,7 +80,7 @@ The strict v1 state records:
 
 - status: `preparing | applied | restoring | conflict`;
 - canonical project root plus full SHA-256 identity;
-- CLI version and stable capability ID `trellis.full`;
+- CLI version and stable capability ID `omtre.full`;
 - configured platforms and pruned manifest;
 - each affected relative path, exact pre-fingerprint, expected ablated
   fingerprint, and backup path.
@@ -218,14 +218,14 @@ The command never stages, commits, or hides Git changes.
    retryable.
 7. Delete the external transaction only after complete verification.
 
-The reservation serializes Trellis operations, not arbitrary external editors.
+The reservation serializes omtre operations, not arbitrary external editors.
 Callers must keep the affected managed paths quiescent during restore. The
 immediate per-path recheck detects changes before publication and final
 verification detects changes afterward; portable Node filesystems do not offer
 an atomic content-fingerprint compare-and-swap for an existing mixed file.
 
 PR 1 performs no three-way merge. Users resolve a conflict by returning the
-reported path to its expected ablated state and rerunning `trellis restore`.
+reported path to its expected ablated state and rerunning `omtre restore`.
 
 ## Privacy and session boundary
 
@@ -237,9 +237,9 @@ root, and retains it only until verified restore. Ablation does not separately
 collect browser/session state, global channel logs, host transcripts, or
 unrelated application files.
 
-The current agent may already have Trellis instructions in context, so ablation
+The current agent may already have omtre instructions in context, so ablation
 does not change that live session. Meaningful comparison begins in a fresh
-session. Global Trellis CLI data remains installed and explicitly callable.
+session. Global omtre CLI data remains installed and explicitly callable.
 
 ## Required tests
 

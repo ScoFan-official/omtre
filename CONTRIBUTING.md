@@ -70,10 +70,11 @@ Code contributions are welcome for:
 ### Running Checks
 
 ```bash
-pnpm lint        # ESLint for TypeScript
-pnpm lint:py     # Type checking for Python (basedpyright)
-pnpm lint:all    # Run both
-pnpm typecheck   # TypeScript type checking
+pnpm lint               # ESLint for TypeScript + legacy-name gate
+pnpm lint:py            # Type checking for Python (basedpyright)
+pnpm lint:all           # Run both
+pnpm typecheck          # TypeScript type checking
+pnpm check:legacy-names # Brand/name gate
 ```
 
 > **Note:** Pre-commit hooks will automatically run `eslint --fix` and `prettier --write` on staged `.ts` files.
@@ -82,20 +83,16 @@ pnpm typecheck   # TypeScript type checking
 
 ```
 omtre/
-├── src/                    # TypeScript source code
-│   ├── cli/                # CLI entry point
-│   ├── commands/           # CLI commands (init, update)
-│   ├── configurators/      # Template application logic
-│   ├── templates/          # Templates copied to user projects ←
-│   └── utils/              # Utility functions
+├── packages/
+│   ├── cli/                # CLI binary, commands, configurators, templates
+│   └── core/               # Channel/task/memory SDK bundled into the CLI
+├── skills/                 # First-party skills
+├── marketplace/            # Skills, spec templates, workflows, registry
+├── catalog/                # Vendored catalog assets (do not patch in place)
 ├── .claude/                # Claude Code config (project's own) ←
-│   ├── agents/             # Agent definitions
-│   ├── commands/           # Slash commands
-│   └── hooks/              # Python hook scripts
 ├── .omtre/                 # omtre workflow (project's own) ←
-│   ├── scripts/            # Bash scripts
-│   └── spec/               # Spec file templates
-└── docs/                   # Documentation
+├── docs/                   # Product and maintainer documentation
+└── scripts/                # Repository tooling
 ```
 
 > **Important:** When modifying `.claude/`, `.omtre/`, or `.cursor/`, check if the same changes need to be applied to `src/templates/`. The project uses its own config files, but templates are what gets installed to user projects.
@@ -148,6 +145,11 @@ docs(readme): update quick start instructions
    - Include screenshots for UI changes
 
 6. **Address review feedback** if requested
+
+## Releasing
+
+Maintainers: see [docs/release.md](./docs/release.md) for the npm and GitHub
+Release procedure, version policy, and token setup.
 
 ## Thank You
 

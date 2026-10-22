@@ -30,7 +30,7 @@ All workflow scripts target **Python 3.9+** for cross-platform compatibility (ma
 │   ├── task_context.py   # JSONL context management (add-context, validate, list-context)
 │   ├── task_queue.py     # Task queue CRUD
 │   ├── config.py         # Config reader (config.yaml, hooks)
-│   ├── trellis_config.py # Standalone .omtre/config.yaml reader (no task/repo deps)
+│   ├── omtre_config.py # Standalone .omtre/config.yaml reader (no task/repo deps)
 │   ├── workflow_phase.py # Extract Phase Index / step sections from .omtre/workflow.md (with platform filter)
 │   ├── cli_adapter.py    # Multi-platform CLI abstraction
 │   ├── git_context.py    # Entry shim → session_context + packages_context
@@ -51,10 +51,10 @@ All workflow scripts target **Python 3.9+** for cross-platform compatibility (ma
 
 ### 1. Scope / Trigger
 
-Every file above exists **twice**: `.omtre/scripts/**` is Trellis's own
-dogfood copy, `packages/cli/src/templates/trellis/scripts/**` is what ships to
+Every file above exists **twice**: `.omtre/scripts/**` is omtre's own
+dogfood copy, `packages/cli/src/templates/omtre/scripts/**` is what ships to
 users. Two physical copies of one thing drift, and this pair did: PR #390
-changed the `trellis upgrade` → `update` hint in the template copy only, and
+changed the `omtre upgrade` → `update` hint in the template copy only, and
 the dogfood copy sat on the old wording for a month.
 
 That is now a build failure. It is written here because until 2026-08-06 three
@@ -63,7 +63,7 @@ specs described this pair with three different rules and none named a test.
 ### 2. Signatures
 
 No API — the contract is a test, `regression.test.ts` → `describe("regression:
-.omtre/scripts stays byte-identical to templates/trellis/scripts")`.
+.omtre/scripts stays byte-identical to templates/omtre/scripts")`.
 
 ```ts
 function listPyFiles(root: string): string[]   // recursive, skips __pycache__, sorted
@@ -99,7 +99,7 @@ point is the whole-tree comparison — do not add per-file tests of your own.
 Confirm locally with:
 
 ```bash
-diff -rq .omtre/scripts packages/cli/src/templates/trellis/scripts -x __pycache__
+diff -rq .omtre/scripts packages/cli/src/templates/omtre/scripts -x __pycache__
 ```
 
 Silent output means parity.
@@ -110,7 +110,7 @@ Silent output means parity.
 
 ```bash
 # edit only the copy you happened to open
-$EDITOR packages/cli/src/templates/trellis/scripts/common/session_context.py
+$EDITOR packages/cli/src/templates/omtre/scripts/common/session_context.py
 ```
 
 #### Correct
@@ -118,8 +118,8 @@ $EDITOR packages/cli/src/templates/trellis/scripts/common/session_context.py
 ```bash
 $EDITOR .omtre/scripts/common/session_context.py
 rsync -av --delete --exclude='__pycache__' \
-  .omtre/scripts/ packages/cli/src/templates/trellis/scripts/
-diff -rq .omtre/scripts packages/cli/src/templates/trellis/scripts -x __pycache__
+  .omtre/scripts/ packages/cli/src/templates/omtre/scripts/
+diff -rq .omtre/scripts packages/cli/src/templates/omtre/scripts -x __pycache__
 ```
 
 ---
@@ -263,7 +263,7 @@ def run_command(
 
 Use this contract when a generated `.omtre/scripts/` module performs an
 advisory check during hook/session context generation, such as checking whether
-a Trellis update is available. These checks must never block context output.
+an omtre update is available. These checks must never block context output.
 
 The names below are placeholders for the pattern. The one live instance is
 `session_context.py:get_update_hint` — **public**, with two callers in
@@ -289,7 +289,7 @@ def _mark_attempted(repo_root: Path) -> bool: ...
   text=True, encoding="utf-8", errors="replace",
   timeout=<short timeout>)`.
 - Marker files live under `.omtre/.runtime/` and are keyed by the current
-  Trellis session identity when available. A caller that has already resolved
+  omtre session identity when available. A caller that has already resolved
   session identity (a hook reading it from stdin) **passes it in** rather than
   letting the module re-resolve: the module's own fallback chain ends at
   `TERM_SESSION_ID`, which identifies a terminal *window*, so a
@@ -308,9 +308,9 @@ def _mark_attempted(repo_root: Path) -> bool: ...
 
 #### 5. Good / Base / Bad Cases
 
-- Good: `trellis --version` prints an existing CLI update hint or final version,
+- Good: `omtre --version` prints an existing CLI update hint or final version,
   project `.version` is `0.5.0`, so context prints the update hint once.
-- Base: `trellis --version` returns `0.5.9`; no registry parsing is needed.
+- Base: `omtre --version` returns `0.5.9`; no registry parsing is needed.
 - Bad: a failed local command writes the marker before any usable value is
   resolved, hiding a later successful check in the same session.
 
@@ -319,7 +319,7 @@ def _mark_attempted(repo_root: Path) -> bool: ...
 - Newer value prints the hint and includes the generated context body.
 - Equal/newer current project version prints no hint.
 - Failed lookup prints no hint and does not burn the once-per-session marker.
-- Existing `trellis --version` update output is parsed and normalized.
+- Existing `omtre --version` update output is parsed and normalized.
 - Non-default modes of the *text-mode CLI caller* (`--json`, record, packages,
   phase) do not call the advisory check. This is a property of that caller, not
   of the check — a second caller (the SessionStart hook) legitimately invokes it
@@ -572,7 +572,7 @@ command cannot infer the current conversation/window unless the host process
 exports session identity in its environment or the command is launched with
 `OMTRE_CONTEXT_ID`; without that identity, `task.py start` fails and explains
 how to provide a session runtime. For Claude Code, SessionStart receives
-`CLAUDE_ENV_FILE`; Trellis must append `export OMTRE_CONTEXT_ID=<context-key>`
+`CLAUDE_ENV_FILE`; omtre must append `export OMTRE_CONTEXT_ID=<context-key>`
 there so later Bash tools inherit the same session identity. For OpenCode,
 `tool.execute.before` must prefix Bash commands with
 `OMTRE_CONTEXT_ID` from plugin session identity when the command does not
@@ -890,7 +890,7 @@ top level (shell-execution shape) or `tool_input.command` / `toolInput.command`
 shape extends the same function.
 
 **Response envelope.** A shell-execution host gets `{"permission": "allow"}` back
-so Cursor does not re-prompt for a command Trellis itself asked for. Tool-call
+so Cursor does not re-prompt for a command omtre itself asked for. Tool-call
 hosts read a different response schema and get no answer at all, rather than a
 key they would have to ignore.
 
@@ -986,7 +986,7 @@ Accept a ticket on its merits — fresh, right repo, right subcommand — and le
 
 ##### 1. Scope / Trigger
 
-Env wiring: `active_task.py`'s three env tables are the only place Trellis
+Env wiring: `active_task.py`'s three env tables are the only place omtre
 claims a vendor sets a particular variable. On 2026-08-05 an audit of all 21
 platforms deleted **12 of the 21 declared names** — none had ever existed on any
 platform. They had been pattern-guessed from a `<PLATFORM>_SESSION_ID` shape no
@@ -1039,7 +1039,7 @@ any of them must resolve **no** context key for its platform.
 
 ##### 5. Good / Base / Bad Cases
 
-- **Good** — Snow. `sessionIdentityEnv.ts` exports `SNOW_SESSION_ID` into hook, terminal and sub-agent children, and names Trellis in its source header. Verified by reading the vendor's source; the comment says so.
+- **Good** — Snow. `sessionIdentityEnv.ts` exports `SNOW_SESSION_ID` into hook, terminal and sub-agent children, and names omtre in its source header. Verified by reading the vendor's source; the comment says so.
 - **Base** — Kiro. `KIRO_SESSION_ID` is absent from the official docs, but three independent third-party tools key agent detection on it. Kept, marked UNVERIFIED, with the settling probe written down (`env | grep KIRO` from a Kiro shell-tool call).
 - **Bad** — the removed `PI_SESSION_ID` / `PI_SESSIONID`. Pi builds its bash env as `{...process.env, PATH}` only; no `PI_*` session var exists anywhere. The entry looked like the others and worked never.
 
@@ -1073,7 +1073,7 @@ shell ticket.
 ##### 1. Scope / Trigger
 
 Infra wiring into a **user-owned** file. Claude Code's SessionStart passes
-`CLAUDE_ENV_FILE`; Trellis appends `export OMTRE_CONTEXT_ID=<context-key>`
+`CLAUDE_ENV_FILE`; omtre appends `export OMTRE_CONTEXT_ID=<context-key>`
 there so later Bash tools inherit the session identity. The append rule was
 stated with no bound, and unbounded it produced 3 933 lines for 27 distinct
 values on one maintainer's machine — in a file the shell sources for every
@@ -1307,7 +1307,7 @@ from __future__ import annotations
 immediately after the module docstring.
 
 **Why it matters**: The `{{PYTHON_CMD}}` placeholder resolves to `python` on
-Windows and `python3` on macOS/Linux. `trellis init` probes that same
+Windows and `python3` on macOS/Linux. `omtre init` probes that same
 platform-selected command and soft-warns if it resolves to Python < 3.9, while
 hooks are invoked by the host AI CLI (Claude Code, Cursor, enterprise-forked CC
 distributions, etc.) in a subprocess whose **PATH may differ from the user's
@@ -1691,7 +1691,7 @@ propagate to the others:
 
 | Trigger | Site | Staging route |
 |---|---|---|
-| Session auto-commit | `add_session.py:_auto_commit_workspace` | `safe_trellis_paths_to_add` (Python) |
+| Session auto-commit | `add_session.py:_auto_commit_workspace` | `safe_omtre_paths_to_add` (Python) |
 | Release pre-commit | `release.js` "chore: pre-release updates" | `git add -A` pathspec (Node) |
 | Ad-hoc human/AI commit | manual `git add -A` / `git add .` | none — pure behavior |
 
@@ -1708,7 +1708,7 @@ prohibition above is what closes those two escape hatches.
 > `tasks_dir.iterdir()` full scan over all task dirs.** It stages ONLY the
 > named task dir (active or archived) plus explicitly-passed children.
 
-This holds for both `safe_trellis_paths_to_add(..., task_name=...)` and
+This holds for both `safe_omtre_paths_to_add(..., task_name=...)` and
 `safe_archive_paths_to_add(..., task_name=...)`. The legacy no-`task_name`
 wide branches exist only for backwards-compat and are dormant: every live
 caller passes `task_name`. When the current task cannot be resolved (0 or ≥2
@@ -1721,11 +1721,11 @@ wide scope.
 
 | Helper | Source | Purpose |
 |---|---|---|
-| `safe_trellis_paths_to_add(repo_root, task_name=None)` | `templates/trellis/scripts/common/safe_commit.py:safe_trellis_paths_to_add` | Path whitelist for `add_session.py` — current developer's journal files + index.md, and (when `task_name` is passed) ONLY the current task dir. Callers MUST pass `task_name` so parallel-window dirty task dirs never leak into the session commit (#303). |
-| `safe_archive_paths_to_add(repo_root, task_name=None, modified_children=None)` | `templates/trellis/scripts/common/safe_commit.py:safe_archive_paths_to_add` | Path whitelist for `task.py archive` — archive subtree + explicitly-passed `modified_children` task dirs (parent/child relationship updates). Callers MUST pass `task_name`. |
-| `safe_git_add(paths, repo_root)` | `templates/trellis/scripts/common/safe_commit.py:safe_git_add` | Plain `git add -- <paths>`; never `-f`. Returns `(success, used_force=False, stderr)` |
-| `print_gitignore_warning(paths)` | `templates/trellis/scripts/common/safe_commit.py:print_gitignore_warning` | Single source of truth for the "ignored by .gitignore" warning, including the AI-defense negative example |
-| `get_session_auto_commit(repo_root)` | `templates/trellis/scripts/common/config.py:get_session_auto_commit` | Reads `session_auto_commit` from `.omtre/config.yaml` (default `True`) |
+| `safe_omtre_paths_to_add(repo_root, task_name=None)` | `templates/omtre/scripts/common/safe_commit.py:safe_omtre_paths_to_add` | Path whitelist for `add_session.py` — current developer's journal files + index.md, and (when `task_name` is passed) ONLY the current task dir. Callers MUST pass `task_name` so parallel-window dirty task dirs never leak into the session commit (#303). |
+| `safe_archive_paths_to_add(repo_root, task_name=None, modified_children=None)` | `templates/omtre/scripts/common/safe_commit.py:safe_archive_paths_to_add` | Path whitelist for `task.py archive` — archive subtree + explicitly-passed `modified_children` task dirs (parent/child relationship updates). Callers MUST pass `task_name`. |
+| `safe_git_add(paths, repo_root)` | `templates/omtre/scripts/common/safe_commit.py:safe_git_add` | Plain `git add -- <paths>`; never `-f`. Returns `(success, used_force=False, stderr)` |
+| `print_gitignore_warning(paths)` | `templates/omtre/scripts/common/safe_commit.py:print_gitignore_warning` | Single source of truth for the "ignored by .gitignore" warning, including the AI-defense negative example |
+| `get_session_auto_commit(repo_root)` | `templates/omtre/scripts/common/config.py:get_session_auto_commit` | Reads `session_auto_commit` from `.omtre/config.yaml` (default `True`) |
 
 Callers using this contract: `add_session.py:_auto_commit_workspace` and
 `task_store.py:_auto_commit_archive` (invoked from `task.py archive`).
@@ -1761,7 +1761,7 @@ auto `-f` is gone. There is no `-f` retry anywhere in the auto-commit path.
 ```python
 # add_session.py / task.py archive
 from common.safe_commit import (
-    safe_trellis_paths_to_add,
+    safe_omtre_paths_to_add,
     safe_git_add,
     print_gitignore_warning,
 )
@@ -1779,12 +1779,12 @@ def _auto_commit_workspace(repo_root: Path) -> str:
     # Scope staging to the CURRENT task only (#303) — never iterdir all tasks.
     current = get_current_task(repo_root)
     if current:
-        paths = safe_trellis_paths_to_add(repo_root, task_name=Path(current).name)
+        paths = safe_omtre_paths_to_add(repo_root, task_name=Path(current).name)
     else:
         # Task unknown (0 / >=2 parallel sessions): stage journal/index only,
         # drop every task dir — do NOT re-open the wide scan.
         paths = [
-            p for p in safe_trellis_paths_to_add(repo_root, task_name=None)
+            p for p in safe_omtre_paths_to_add(repo_root, task_name=None)
             if not p.startswith(".omtre/tasks/")
         ]
     if not paths:
@@ -1987,7 +1987,7 @@ unchanged), explicit mapping accepted, planning `-`, auto-commit disabled,
 rotation, fault injection at each of append / index / commit with a retry that
 proves convergence, a repeated committed record producing a *new* session, the
 idempotency-key no-op, concurrent-branch numbering, a malformed marker, and
-the staging scope staying inside Trellis-owned paths.
+the staging scope staying inside omtre-owned paths.
 
 #### 7. Wrong vs Correct
 
@@ -2034,7 +2034,7 @@ local-only.
 
 ### Pattern: warning text as canonical AI-defense surface
 
-`print_gitignore_warning` in `templates/trellis/scripts/common/safe_commit.py`
+`print_gitignore_warning` in `templates/omtre/scripts/common/safe_commit.py`
 is the **single source of truth** for the "ignored by .gitignore" warning.
 Any script that hits this failure mode must call this helper rather than
 inlining a copy.
@@ -2069,7 +2069,7 @@ subprocess.run(["git", "add", "-A", ".omtre/"], cwd=repo_root)
 
 ```python
 # Stages EVERY active task dir, leaking dirty parallel-window tasks into an
-# unrelated commit (the original #303 body in safe_trellis_paths_to_add).
+# unrelated commit (the original #303 body in safe_omtre_paths_to_add).
 for child in sorted(tasks_dir.iterdir()):
     paths.append(f".omtre/tasks/{child.name}")
 ```
@@ -2087,7 +2087,7 @@ if "ignored by" in err.lower():
 ```python
 current = get_current_task(repo_root)
 task_name = Path(current).name if current else None
-paths = safe_trellis_paths_to_add(repo_root, task_name=task_name)
+paths = safe_omtre_paths_to_add(repo_root, task_name=task_name)
 success, _, err = safe_git_add(paths, repo_root)
 if not success:
     if "ignored by" in err.lower():
@@ -2102,7 +2102,7 @@ if not success:
 When changing `safe_commit.py`, `add_session.py:_auto_commit_workspace`, or
 `task_store.py:_auto_commit_archive`:
 
-- `safe_trellis_paths_to_add` excludes `.omtre/.backup-*`, `.omtre/worktrees/`,
+- `safe_omtre_paths_to_add` excludes `.omtre/.backup-*`, `.omtre/worktrees/`,
   `.omtre/.template-hashes.json`, `.omtre/.runtime`, `.omtre/.cache/`.
 - `safe_git_add` returns `(False, False, stderr)` when paths are gitignored;
   `used_force` is never `True` in any returned tuple.
@@ -2116,7 +2116,7 @@ When changing `safe_commit.py`, `add_session.py:_auto_commit_workspace`, or
   `task-archive.integration.test.ts` ("does not bundle dirty changes from
   other task dirs") for the session route in
   `add-session.integration.test.ts`.
-- **Parity invariant:** `safe_trellis_paths_to_add(repo_root, task_name=...)`
+- **Parity invariant:** `safe_omtre_paths_to_add(repo_root, task_name=...)`
   returns only the named task dir (active or archived), never the whole task
   list.
 
@@ -2145,7 +2145,7 @@ parser.add_argument(
 
 #### 1. Scope / Trigger
 
-`common/session_context.py` must probe the Trellis root with
+`common/session_context.py` must probe the omtre root with
 `git rev-parse --is-inside-work-tree` before rendering root Git status.
 This applies to default text, default JSON, record text, and record JSON.
 
@@ -2287,13 +2287,13 @@ commit_hash = rest.split()[0]
 ## Config helpers
 
 All keys in `.omtre/config.yaml` MUST be read through `common/config.py`
-(or `common/trellis_config.py` for hooks that cannot import the full task
+(or `common/omtre_config.py` for hooks that cannot import the full task
 helpers). Both go through one parser chain:
 
 ```
 _load_config(repo_root)                      # config.py
-read_trellis_config(repo_root)               # trellis_config.py
-  -> parse_simple_yaml(content, source)      # trellis_config.py — the only copy
+read_omtre_config(repo_root)               # omtre_config.py
+  -> parse_simple_yaml(content, source)      # omtre_config.py — the only copy
     -> _strip_inline_comment(value)
     -> _unquote(value)
 ```
@@ -2301,8 +2301,8 @@ read_trellis_config(repo_root)               # trellis_config.py
 This is a load-bearing chain. Any new key added to `.omtre/config.yaml`
 must flow through it — do not write a custom reader, even a "small" one.
 
-**`parse_simple_yaml` lives in `trellis_config.py` and nowhere else.**
-`config.py` imports it. The direction is forced: `trellis_config.py` imports
+**`parse_simple_yaml` lives in `omtre_config.py` and nowhere else.**
+`config.py` imports it. The direction is forced: `omtre_config.py` imports
 nothing from the package, because hooks copy it out as a single standalone
 file, while `config.py` depends on `paths.py`. The two modules previously
 carried byte-equivalent copies of all five parser functions with only
@@ -2339,7 +2339,7 @@ caught only `(OSError, IOError)` around a call that could raise anything.
 Symptom: a value like `key: value  # comment` parses as `value  # comment`
 or as `value` plus garbage, depending on the reader's `.split("#")` /
 `.strip()` strategy. Tests that don't use the inline-comment form pass; live
-configs with the `# explanation` annotation in `templates/trellis/config.yaml`
+configs with the `# explanation` annotation in `templates/omtre/config.yaml`
 break silently.
 
 Two near-misses worth remembering:
@@ -2400,10 +2400,10 @@ two accessors disagreeing about the same word: `_is_true_config_value`
 whether a package is its own git repository. An accepted-here/rejected-there
 split is worse than a narrow set applied consistently.
 
-### Pattern: document every key in `templates/trellis/config.yaml`
+### Pattern: document every key in `templates/omtre/config.yaml`
 
 Every accessor in `common/config.py` must have a corresponding commented-out
-example in `packages/cli/src/templates/trellis/config.yaml`, with:
+example in `packages/cli/src/templates/omtre/config.yaml`, with:
 
 - A short prose explanation of effects (default behavior + opt-in/opt-out
   semantics).
@@ -2497,7 +2497,7 @@ When adding a new accessor in `common/config.py`:
 ### Config.yaml Schema
 
 ```yaml
-# Auto-detected monorepo packages (written by trellis init)
+# Auto-detected monorepo packages (written by omtre init)
 packages:
   cli:
     path: packages/cli
@@ -2513,7 +2513,7 @@ session:
 # Update behavior
 update:
   skip:
-    - .claude/commands/trellis/my-custom.md
+    - .claude/commands/omtre/my-custom.md
 
 # Lifecycle hooks
 hooks:
@@ -2616,7 +2616,7 @@ def error(msg: str) -> None:
 
 # Usage
 if not repo_root:
-    error("Not in a Trellis project (no .omtre directory found)")
+    error("Not in an omtre project (no .omtre directory found)")
     sys.exit(1)
 ```
 

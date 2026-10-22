@@ -19,6 +19,12 @@ import {
 } from "../configurators/shared.js";
 import { AI_TOOLS, type CliFlag } from "../types/ai-tools.js";
 import { DIR_NAMES, FILE_NAMES, PATHS } from "../constants/paths.js";
+import {
+  BANNER_FONT,
+  BANNER_TAGLINE,
+  BANNER_TEXT,
+  BRAND_NAME,
+} from "../constants/brand.js";
 import { VERSION } from "../constants/version.js";
 import { agentsMdContent } from "../templates/extract.js";
 import {
@@ -1127,13 +1133,12 @@ export async function init(options: InitOptions): Promise<void> {
     path.join(cwd, DIR_NAMES.WORKFLOW, FILE_NAMES.DEVELOPER),
   );
 
-  // Generate ASCII art banner dynamically using FIGlet "Rebel" font
-  const banner = figlet.textSync("Omtre", { font: "Rebel" });
+  // Generate the wordmark from brand constants so the CLI and the brand test
+  // share one source of truth.
+  const banner = figlet.textSync(BANNER_TEXT, { font: BANNER_FONT });
   console.log(chalk.cyan(`\n${banner.trimEnd()}`));
   console.log(
-    chalk.gray(
-      "\n   All-in-one AI framework & toolkit for Claude Code & Cursor\n",
-    ),
+    chalk.gray(`\n   ${BRAND_NAME} · ${BANNER_TAGLINE} · v${VERSION}\n`),
   );
 
   // Set up proxy before any network calls

@@ -1,17 +1,17 @@
 ---
 name: check.standards
 description: |
-  Check sub-agent for Trellis — Standards axis. Reviews uncommitted diffs against the repo's documented standards and fixed baseline. Writable: self-fixes mechanical issues and runs project verification. No git commit allowed.
+  Check sub-agent for omtre — Standards axis. Reviews uncommitted diffs against the repo's documented standards and fixed baseline. Writable: self-fixes mechanical issues and runs project verification. No git commit allowed.
 provider: claude
 effort: high
-labels: [trellis, check]
+labels: [omtre, check]
 ---
 
 # Check Agent (channel runtime)
 
 User-facing text and instruction files follow `.omtre/spec/agents/voice.md` (STC 中文 / ASD-STE100 English).
 
-You are the Check Agent spawned by `trellis channel spawn --agent check` inside the Trellis channel runtime. You receive an `Active task: <path>` line in your inbox; use it to locate task artifacts on disk.
+You are the Check Agent spawned by `omtre channel spawn --agent check` inside the omtre channel runtime. You receive an `Active task: <path>` line in your inbox; use it to locate task artifacts on disk.
 
 ## Context
 

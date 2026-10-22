@@ -1,421 +1,72 @@
 ---
 name: contribute
-description: "Guide for contributing to Trellis documentation and marketplace. Covers adding spec templates, marketplace skills, documentation pages, and submitting PRs across both the Trellis main repo and docs repo. Use when someone wants to add a new spec template, add a new skill to the marketplace, add or update documentation pages, or submit a PR to this project."
+description: "Guide for contributing to omtre: first-party skills, marketplace skills and spec templates, docs, and pull requests. Use when adding or updating a skill, template, workflow, or documentation page."
 ---
 
-# Contributing to Trellis
+# Contributing to omtre
 
-Contributions are split across two repos:
+omtre is a single repository. There is no separate docs site or docs repo;
+user-facing docs live in `README.md`, `README.zh-CN.md`, and `docs/`.
 
-| What | Repo | Purpose |
-|------|------|---------|
-| Documentation pages | [mindfold-ai/docs](https://github.com/mindfold-ai/docs) | Mintlify doc site |
-| Skills + Spec templates | [mindfold-ai/Trellis](https://github.com/mindfold-ai/Trellis) | `marketplace/` directory |
+## Where things live
 
-## Docs Repo Structure
+| What | Where |
+| --- | --- |
+| First-party skills | `skills/<name>/SKILL.md` |
+| Marketplace skills | `marketplace/skills/<name>/SKILL.md` |
+| Spec templates | `marketplace/specs/<name>/` |
+| Workflows | `marketplace/workflows/<name>/` |
+| Registry | `marketplace/index.json` |
+| Product docs | `README.md`, `README.zh-CN.md`, `docs/` |
+| CLI code | `packages/cli/src/` |
+| Core SDK | `packages/core/src/` |
 
-```
-docs/
-├── docs.json              # Navigation config (MUST update for new pages)
-│
-├── index.mdx              # English homepage
-├── quickstart.mdx         # English quickstart
-├── zh/index.mdx           # Chinese homepage
-├── zh/quickstart.mdx      # Chinese quickstart
-│
-├── guides/                # English guide pages
-├── zh/guides/             # Chinese guide pages
-│
-├── templates/             # English template pages
-├── zh/templates/          # Chinese template pages
-│
-├── skills-market/         # English skill marketplace pages
-├── zh/skills-market/      # Chinese skill marketplace pages
-│
-├── blog/                  # English tech blog
-├── zh/blog/               # Chinese tech blog
-│
-├── changelog/             # English changelog
-├── zh/changelog/          # Chinese changelog
-│
-├── contribute/            # English contribution guide
-├── zh/contribute/         # Chinese contribution guide
-│
-├── showcase/              # English showcase
-└── zh/showcase/           # Chinese showcase
-```
+## Adding a first-party skill
 
-## Trellis Main Repo Marketplace Structure
+1. Create `skills/<name>/SKILL.md`; keep the directory name and the
+   frontmatter `name` identical.
+2. Put long references under `skills/<name>/references/` and link them from
+   `SKILL.md`; do not duplicate the same text in several files.
+3. If the skill belongs to the recommended set, add it to the install list in
+   `docs/pack.md` and `docs/pack.zh-CN.md`.
+4. Test it in a scratch repository before opening a PR.
 
-```
-marketplace/
-├── index.json             # Template registry (lists all available templates)
-├── README.md              # Marketplace overview
-├── specs/                 # Spec templates
-│   └── electron-fullstack/
-│       ├── README.md
-│       ├── frontend/
-│       ├── backend/
-│       ├── guides/
-│       └── shared/
-└── skills/                # Skills
-    └── omtre-meta/
-        ├── SKILL.md
-        └── references/
-```
+## Adding a marketplace skill or spec template
 
-## Understanding docs.json
+1. Create the skill under `marketplace/skills/<name>/` or the template under
+   `marketplace/specs/<name>/`.
+2. Add an entry to `marketplace/index.json` with `id`, `type`, `name`,
+   `description`, `path`, and `tags`.
+3. Verify installation:
+   ```bash
+   python scripts/install.py --platform <platform> --target <tmp-dir>
+   ```
+4. Update the relevant section of `docs/pack.md` and `docs/pack.zh-CN.md` if the
+   recommended set changes.
 
-The navigation uses a **language-based structure**:
+## Documentation
 
-```json
-{
-  "navigation": {
-    "languages": [
-      {
-        "language": "en",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": ["index", "quickstart"]
-          },
-          {
-            "group": "Guides",
-            "pages": ["guides/specs", "guides/tasks", ...]
-          },
-          {
-            "group": "Resource Marketplace",
-            "pages": [
-              {
-                "group": "Skills",
-                "expanded": false,
-                "pages": ["skills-market/index", "skills-market/omtre-meta"]
-              },
-              {
-                "group": "Spec Templates",
-                "expanded": false,
-                "pages": ["templates/specs-index", "templates/specs-electron"]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "language": "zh",
-        "groups": [
-          // Same structure with zh/ prefix
-        ]
-      }
-    ]
-  }
-}
-```
+- Keep English and Chinese user-facing docs in sync.
+- Verify every command you document by running it.
+- Attribute vendored content in `catalog/ATTRIBUTION.md`.
+- Keep lineage statements in `NOTICE` and `docs/upstream.md`; do not put
+  upstream branding back into the product surface.
 
-**Key points**:
-
-- English pages: no prefix (e.g., `guides/specs`)
-- Chinese pages: `zh/` prefix (e.g., `zh/guides/specs`)
-- Nested groups supported (e.g., Skills inside Resource Marketplace)
-- `expanded: false` keeps groups collapsed by default
-
-## Contributing a Spec Template
-
-Spec templates live in the **Trellis main repo** at `marketplace/specs/`.
-
-### 1. Create template directory
-
-```
-marketplace/specs/your-template-name/
-├── README.md              # Template overview (required)
-├── frontend/              # Frontend guidelines
-│   ├── index.md
-│   └── ...
-├── backend/               # Backend guidelines
-│   ├── index.md
-│   └── ...
-├── guides/                # Thinking guides
-│   └── ...
-└── shared/                # Cross-cutting concerns (optional)
-    └── ...
-```
-
-Structure varies by stack. Include directories relevant to your template.
-
-### 2. Register in index.json
-
-Add your template to `marketplace/index.json` in the Trellis repo:
-
-```json
-{
-  "id": "your-template-id",
-  "type": "spec",
-  "name": "Your Template Name",
-  "description": "Brief description of the template",
-  "path": "marketplace/specs/your-template-name",
-  "tags": ["relevant", "tags"]
-}
-```
-
-### 3. Create documentation pages (both languages, in docs repo)
-
-**English**: `templates/specs-your-template.mdx`
-**Chinese**: `zh/templates/specs-your-template.mdx`
-
-Use this frontmatter:
-
-```yaml
----
-title: 'Your Template Name'
-description: 'Brief description'
----
-```
-
-### 4. Update navigation in docs.json
-
-Find the `Spec Templates` nested group and add your page:
-
-```json
-{
-  "group": "Spec Templates",
-  "expanded": false,
-  "pages": ["templates/specs-index", "templates/specs-electron", "templates/specs-your-template"]
-}
-```
-
-Do the same for Chinese under `"language": "zh"`:
-
-```json
-{
-  "group": "Spec Templates",
-  "expanded": false,
-  "pages": [
-    "zh/templates/specs-index",
-    "zh/templates/specs-electron",
-    "zh/templates/specs-your-template"
-  ]
-}
-```
-
-### 5. Update the overview page
-
-Add your template to the table in:
-
-- `templates/specs-index.mdx`
-- `zh/templates/specs-index.mdx`
-
-## Contributing a Skill
-
-Skills live in the **Trellis main repo** at `marketplace/skills/`.
-
-### 1. Create skill directory
-
-```
-marketplace/skills/your-skill/
-├── SKILL.md               # Skill definition (required)
-└── references/            # Reference docs (optional)
-```
-
-See [Claude Code Skills documentation](https://code.claude.com/docs/en/skills) for SKILL.md format.
-
-### 2. Register in index.json
-
-Add your skill to `marketplace/index.json` in the Trellis repo:
-
-```json
-{
-  "id": "your-skill-id",
-  "type": "skill",
-  "name": "Your Skill Name",
-  "description": "Brief description",
-  "path": "marketplace/skills/your-skill",
-  "tags": ["relevant", "tags"]
-}
-```
-
-### 3. Create documentation pages (in docs repo)
-
-**English**: `skills-market/your-skill.mdx`
-**Chinese**: `zh/skills-market/your-skill.mdx`
-
-### 4. Update navigation in docs.json
-
-Find the `Skills` nested group and add your page to both languages.
-
-### 5. Update the overview page
-
-Add your skill to the table in:
-
-- `skills-market/index.mdx`
-- `zh/skills-market/index.mdx`
-
-### Installation
-
-Users install skills via:
+## Before a PR
 
 ```bash
-npx skills add mindfold-ai/Trellis/marketplace -s your-skill
+pnpm check:legacy-names
+pnpm typecheck
+pnpm lint
+pnpm --filter omtre lint:py
 ```
 
-## Contributing a Showcase Project
-
-### 1. Copy the template
-
-```bash
-cp showcase/template.mdx showcase/your-project.mdx
-cp zh/showcase/template.mdx zh/showcase/your-project.mdx
-```
-
-### 2. Fill in project details
-
-- Update `sidebarTitle` with your project name
-- Add project description
-- Replace GitHub OG image URL with your repo
-- Describe how you used Trellis
-
-### 3. Update navigation in docs.json
-
-Find the `Showcase` / `项目展示` group and add your page:
-
-```json
-{
-  "group": "Showcase",
-  "expanded": false,
-  "pages": ["showcase/index", "showcase/open-typeless", "showcase/your-project"]
-}
-```
-
-Do the same for Chinese.
-
-### 4. Add Card to overview page
-
-Add a Card component to display your project:
-
-**English** (`showcase/index.mdx`):
-
-```mdx
-<Card title="Project Name" icon="icon-name" href="/showcase/your-project">
-  One-line description
-</Card>
-```
-
-**Chinese** (`zh/showcase/index.mdx`):
-
-```mdx
-<Card title="项目名" icon="icon-name" href="/zh/showcase/your-project">
-  一句话描述
-</Card>
-```
-
-## Contributing Documentation
-
-### Adding a new guide
-
-1. Create the page in `guides/your-guide.mdx`
-2. Create Chinese version in `zh/guides/your-guide.mdx`
-3. Update `docs.json` - add to `Guides` group in both languages
-
-### Adding a blog post
-
-1. Create the page in `blog/your-post.mdx`
-2. Create Chinese version in `zh/blog/your-post.mdx`
-3. Update `docs.json` - add to `Tech Blog` group in both languages
-
-### Updating existing pages
-
-1. Find the file in the appropriate directory
-2. Make your changes
-3. Ensure both language versions stay in sync
-
-## Bilingual Requirements
-
-**All user-facing content must have both English and Chinese versions.**
-
-| Content Type | English Path          | Chinese Path             |
-| ------------ | --------------------- | ------------------------ |
-| Homepage     | `index.mdx`           | `zh/index.mdx`           |
-| Guides       | `guides/*.mdx`        | `zh/guides/*.mdx`        |
-| Templates    | `templates/*.mdx`     | `zh/templates/*.mdx`     |
-| Skills       | `skills-market/*.mdx` | `zh/skills-market/*.mdx` |
-| Showcase     | `showcase/*.mdx`      | `zh/showcase/*.mdx`      |
-| Blog         | `blog/*.mdx`          | `zh/blog/*.mdx`          |
-| Changelog    | `changelog/*.mdx`     | `zh/changelog/*.mdx`     |
-
-## Development Setup
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start local dev server
-pnpm dev
-
-# Check markdown lint
-pnpm lint:md
-
-# Verify docs structure
-pnpm verify
-
-# Format files
-pnpm format
-```
-
-**Pre-commit hooks**: The project uses husky with lint-staged. On commit:
-
-- Markdown files are auto-linted and formatted
-- `verify-docs.py` checks docs.json and frontmatter
-
-## MDX Components
-
-Mintlify supports MDX components. Common ones:
-
-```mdx
-<Card title="Title" icon="download" href="/path">
-  Card content here
-</Card>
-
-<CardGroup cols={2}>
-  <Card>...</Card>
-  <Card>...</Card>
-</CardGroup>
-
-<Accordion title="Click to expand">Hidden content</Accordion>
-
-<AccordionGroup>
-  <Accordion>...</Accordion>
-</AccordionGroup>
-```
-
-Inline HTML is allowed (MDX). See [Mintlify docs](https://mintlify.com/docs/components) for all components.
+Run the relevant tests for the area you changed. If a test cannot run locally,
+say so in the PR and let CI cover it.
 
 ## Submitting a PR
 
-**For documentation changes** (docs repo):
-
-1. Fork: `https://github.com/mindfold-ai/docs`
-2. Clone: `git clone https://github.com/YOUR_USERNAME/docs.git`
-3. Install: `pnpm install`
-4. Branch: `git checkout -b feat/your-contribution`
-5. Make changes following this guide
-6. Test: `pnpm dev`
-7. Commit with conventional message (e.g., `docs: add xxx template`)
-8. Push and create PR
-
-**For skills/spec templates** (Trellis repo):
-
-1. Fork: `https://github.com/mindfold-ai/Trellis`
-2. Clone: `git clone https://github.com/YOUR_USERNAME/Trellis.git`
-3. Add your skill/template under `marketplace/`
-4. Update `marketplace/index.json`
-5. Push and create PR
-
-## Checklist Before PR
-
-- [ ] Both EN and ZH versions created (for doc pages)
-- [ ] `docs.json` updated for both languages (for doc pages)
-- [ ] `marketplace/index.json` updated (for skills/templates)
-- [ ] Overview/index pages updated with new entries
-- [ ] Local preview tested (`pnpm dev`)
-- [ ] No broken links
-- [ ] Code blocks have correct language tags
-- [ ] Frontmatter includes title and description
-- [ ] Images placed in `images/` directory (if any)
+1. Branch from `main`.
+2. Commit with a conventional message, for example
+   `docs: explain the task lifecycle`.
+3. Open a PR and list the verification commands you actually ran.

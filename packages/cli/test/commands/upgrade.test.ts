@@ -7,7 +7,7 @@ import {
 } from "../../src/commands/upgrade.js";
 
 const TARBALL_URL =
-  "https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.17-ohmy.2/omtre-0.6.17-ohmy.2.tgz";
+  "https://github.com/ScoFan-official/omtre/releases/download/cli-v1.0.0/omtre-1.0.0.tgz";
 
 interface StubOptions {
   tagName?: string;
@@ -24,7 +24,7 @@ interface StubOptions {
  */
 function stubReleaseFetch(options: StubOptions = {}) {
   const {
-    tagName = "cli-v0.6.17-ohmy.2",
+    tagName = "cli-v1.0.0",
     withTgz = true,
     extraReleases = [],
   } = options;
@@ -99,7 +99,7 @@ describe("upgrade command", () => {
     });
     const release = await resolveReleaseTarball("latest");
     expect(release.tarballUrl).toBe(TARBALL_URL);
-    expect(release.tagName).toBe("cli-v0.6.17-ohmy.2");
+    expect(release.tagName).toBe("cli-v1.0.0");
   });
 
   it("lists releases for latest — never the /latest shortcut (pack releases share the page)", async () => {
@@ -120,9 +120,9 @@ describe("upgrade command", () => {
   it("normalizes a bare or v-prefixed version to the cli-v* tag endpoint", async () => {
     stubReleaseFetch();
     const fetchMock = vi.mocked(fetch);
-    await resolveReleaseTarball("0.6.17-ohmy.2");
+    await resolveReleaseTarball("1.0.0");
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.github.com/repos/ScoFan-official/omtre/releases/tags/cli-v0.6.17-ohmy.2",
+      "https://api.github.com/repos/ScoFan-official/omtre/releases/tags/cli-v1.0.0",
       expect.anything(),
     );
   });
@@ -136,28 +136,28 @@ describe("upgrade command", () => {
 
   it("builds POSIX npm global install command without shell", () => {
     expect(
-      buildUpgradeCommand(TARBALL_URL, "cli-v0.6.17-ohmy.2", "darwin"),
+      buildUpgradeCommand(TARBALL_URL, "cli-v1.0.0", "darwin"),
     ).toMatchObject({
       command: "npm",
       args: ["install", "-g", TARBALL_URL],
       spawnOptions: { stdio: "inherit", shell: false },
       displayCommand: `npm install -g ${TARBALL_URL}`,
       target: TARBALL_URL,
-      tag: "cli-v0.6.17-ohmy.2",
+      tag: "cli-v1.0.0",
       binaryCheckCommand: "which omtre",
     });
   });
 
   it("builds Windows command through cmd.exe", () => {
     expect(
-      buildUpgradeCommand(TARBALL_URL, "cli-v0.6.17-ohmy.2", "win32"),
+      buildUpgradeCommand(TARBALL_URL, "cli-v1.0.0", "win32"),
     ).toMatchObject({
       command: "cmd.exe",
       args: ["/d", "/s", "/c", `npm install -g ${TARBALL_URL}`],
       spawnOptions: { stdio: "inherit", shell: false },
       displayCommand: `npm install -g ${TARBALL_URL}`,
       target: TARBALL_URL,
-      tag: "cli-v0.6.17-ohmy.2",
+      tag: "cli-v1.0.0",
       binaryCheckCommand: "where omtre",
     });
   });

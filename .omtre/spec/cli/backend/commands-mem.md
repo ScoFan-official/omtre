@@ -1,6 +1,6 @@
-# `tl mem` — Cross-Platform AI Session Memory
+# `omt mem` — Cross-Platform AI Session Memory
 
-How Trellis indexes, searches, and extracts dialogue from on-disk session files
+How omtre indexes, searches, and extracts dialogue from on-disk session files
 written by Claude Code, Codex, Devin CLI, OpenCode, Pi Agent, and ZCode.
 
 The retrieval engine lives in `@omtre/core/mem` (`packages/core/src/mem/`);
@@ -11,7 +11,7 @@ boundary" below before "Subcommand surface".
 
 ## Overview
 
-`tl mem` is an offline reader over **local AI session stores**. It does not
+`omt mem` is an offline reader over **local AI session stores**. It does not
 attach to running CLIs or talk to any remote service — it parses the files those
 CLIs already drop on disk:
 
@@ -19,7 +19,7 @@ CLIs already drop on disk:
 | ----------- | -------------------------------------------------------------------------------------------------- |
 | Claude Code | `~/.claude/projects/<sanitized-cwd>/<id>.jsonl`                                                    |
 | Codex       | `~/.codex/sessions/**/rollout-<ts>-<id>.jsonl`                                                     |
-| Devin CLI   | `~/.local/share/devin/cli/sessions.db` (Cognition terminal agent; `$XDG_DATA_HOME` / `%APPDATA%\devin\cli`; `DEVIN_DB_PATH` override). Not `trellis init --devin` (Desktop / Cascade) and not Factory Droid. |
+| Devin CLI   | `~/.local/share/devin/cli/sessions.db` (Cognition terminal agent; `$XDG_DATA_HOME` / `%APPDATA%\devin\cli`; `DEVIN_DB_PATH` override). Not `omtre init --devin` (Desktop / Cascade) and not Factory Droid. |
 | OpenCode    | `~/.local/share/opencode/opencode.db` (SQLite, zero-dependency reader)                             |
 | Pi Agent    | `~/.pi/agent/sessions/--<encoded-cwd>--/<timestamp>_<id>.jsonl` or env/settings custom session dir |
 | ZCode       | `~/.zcode/cli/db/db.sqlite` plus active `db.sqlite-wal` / `db.sqlite-shm` files                    |
@@ -27,14 +27,14 @@ CLIs already drop on disk:
 For every session, `mem` can: list metadata (id / cwd / time), grep cleaned
 dialogue across all of them, drill into a single session for a token-budgeted
 context window around hits, or dump full cleaned dialogue. The cleaned form
-strips Trellis / platform injection tags so search hits aren't dominated by
+strips omtre / platform injection tags so search hits aren't dominated by
 session-start preamble.
 
-The retrieval domain does **not** depend on the rest of the Trellis runtime (no
+The retrieval domain does **not** depend on the rest of the omtre runtime (no
 `configurators/`, no Python scripts) and does **not** depend on the CLI: it uses
 only `node:fs / node:path / node:os` and is free of `zod`, `console.*`, and
 `process.exit`. The CLI exposes it through a single `runMem(args)` entry point
-invoked from the `tl` Commander wire.
+invoked from the `omt` Commander wire.
 
 > **Audience for this spec**: contributors extending `mem` — adding new
 > platforms, new subcommands, or new flags. The goal is to keep the cleaning
@@ -107,7 +107,7 @@ Cross-cutting (`buildFilter`):
 
 | Flag                                          | Default         | Notes                                                                                                                                                                |
 | --------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--platform claude\|codex\|devin\|grok\|opencode\|pi\|zcode\|all` | `all` | Validated by the CLI against the `MemSourceFilter` union (hand-written guard, no zod). Unknown value → exit 2. `devin` is Cognition Devin CLI, not `trellis init --devin`. |
+| `--platform claude\|codex\|devin\|grok\|opencode\|pi\|zcode\|all` | `all` | Validated by the CLI against the `MemSourceFilter` union (hand-written guard, no zod). Unknown value → exit 2. `devin` is Cognition Devin CLI, not `omtre init --devin`. |
 | `--since YYYY-MM-DD`                          | none            | Inclusive lower bound. Parsed by `new Date(value)`; invalid → exit 2.                                                                                                |
 | `--until YYYY-MM-DD`                          | none            | Inclusive upper bound; parser appends `T23:59:59.999Z` so a date string covers the whole UTC day.                                                                    |
 | `--cwd <path>`                                | `process.cwd()` | Project scope. Resolved with `path.resolve`. Combined with `--global` → `--global` wins.                                                                             |
@@ -250,9 +250,9 @@ export function collectPiTurnsAndEvents(s: MemSessionInfo): {
 
 #### 5. Good/Base/Bad Cases
 
-- Good: `trellis mem search kw --platform pi --cwd /repo` searches only the
+- Good: `omtre mem search kw --platform pi --cwd /repo` searches only the
   cleaned active branch for `/repo`, with compaction already applied.
-- Base: `trellis mem list --platform pi --json` returns metadata rows with the
+- Base: `omtre mem list --platform pi --json` returns metadata rows with the
   latest session name when `/name` or `--name` was used.
 - Bad: a linear scan over every Pi row leaks `/tree` abandoned branches and old
   pre-compaction history into search results.
@@ -308,7 +308,7 @@ for (const entry of effective) addCleanTurnAndTaskEvents(entry);
 
 Reads `~/.local/share/devin/cli/sessions.db` (WAL SQLite; Windows
 `%APPDATA%\devin\cli\sessions.db`; `DEVIN_DB_PATH` override) through the same
-zero-dependency parser as ZCode / OpenCode. This is **not** `trellis init
+zero-dependency parser as ZCode / OpenCode. This is **not** `omtre init
 --devin` (Devin Desktop / former Windsurf Cascade) and **not** Factory Droid.
 
 - **Sessions**: `sessions` table; skip `hidden != 0`. cwd is
@@ -340,7 +340,7 @@ In 0.6.0-beta.3 a SQLite-backed reader was added for OpenCode 1.2+
 That release relied on a `better-sqlite3` native dependency that broke
 installation on Windows + restricted networks (China, corporate
 firewalls): `prebuild-install` timed out fetching binaries, the fallback
-`node-gyp` rebuild required VS2017+ build tools, and `trellis` failed to
+`node-gyp` rebuild required VS2017+ build tools, and `omtre` failed to
 install at all on machines that did not have a C toolchain. 0.6.0-beta.4
 reverted the dependency. See `quality-guidelines.md` "Native dependency
 policy" for the broader rule.
@@ -455,9 +455,9 @@ Before any search or display, raw turn text passes through:
 Once turns are cleaned, search reduces to **multi-token AND substring matching
 on lowercased text** — `searchInDialogue` does not need a tokenizer or stemmer.
 The cleaning pipeline is what makes plain `String.prototype.includes` viable:
-Trellis / platform injection tags would otherwise dominate every match.
+omtre / platform injection tags would otherwise dominate every match.
 
-If you need to add a new injection tag (e.g. a new Trellis hook adds
+If you need to add a new injection tag (e.g. a new omtre hook adds
 `<my-new-tag>`), append it to the `INJECTION_TAGS` array and add a fixture-based
 test. Do not write platform-specific stripping logic; the tag list is shared.
 
@@ -570,7 +570,7 @@ never absorb children.
 - **No remote/cloud sync**: OpenCode's optional cloud sync is invisible here.
   Local OpenCode reading is also unavailable in 0.6.0-beta.4 (reverted — see
   the OpenCode section above).
-- **No transitive dependency on Trellis runtime**: `core/mem/` does not import
+- **No transitive dependency on omtre runtime**: `core/mem/` does not import
   from `configurators/`, `migrations/`, `templates/`, or `.omtre/scripts`,
   and does not depend on the CLI package. It uses only
   `node:fs / node:path / node:os` — no `zod`, no `console.*`, no
@@ -603,7 +603,7 @@ excluded from the search index:
 
 **User-visible consequence**: queries phrased in terms of _what tool / skill /
 agent was invoked_ return false-negatives even when the conversation used that
-tool heavily. For example, `tl mem search "Skill"` against a session that
+tool heavily. For example, `omt mem search "Skill"` against a session that
 called `Skill` 40 times will return 0 hits — the tool name lives in
 `tool_use.name`, which is dropped at extraction time.
 
@@ -616,21 +616,21 @@ the JSONL files**:
 ```bash
 # What skills did this session invoke?
 grep -oE '"name":"Skill","input":\{[^}]+\}' \
-  ~/.claude/projects/-Users-…-Trellis/<session-id>.jsonl
+  ~/.claude/projects/-Users-…-omtre/<session-id>.jsonl
 
 # Cross-session skill usage in a project
 grep -hoE '"skill":"[a-z0-9-]+"' \
-  ~/.claude/projects/-Users-…-Trellis/*.jsonl | sort | uniq -c
+  ~/.claude/projects/-Users-…-omtre/*.jsonl | sort | uniq -c
 ```
 
-**Decision rule** for choosing between `tl mem` and raw `grep`:
+**Decision rule** for choosing between `omt mem` and raw `grep`:
 
 | Searching for                                                       | Tool                     |
 | ------------------------------------------------------------------- | ------------------------ |
-| User/assistant said something / discussed a topic / made a decision | `tl mem search`          |
+| User/assistant said something / discussed a topic / made a decision | `omt mem search`          |
 | What tool / skill / agent / sub-agent was used                      | `grep` over JSONL        |
 | Tool call frequency / parameters                                    | `grep` + `jq` over JSONL |
-| Cross-session topic recall (concepts in dialogue)                   | `tl mem search`          |
+| Cross-session topic recall (concepts in dialogue)                   | `omt mem search`          |
 
 A future enhancement could add an opt-in `--include-tools` flag to
 `extractDialogue` that emits synthetic `[tool: <name>]` turns or surfaces
@@ -642,8 +642,8 @@ relevance quality on the conversational path.
 
 ## Phase slicing (`--phase`)
 
-`tl mem extract <id> --phase <brainstorm|implement|all>` slices the cleaned
-dialogue by Trellis brainstorm windows, allowing the high-density discussion
+`omt mem extract <id> --phase <brainstorm|implement|all>` slices the cleaned
+dialogue by omtre brainstorm windows, allowing the high-density discussion
 turns (user thinking, AI proposals being rejected, decision rationale) to be
 extracted independently from implementation work.
 
@@ -686,7 +686,7 @@ platform's `*ExtractDialogue`) AND a list of `task.py` events with their
 ### Regex compatibility
 
 `core/mem/phase.ts:parseTaskPyCommand` parses individual Bash commands. It must
-cover every shape Trellis users actually write:
+cover every shape omtre users actually write:
 
 ```
 \b(?:python3?|py(?:\s+-3)?)?\s*\S*[/\\]?task\.py\s+(create|start)\b
@@ -732,7 +732,7 @@ returned 0 windows on a session that contained 6 tasks.
 
 When extending the parser:
 
-- New surface forms (e.g., `tl task create` if Trellis ever ships a wrapper)
+- New surface forms (e.g., `omt task create` if omtre ever ships a wrapper)
   must be added to `parseTaskPyCommand`'s regex AND must round-trip through
   the same shell-token cleanup; do not handle quoting separately.
 - Token edge-stripping (`;|&()`) is the canonical place for shell metacharacter
@@ -887,7 +887,7 @@ window.
 ### Bypassing `stripInjectionTags`
 
 Adding raw turn text to `searchInDialogue` skips injection-tag removal and
-inflates hit counts on every Trellis-using session. Always run text through
+inflates hit counts on every omtre-using session. Always run text through
 `stripInjectionTags` _before_ the bootstrap check, and pass the
 post-strip text into `isBootstrapTurn` along with `originalLength` so the size
 threshold is computed against the raw input.
@@ -931,12 +931,12 @@ Current implementation:
    `findInJsonl(maxLines<100)`). The reader closes the file and returns
    immediately, never reading further chunks.
 
-Measured impact on a 36 MB Claude session (Trellis dogfood):
+Measured impact on a 36 MB Claude session (omtre dogfood):
 
 | Operation                           | Before (full read + split) | After (chunked + 0x7b skip) |
 | ----------------------------------- | -------------------------- | --------------------------- |
-| `tl mem list`                       | ~3.5s                      | ~0.67s                      |
-| `tl mem extract --phase brainstorm` | ~5.8s                      | ~0.73s                      |
+| `omt mem list`                       | ~3.5s                      | ~0.67s                      |
+| `omt mem extract --phase brainstorm` | ~5.8s                      | ~0.73s                      |
 
 Rules for extending:
 
@@ -1139,7 +1139,7 @@ subpath surface — the CLI must not deep-import them.
 
 | Export                                                       | Use                                          |
 | ------------------------------------------------------------ | -------------------------------------------- |
-| `runMem(args)`                                               | Entry point — `tl mem ...` calls into this   |
+| `runMem(args)`                                               | Entry point — `omt mem ...` calls into this   |
 | `parseArgv(argv)` and the CLI flag → `MemFilter` translation | argv parsing — used by `mem-helpers.test.ts` |
 | `shortDate`, `shortPath`                                     | terminal formatting — tested directly        |
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.png" alt="omtre — mattpocock × ECC × impeccable on one omtre spine">
+  <img src="../assets/hero.svg" alt="omtre — the contract-enforced workflow harness">
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a> · vendored under MIT &amp; Apache-2.0 — see <a href="catalog/ATTRIBUTION.md">ATTRIBUTION</a>
+  <strong>English</strong> · <a href="./pack.zh-CN.md">简体中文</a> · vendored under MIT &amp; Apache-2.0 — see <a href="../catalog/ATTRIBUTION.md">ATTRIBUTION</a>
 </p>
 
 Advisory skills don't ship design systems — contracts do. omtre vendors
@@ -43,7 +43,7 @@ Repo is public — all three channels work without auth. Mix and match freely.
 
 Hand this to Devin / Codex / ZCode / Claude / Cursor and it will set everything up itself:
 
-> Set up omtre in this repo: ① install our omtre CLI and init — `npm i -g https://github.com/ScoFan-official/omtre/releases/download/cli-v0.6.18-ohmy.5/omtre-0.6.18-ohmy.5.tgz`, then `omtre init --devin` — registry and workflow defaults are baked into the CLI; ② run `omtre init --template agent-workflow --append` to install the spec contracts; ③ install the skills for YOUR platform — prefer `npx skills add ScoFan-official/omtre --agent <your-platform> --copy`; if your platform isn't covered, run `git clone --depth 1 https://github.com/ScoFan-official/omtre /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <your-platform> --target . --only-core` instead; ④ invoke the `mp-omtre-bridge` skill so it finishes seeding `AGENTS.md`, then read `.omtre/spec/agents/issue-tracker.md` and report back which tracker verbs you'll use for specs, tickets, triage and implementation. To update later, invoke the `oh-my-update` skill.
+> Set up omtre in this repo: ① install our omtre CLI and init — `npm i -g omtre`, then `omtre init --devin` — registry and workflow defaults are baked into the CLI; ② run `omtre init --template agent-workflow --append` to install the spec contracts; ③ install the skills for YOUR platform — prefer `npx skills add ScoFan-official/omtre --agent <your-platform> --copy`; if your platform isn't covered, run `git clone --depth 1 https://github.com/ScoFan-official/omtre /tmp/mtp && python /tmp/mtp/scripts/install.py --platform <your-platform> --target . --only-core` instead; ④ invoke the `mp-omtre-bridge` skill so it finishes seeding `AGENTS.md`, then read `.omtre/spec/agents/issue-tracker.md` and report back which tracker verbs you'll use for specs, tickets, triage and implementation. To update later, invoke the `oh-my-update` skill.
 
 For non-omtre repos, skip to skills only:
 
@@ -198,7 +198,7 @@ commands/MCP paths are conventional.
 
 ## Asset catalog — what's inside
 
-**Per-component "when to use":** see [`catalog/INDEX.md`](catalog/INDEX.md) —
+**Per-component "when to use":** see [`catalog/INDEX.md`](../catalog/INDEX.md) —
 an auto-generated index where every one of the 1,741 components carries its
 own description ("use when…") extracted from its source frontmatter.
 Regenerate with `python scripts/build_index.py`.
@@ -275,7 +275,7 @@ from `install.py --list`:
 Not ported (kept in `catalog/` as reference, Claude-Code-specific):
 **hooks 81**, **settings 75**, **mods ~40**, **sandbox 23** (cloudflare/docker/e2b), **loops 18**.
 
-Every component's when-to-use: [`catalog/INDEX.md`](catalog/INDEX.md).
+Every component's when-to-use: [`catalog/INDEX.md`](../catalog/INDEX.md).
 
 ## Repo layout
 

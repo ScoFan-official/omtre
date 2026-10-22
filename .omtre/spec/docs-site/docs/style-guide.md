@@ -83,11 +83,11 @@ Open technical architecture pages with the system thesis, then immediately groun
 
 **Good:**
 
-> Trellis is a Team-level Agent Harness with built-in LLM wiki. In implementation terms, that means two systems share the same project files: the agent harness controls workflow execution, and the LLM wiki stores specs, tasks, research, and journals.
+> omtre is a Team-level Agent Harness with built-in LLM wiki. In implementation terms, that means two systems share the same project files: the agent harness controls workflow execution, and the LLM wiki stores specs, tasks, research, and journals.
 
 **Avoid:**
 
-> This page is for contributors and fork modders: engineers extending Trellis itself, not end users.
+> This page is for contributors and fork modders: engineers extending omtre itself, not end users.
 
 **Why**: Architecture docs should preserve the conceptual model, but the opening must quickly become a technical map. Audience labels and unsupported positioning prose make the page feel like a pitch instead of a technical contract.
 
@@ -252,7 +252,7 @@ Release notes (`docs-site/changelog/v*.mdx` and `docs-site/zh/changelog/v*.mdx`)
 ```markdown
 ### Joiner onboarding task
 
-`trellis init` now dispatches on two filesystem flags:
+`omtre init` now dispatches on two filesystem flags:
 
 | `.omtre/` | `.omtre/.developer` | Generated task |
 |---|---|---|
@@ -274,12 +274,12 @@ Release notes (`docs-site/changelog/v*.mdx` and `docs-site/zh/changelog/v*.mdx`)
 ```markdown
 ### Joiner 引导任务——新开发者不再进来一脸懵
 
-这个版本之前，新开发者在一个已有 Trellis 项目上第一次跑 `trellis init` 几乎啥都不做：
+这个版本之前，新开发者在一个已有 omtre 项目上第一次跑 `omtre init` 几乎啥都不做：
 只往 `.omtre/.developer` 写了个身份文件，然后呢？然后就没然后了。打开 AI 工具面对
-的是一片空白，不知道 Trellis 是什么、团队约定在哪、自己该做什么。队友只能反复在
+的是一片空白，不知道 omtre 是什么、团队约定在哪、自己该做什么。队友只能反复在
 群里解释工作流。
 
-beta.9 起，`trellis init` 按两个文件的存在状态分三种场景派发：
+beta.9 起，`omtre init` 按两个文件的存在状态分三种场景派发：
 ```
 
 **Why it's bad**:
@@ -294,7 +294,7 @@ beta.9 起，`trellis init` 按两个文件的存在状态分三种场景派发�
 ```markdown
 ### Joiner onboarding task
 
-`trellis init` now dispatches on (`.omtre/`, `.omtre/.developer`) presence
+`omtre init` now dispatches on (`.omtre/`, `.omtre/.developer`) presence
 to generate three task types: creator bootstrap, joiner onboarding, or no task.
 ```
 
@@ -316,7 +316,7 @@ Lead with the change. Background (if any) goes into a second paragraph or a coll
 
 - **Use feature names, not outcomes**: `### Joiner onboarding task`, not `### New developers aren't thrown into a black box anymore`.
 - **Stable across translations**: same technical nouns in both `docs-site/changelog/` and `docs-site/zh/changelog/`.
-- **Greppable**: include exact identifiers users might search for (`task.json`, `trellis init`, `/omt:finish-work`).
+- **Greppable**: include exact identifiers users might search for (`task.json`, `omtre init`, `/omt:finish-work`).
 
 ### Backstory goes elsewhere
 
@@ -451,7 +451,7 @@ The docs-site has two version tracks: **Beta** (tracks the latest `@beta` npm re
 |  | `templates/` |
 |  | `contribute/` |
 
-**Rule of thumb**: anything that describes *how Trellis works right now* is dual (because that changes per version). Anything marketing, community, or resource-discovery stays single-source — those pages don't change per version, so maintaining two drift-prone copies burns effort for no user benefit.
+**Rule of thumb**: anything that describes *how omtre works right now* is dual (because that changes per version). Anything marketing, community, or resource-discovery stays single-source — those pages don't change per version, so maintaining two drift-prone copies burns effort for no user benefit.
 
 When in doubt, ask: "Would a 0.4 user genuinely see something different on this page than a 0.5 user?" If no, it's single-source.
 
@@ -473,7 +473,7 @@ The count is `(number of configurator files) - (index.ts + shared.ts + workflow.
 
 ### Per-platform directory layout for a specific version
 
-To document what `trellis init --<platform>` actually writes in a given version:
+To document what `omtre init --<platform>` actually writes in a given version:
 
 ```bash
 git show v0.4.0:packages/cli/src/configurators/qoder.ts | head -60
@@ -518,7 +518,7 @@ When 0.5 reaches GA:
 
 ### Common Mistake: Documenting Release track from current templates
 
-**Symptom**: You write Release-track docs (documenting 0.4.0 GA) and grab details from the current tree — e.g. `cat packages/cli/src/configurators/qoder.ts` or `ls packages/cli/src/templates/qoder/`. Result: the docs claim 0.4.0 generates paths that only exist on 0.5 betas (`.qoder/rules/`, `.qoder/hooks/`), or platforms that are 0.5-only get documented as 0.4. User tries to `trellis init --qoder` on 0.4.0 and sees a completely different layout.
+**Symptom**: You write Release-track docs (documenting 0.4.0 GA) and grab details from the current tree — e.g. `cat packages/cli/src/configurators/qoder.ts` or `ls packages/cli/src/templates/qoder/`. Result: the docs claim 0.4.0 generates paths that only exist on 0.5 betas (`.qoder/rules/`, `.qoder/hooks/`), or platforms that are 0.5-only get documented as 0.4. User tries to `omtre init --qoder` on 0.4.0 and sees a completely different layout.
 
 **Cause**: The current tree is always beta-current. Release track docs must reflect the tagged stable version, which is what users on `@stable` actually get.
 
@@ -528,7 +528,7 @@ When 0.5 reaches GA:
 
 ### Common Mistake: Counting platforms from existing docs
 
-**Symptom**: Docs say Trellis supports N platforms, but the real count is different. Worst case: you inherit a wrong count from prior docs, propagate it, then spend a session re-fixing every mention. (Seen in 0.4.0 Release audit: prior docs claimed 6 platforms, next pass got to 12, actual was 14 — CodeBuddy and Antigravity were quietly shipped and never documented.)
+**Symptom**: Docs say omtre supports N platforms, but the real count is different. Worst case: you inherit a wrong count from prior docs, propagate it, then spend a session re-fixing every mention. (Seen in 0.4.0 Release audit: prior docs claimed 6 platforms, next pass got to 12, actual was 14 — CodeBuddy and Antigravity were quietly shipped and never documented.)
 
 **Cause**: Docs drift silently. When a platform is added to the CLI, documentation updates are manual and easy to forget. Counting from docs compounds every prior miss.
 

@@ -53,13 +53,13 @@ description: '<one-line description>'
 ## Install
 
 ```bash
-npx skills add mindfold-ai/Trellis/marketplace --skill <skill-name>
+npx skills add ScoFan-official/omtre/marketplace --skill <skill-name>
 ```
 
 Or install all available skills:
 
 ```bash
-npx skills add mindfold-ai/Trellis/marketplace
+npx skills add ScoFan-official/omtre/marketplace
 ```
 
 Options:

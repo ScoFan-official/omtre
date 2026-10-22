@@ -1,4 +1,7 @@
-Trellis - All-in-one AI framework & toolkit for Claude Code & Cursor
+omtre - contract-enforced workflow harness for AI coding agents
+Copyright (C) 2026 ScoFan
+
+omtre is derived from Trellis (https://github.com/mindfold-ai/trellis).
 Copyright (C) 2026 Mindfold LLC
 
 This program is free software: you can redistribute it and/or modify

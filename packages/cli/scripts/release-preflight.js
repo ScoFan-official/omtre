@@ -72,8 +72,8 @@ function readVersions() {
 }
 
 function tagVersionFromEnv() {
-  // GITHUB_REF for `push: tags: v*` or `cli-v*` looks like `refs/tags/v0.6.0-beta.12`
-  // or `refs/tags/cli-v0.6.18-ohmy.5`.
+  // GITHUB_REF for `push: tags: v*` or `cli-v*` looks like `refs/tags/v0.7.0-beta.12`
+  // or `refs/tags/cli-v1.0.0`.
   // GITHUB_REF_NAME on `release.published` or tag push is the tag name.
   const ref = process.env.GITHUB_REF_NAME || process.env.GITHUB_REF || "";
   const m = ref.match(
@@ -257,6 +257,11 @@ function verifyPackedCli() {
     const requiredEntries = [
       "package/node_modules/@omtre/core/dist/index.js",
       "package/node_modules/@omtre/core/package.json",
+      "package/README.md",
+      "package/LICENSE",
+      "package/NOTICE",
+      "package/assets/hero.svg",
+      "package/assets/workflow.svg",
     ];
     for (const reqEntry of requiredEntries) {
       if (!entries.includes(reqEntry)) {

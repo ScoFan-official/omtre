@@ -1456,13 +1456,13 @@ function getInstalledVersion(cwd: string): string {
 }
 
 /**
- * [oh-my] Fetch the latest released CLI version from GitHub.
+ * Fetch the latest released CLI version from GitHub.
  *
- * The fork (`omtre`) ships as GitHub release tarballs on
- * `ScoFan-official/omtre` under `cli-v*` tags, not on npm — the npm
- * registry lookup upstream used is replaced by the releases API. The list
- * endpoint is required (not `/latest`): the pack's own `vX.Y.Z` releases
- * share it. Returns the bare version (`0.6.17-ohmy.N`, no tag prefix).
+ * omtre ships on npm and as GitHub release tarballs under `cli-v*` tags.
+ * `omtre update` reads the releases API so tarball-only installs see the same
+ * version. The list endpoint is required (not `/latest`): the repository's
+ * pack releases (`vX.Y.Z`) share it. Returns the bare version (`1.0.0`, no tag
+ * prefix; legacy `-ohmy.N` tags may still appear).
  */
 async function getLatestReleaseVersion(): Promise<string | null> {
   try {

@@ -195,7 +195,7 @@ Always run `mintlify dev` locally after the script + manual edits to catch routi
 
 The RC banner has been `"📦 Reading **RC** docs (0.5.0-rc.0)..."` literally across rc.0–rc.7 because nothing auto-bumps the version inside it. Either:
 
-- Treat the banner as "RC docs in general — check `trellis --version` for your install" (current pattern), or
+- Treat the banner as "RC docs in general — check `omtre --version` for your install" (current pattern), or
 - Bump it as part of `docs-beta-to-rc.sh` followup (current scripts do not — they only print a reminder)
 
 ### MDX `<Note>` / `<Warning>` closing tags must NOT be indented

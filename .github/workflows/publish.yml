@@ -1,13 +1,19 @@
 name: Publish to npm
 
-# [oh-my] Manual dispatch only. Upstream wired `release: published` and
-# `v*` tag pushes so either event fires a publish — but the fork ships
-# GitHub release tarballs (channel A), and both events occur on every fork
-# release. Left wired, this workflow would run `check-versions` (which the
-# `-ohmy.N` suffix intentionally fails) or attempt an npm publish the fork
-# does not want yet. Re-enable when channel B ships (docs/fork-sync.md).
+# npm is omtre's primary install channel. This workflow is dispatchable for the
+# first release and also runs on `cli-v*` tags once NPM_TOKEN is configured.
+# The CLI package bundles @omtre/core, so publishing only `omtre` is a complete
+# install; `@omtre/core` is published separately only when explicitly requested
+# (it requires the npm `omtre` org).
 on:
   workflow_dispatch:
+    inputs:
+      publish_core:
+        description: "Also publish @omtre/core (requires the npm omtre org)"
+        type: boolean
+        default: false
+  push:
+    tags: ["cli-v*"]
 
 concurrency:
   group: publish-${{ github.ref_name || github.ref }}
@@ -38,6 +44,15 @@ jobs:
         with:
           version: 10.32.1
 
+      - name: Check npm token
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::NPM_TOKEN is not configured. Add a repository secret named NPM_TOKEN."
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -62,18 +77,6 @@ jobs:
         id: plan
         run: node packages/cli/scripts/release-preflight.js publish-plan --github
 
-      - name: Publish @omtre/core
-        if: steps.plan.outputs.core_publish == 'true'
-        run: pnpm publish --access public --no-git-checks --tag ${{ steps.plan.outputs.tag }}
-        working-directory: packages/core
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
-
-      - name: Skip @omtre/core (already on npm)
-        if: steps.plan.outputs.core_publish != 'true'
-        run: echo "@omtre/core@${{ steps.plan.outputs.version }} already published; skipping."
-
       - name: Publish omtre
         if: steps.plan.outputs.cli_publish == 'true'
         run: pnpm publish --access public --no-git-checks --tag ${{ steps.plan.outputs.tag }}
@@ -86,5 +89,25 @@ jobs:
         if: steps.plan.outputs.cli_publish != 'true'
         run: echo "omtre@${{ steps.plan.outputs.version }} already published; skipping."
 
-      - name: Verify published packages on public npm
-        run: node packages/cli/scripts/release-preflight.js verify-npm --package all
+      - name: Verify published omtre on npm
+        run: node packages/cli/scripts/release-preflight.js verify-npm --package cli
+
+      - name: Publish @omtre/core
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_core == true && steps.plan.outputs.core_publish == 'true'
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.plan.outputs.tag }}
+        working-directory: packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Skip @omtre/core
+        if: github.event_name != 'workflow_dispatch' || inputs.publish_core != true || steps.plan.outputs.core_publish != 'true'
+        run: echo "@omtre/core is bundled into the CLI; separate publish not requested or already done."
+
+      - name: Summary
+        run: |
+          echo "### Published omtre@${{ steps.plan.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- npm: https://www.npmjs.com/package/omtre" >> "$GITHUB_STEP_SUMMARY"
+          echo "- install: \`npm install -g omtre\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- tag: \`${{ github.ref_name }}\`" >> "$GITHUB_STEP_SUMMARY"

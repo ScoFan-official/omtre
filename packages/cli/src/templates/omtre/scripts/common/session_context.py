@@ -411,7 +411,7 @@ _OHMY_SUFFIX_RE = re.compile(r"-ohmy\.(\d+)$")
 
 
 def _split_ohmy_suffix(version: str) -> tuple[str, int]:
-    """Split a fork build suffix: '0.6.17-ohmy.2' -> ('0.6.17', 2)."""
+    """Split a legacy fork build suffix: '0.6.17-ohmy.2' -> ('0.6.17', 2)."""
     match = _OHMY_SUFFIX_RE.search(version.strip())
     if match:
         return version.strip()[: match.start()], int(match.group(1))

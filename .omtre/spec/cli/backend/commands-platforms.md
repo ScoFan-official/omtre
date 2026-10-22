@@ -1,4 +1,4 @@
-# `trellis platforms` Command
+# `omtre platforms` Command
 
 Machine-readable report of which AI platforms are configured (active) in the
 current project. Downstream tooling (docs, dashboards, other CLIs) can read
@@ -10,13 +10,13 @@ as the platform count grows or a `configDir` is renamed.
 ## User-facing contract
 
 ```text
-trellis platforms [--json]
+omtre platforms [--json]
 ```
 
 Behavior:
 
 - Reads `getConfiguredPlatforms(cwd)` (`configurators/index.ts`) to find every
-  platform with at least one Trellis-owned template recorded under its private
+  platform with at least one omtre-owned template recorded under its private
   `configDir`. Native platform directories alone do not count. Template
   ownership comes from `.omtre/.template-hashes.json`, while each platform's
   distinct file layout comes from its `collectTemplates()` registry entry.

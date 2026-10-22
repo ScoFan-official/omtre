@@ -151,12 +151,12 @@ function main() {
   run("node scripts/release-preflight.js check-versions");
   run("git add package.json ../core/package.json");
   run(`git commit -m "${version}"`);
-  run(`git tag "v${version}"`);
+  run(`git tag "cli-v${version}"`);
   // Push HEAD to the branch we are actually on, by name. `HEAD` alone relies
   // on the remote having a same-named branch, and a bare `main` pushes the
   // local main ref regardless of where the release commit lives.
   run(`git push origin "HEAD:${branch}" --tags`);
-  assertPushLanded(branch, `v${version}`);
+  assertPushLanded(branch, `cli-v${version}`);
 }
 
 main();

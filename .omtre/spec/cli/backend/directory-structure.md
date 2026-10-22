@@ -6,7 +6,7 @@
 
 ## Overview
 
-This project is a **TypeScript monorepo** using ES modules. It publishes a CLI package (`omtre`) and a reusable core package (`@omtre/core`). The source code also follows a **dogfooding architecture** - Trellis uses its own configuration files (`.cursor/`, `.claude/`, `.omtre/`) as templates for new projects.
+This project is a **TypeScript monorepo** using ES modules. It publishes a CLI package (`omtre`) and a reusable core package (`@omtre/core`). The source code also follows a **dogfooding architecture** - omtre uses its own configuration files (`.cursor/`, `.claude/`, `.omtre/`) as templates for new projects.
 
 ---
 
@@ -58,7 +58,7 @@ These directories are copied to `dist/` during build and used as templates:
 ├── hooks/               # Context injection hooks
 └── settings.json        # Hook configuration
 
-.omtre/                # Trellis workflow (partially dogfooded)
+.omtre/                # omtre workflow (partially dogfooded)
 ├── scripts/             # Python scripts (dogfooded)
 │   ├── common/          # Shared utilities (paths.py, developer.py, cli_adapter.py, etc.)
 │   ├── hooks/           # Lifecycle hook scripts (project-specific, NOT dogfooded)
@@ -79,7 +79,7 @@ These directories are copied to `dist/` during build and used as templates:
 
 ### What is Dogfooded
 
-Files that are copied directly from Trellis project to user projects:
+Files that are copied directly from omtre project to user projects:
 
 | Source | Destination | Description |
 |--------|-------------|-------------|
@@ -181,13 +181,13 @@ Full contract — map key/value rules, the three platforms that also need a
 
 ```typescript
 // Get path to .omtre/ (works in dev and production)
-getTrellisSourcePath(): string
+getOmtreSourcePath(): string
 
 // Read file from .omtre/
-readTrellisFile(relativePath: string): string
+readOmtreFile(relativePath: string): string
 
 // Copy directory from .omtre/ with executable scripts
-copyTrellisDir(srcRelativePath: string, destPath: string, options?: { executable?: boolean }): void
+copyOmtreDir(srcRelativePath: string, destPath: string, options?: { executable?: boolean }): void
 ```
 
 ---
@@ -218,8 +218,8 @@ Templates use `.txt` extension to:
 
 | Path | Purpose |
 |------|---------|
-| `.omtre/spec/<pkg>/<layer>/*.md` | This repo's dogfood spec (Trellis documenting its own code) |
-| `packages/cli/src/templates/markdown/spec/<layer>/*.md.txt` | User-facing placeholder templates (ship to new projects via `trellis init`) |
+| `.omtre/spec/<pkg>/<layer>/*.md` | This repo's dogfood spec (omtre documenting its own code) |
+| `packages/cli/src/templates/markdown/spec/<layer>/*.md.txt` | User-facing placeholder templates (ship to new projects via `omtre init`) |
 
 If you open-and-edit the wrong one, nothing fails at build / test / lint time — `markdown/index.ts` silently ignores your new file because it only reads the `.md.txt` variants. The drift can persist for years (caught in 2026-04 after ~3 months).
 
@@ -335,7 +335,7 @@ Last-resort detector for **polyrepo** layouts (multiple independent git repos in
 | `--no-monorepo` | Skip monorepo detection entirely |
 | _(neither)_ | Auto-detect; prompt user to confirm if packages found |
 
-> **Design Decision (do NOT revisit lightly)**: There is intentionally **no `--packages` CLI flag**. The escape hatch for users with non-standard layouts is hand-writing `packages:` in `.omtre/config.yaml` — `writeMonorepoConfig` is non-destructive and won't overwrite. Reasons: (1) `config.yaml` is the runtime source of truth, a flag would be a transient duplicate; (2) Trellis prefers declarative configuration over imperative flags. If future need pushes back, document the use case before adding the flag.
+> **Design Decision (do NOT revisit lightly)**: There is intentionally **no `--packages` CLI flag**. The escape hatch for users with non-standard layouts is hand-writing `packages:` in `.omtre/config.yaml` — `writeMonorepoConfig` is non-destructive and won't overwrite. Reasons: (1) `config.yaml` is the runtime source of truth, a flag would be a transient duplicate; (2) omtre prefers declarative configuration over imperative flags. If future need pushes back, document the use case before adding the flag.
 
 ### Init Sequence (Monorepo Path)
 
@@ -372,8 +372,8 @@ injecting package Git status. The configured package list remains the primary
 source of truth.
 
 For backward compatibility with projects initialized before polyrepo detection
-or hand-created Trellis roots, session context has a bounded fallback: when the
-Trellis root is not a Git worktree and no configured package Git repositories
+or hand-created omtre roots, session context has a bounded fallback: when the
+omtre root is not a Git worktree and no configured package Git repositories
 are available, it may scan immediate child and grandchild directories for
 independent `.git` entries and inject those repositories' status. This fallback
 must mirror `parsePolyrepo()`:
@@ -422,13 +422,13 @@ Packages that received a remote template download (tracked via `remoteSpecPackag
 
 ## Workspace Journal Merge Behavior (parallel sessions / worktrees)
 
-Parallel Trellis sessions (multiple git worktrees, or overlapping branches)
+Parallel omtre sessions (multiple git worktrees, or overlapping branches)
 regularly touch `.omtre/workspace/<developer>/` at the same time. The two
 files there behave differently on merge, and this is intentional:
 
 - **`journal-N.md` auto-resolves.** The project ships `.gitattributes` with
   `.omtre/workspace/*/journal-*.md merge=union` (project root; both the
-  bundled template at `packages/cli/src/templates/trellis/gitattributes.txt`
+  bundled template at `packages/cli/src/templates/omtre/gitattributes.txt`
   and this repo's own dogfooded copy carry the rule). Each session only
   appends a new session block, so a union merge keeps both sides' blocks with
   no conflict markers — there is nothing semantically to resolve.
@@ -445,7 +445,7 @@ files there behave differently on merge, and this is intentional:
 `ensureGitattributes()` (`packages/cli/src/configurators/workflow.ts`) writes
 the `merge=union` rules additively — journal files plus the domain
 `REGISTRY.md` and per-writer domain worklogs (`MERGE_UNION_RULES`). It is
-called from both `trellis init` and `trellis update`, never overwrites an
+called from both `omtre init` and `omtre update`, never overwrites an
 existing project-root `.gitattributes` wholesale, and appends only the rules
 that are missing (a rule already present — user-authored or from a previous
 run — is left alone).
@@ -477,7 +477,7 @@ tree) with `session_auto_commit` enabled, pointing back at this section.
 ```typescript
 import { downloadTemplate } from "giget";
 
-await downloadTemplate("gh:mindfold-ai/Trellis/marketplace/specs/electron-fullstack", {
+await downloadTemplate("gh:ScoFan-official/omtre/marketplace/specs/electron-fullstack", {
   dir: destDir,
 });
 ```

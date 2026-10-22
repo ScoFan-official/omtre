@@ -83,18 +83,16 @@ export function compareVersions(a: string, b: string): number {
 }
 
 /**
- * [oh-my] Compare fork-aware versions of the form `X.Y.Z-ohmy.N`.
+ * Compare legacy fork versions of the form `X.Y.Z-ohmy.N`.
  *
- * The `-ohmy.N` suffix is the fork's patch counter ON TOP of the upstream
- * base — not a pre-release of it. Plain semver ranks `0.6.17-ohmy.1` below
- * `0.6.17`, which made a fork CLI report itself older than a project stamped
- * by an upstream build. This comparator compares the upstream base first
- * (full semver rules), then the presence and value of the oh-my counter:
- * ANY `-ohmy.N` build (including `-ohmy.0`) outranks the bare base, and the
- * bare base ranks below it. `absent` and `-ohmy.0` must NOT compare equal —
- * that collision made `update` treat `0.6.18` → `0.6.18-ohmy.0` as "already
- * up to date" and skip re-stamping `.version`. Non-oh-my versions fall back
- * to {@link compareVersions} behaviour.
+ * The `-ohmy.N` suffix was the pre-1.0 fork's patch counter ON TOP of the
+ * upstream base — not a pre-release of it. Plain semver ranks
+ * `0.6.17-ohmy.1` below `0.6.17`, which made a legacy CLI report itself older
+ * than a project stamped by an upstream build. This comparator compares the
+ * base first (full semver rules), then the presence and value of the legacy
+ * counter: ANY `-ohmy.N` build (including `-ohmy.0`) outranks the bare base.
+ * Plain versions (including the independent `1.0.0` line) fall back to
+ * {@link compareVersions} behaviour.
  */
 const OHMY_SUFFIX_RE = /-ohmy\.(\d+)$/;
 

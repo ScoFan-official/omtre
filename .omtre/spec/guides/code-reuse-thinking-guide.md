@@ -186,38 +186,38 @@ def cli_name(self) -> str:
 - **If asymmetry is unavoidable**: Add a regression test that compares outputs from both mechanisms
 - When migrating directory structures, search for ALL code paths that reference the old structure
 
-**Real example**: `trellis update` had a manual `files.set()` list for 11 scripts that `getAllScripts()` already tracked. Fix: replaced the manual list with a `for..of getAllScripts()` loop. See `update.ts` refactor in v0.4.0-beta.3.
+**Real example**: `omtre update` had a manual `files.set()` list for 11 scripts that `getAllScripts()` already tracked. Fix: replaced the manual list with a `for..of getAllScripts()` loop. See `update.ts` refactor in v0.4.0-beta.3.
 
 ---
 
-## Template File Registration (Trellis-specific)
+## Template File Registration (omtre-specific)
 
-When adding new files to `src/templates/trellis/scripts/`:
+When adding new files to `src/templates/omtre/scripts/`:
 
-**Single registration point**: `src/templates/trellis/index.ts`
+**Single registration point**: `src/templates/omtre/index.ts`
 
 1. Add `export const xxxScript = readTemplate("scripts/path/file.py");`
 2. Add to `getAllScripts()` Map
 
 That's it. `commands/update.ts` uses `getAllScripts()` directly — no manual sync needed.
 
-**Why this matters**: Without registration in `getAllScripts()`, `trellis update` won't sync the file to user projects. Bug fixes and features won't propagate.
+**Why this matters**: Without registration in `getAllScripts()`, `omtre update` won't sync the file to user projects. Bug fixes and features won't propagate.
 
-**History**: Before v0.4.0-beta.3, `update.ts` had its own hand-maintained file list that frequently fell out of sync with `getAllScripts()`. This caused 11 Python files to be silently skipped during `trellis update`. The fix was to eliminate the duplicate list and use `getAllScripts()` as the single source of truth.
+**History**: Before v0.4.0-beta.3, `update.ts` had its own hand-maintained file list that frequently fell out of sync with `getAllScripts()`. This caused 11 Python files to be silently skipped during `omtre update`. The fix was to eliminate the duplicate list and use `getAllScripts()` as the single source of truth.
 
 ### Quick Checklist for New Scripts
 
 ```bash
 # After adding a new .py file, verify it's in getAllScripts():
-grep -l "newFileName" src/templates/trellis/index.ts  # Should match
+grep -l "newFileName" src/templates/omtre/index.ts  # Should match
 ```
 
 ### Template Sync Convention
 
-`.omtre/scripts/` (dogfooded) and `packages/cli/src/templates/trellis/scripts/` (template) must stay identical — build-enforced for every `.py` file, see `cli/backend/script-conventions.md` → "Two script trees, one content". After editing `.omtre/scripts/`, always sync:
+`.omtre/scripts/` (dogfooded) and `packages/cli/src/templates/omtre/scripts/` (template) must stay identical — build-enforced for every `.py` file, see `cli/backend/script-conventions.md` → "Two script trees, one content". After editing `.omtre/scripts/`, always sync:
 
 ```bash
-rsync -av --delete --exclude='__pycache__' .omtre/scripts/ packages/cli/src/templates/trellis/scripts/
+rsync -av --delete --exclude='__pycache__' .omtre/scripts/ packages/cli/src/templates/omtre/scripts/
 ```
 
 **Gotcha**: Running rsync with wrong source/destination paths can create nested garbage directories (e.g., `.omtre/scripts/packages/cli/...`). Always double-check paths before running.

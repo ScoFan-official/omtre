@@ -1,6 +1,6 @@
 ---
 name: create-manifest
-description: "Create a Trellis migration manifest and matching docs-site changelogs for a target release by analyzing commits since the previous release. Use when preparing a patch, beta, rc, or minor release manifest."
+description: "Create an omtre migration manifest and matching docs-site changelogs for a target release by analyzing commits since the previous release. Use when preparing a patch, beta, rc, or minor release manifest."
 ---
 
 # Create Migration Manifest
@@ -13,7 +13,7 @@ Create a migration manifest for a new patch, beta, rc, or minor release based on
 
 ## Package release model
 
-Trellis currently publishes two npm packages from the same git tag:
+omtre currently publishes two npm packages from the same git tag:
 
 - `omtre`
 - `@omtre/core`
@@ -88,14 +88,14 @@ Manifest `changelog` field:
 
 - Use one string with real `\n` separators.
 - Group with bold prefixes: `**Enhancements:**`, `**Bug Fixes:**`, `**Internal:**`.
-- Keep it shorter than the MDX changelog because it prints in terminal during `trellis update`.
+- Keep it shorter than the MDX changelog because it prints in terminal during `omtre update`.
 
 ## Step 5: Determine Manifest Fields
 
 | Field | How to decide |
 |---|---|
 | `breaking` | Any breaking API or behavior change. Default `false` for patch/prerelease fixes. |
-| `recommendMigrate` | Any rename/delete migration the user should run. Default `false` for patch fixes. When `breaking=true` and `recommendMigrate=true`, `trellis update` exits 1 without `--migrate`. |
+| `recommendMigrate` | Any rename/delete migration the user should run. Default `false` for patch fixes. When `breaking=true` and `recommendMigrate=true`, `omtre update` exits 1 without `--migrate`. |
 | `migrations` | List of `rename`, `rename-dir`, `delete`, or `safe-file-delete` actions. Usually `[]` for patch fixes. |
 | `migrationGuide` | Mandatory when `breaking=true` and `recommendMigrate=true`. Human migration guide inserted into the generated migration task PRD. |
 | `aiInstructions` | Strongly recommended with `migrationGuide`. Instructions for AI migration assistance. |

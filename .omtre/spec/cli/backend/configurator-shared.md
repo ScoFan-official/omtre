@@ -10,9 +10,9 @@ For per-platform integration mechanics (which directory each platform writes, wh
 
 `configurators/shared.ts` exists to keep the per-platform configurators — one `configurators/<platform>.ts` per entry in `AI_TOOLS`, 21 of them — from independently re-implementing the same byte-for-byte rendering, write, and prelude-injection logic. Drift between configurators reliably becomes a bug:
 
-- If two platforms render `{{PYTHON_CMD}}` differently, `trellis update`'s template-hash compare reports a phantom diff after every install.
+- If two platforms render `{{PYTHON_CMD}}` differently, `omtre update`'s template-hash compare reports a phantom diff after every install.
 - If two configurators that both write into `.agents/skills/` resolve `{{CMD_REF}}` per-platform, the last writer wins and clobbers the other (see `platform-integration.md` "Rule: `.agents/skills/` writes use `resolvePlaceholdersNeutral()`").
-- If a platform's file set is described in two places, the two descriptions disagree and `trellis update` silently stops managing whichever file only one of them names (see "Template maps" below).
+- If a platform's file set is described in two places, the two descriptions disagree and `omtre update` silently stops managing whichever file only one of them names (see "Template maps" below).
 
 A helper belongs in `shared.ts` when (a) two or more configurators need the same behavior **or** (b) a single configurator needs the helper in **both** the init write path and the update collect path — putting it in shared.ts forces both to call the same code.
 
@@ -36,7 +36,7 @@ A helper does **not** belong in `shared.ts` when it encodes platform-specific fo
 
 `configurators/shared.ts:resolvePlaceholders` — the standard renderer. Resolves `{{PYTHON_CMD}}`, `{{CMD_REF:name}}`, `{{EXECUTOR_AI}}`, `{{USER_ACTION_LABEL}}`, `{{CLI_FLAG}}`, plus conditional blocks `{{#FLAG}}…{{/FLAG}}` / `{{^FLAG}}…{{/FLAG}}` for `AGENT_CAPABLE` and `HAS_HOOKS`. Cleans up consecutive blank lines left by removed conditionals. Without a `TemplateContext` it only resolves `{{PYTHON_CMD}}` (legacy mode for `settings.json`, `hooks.json`, etc.).
 
-`configurators/shared.ts:resolvePlaceholdersNeutral` — same set of placeholders, but renders `{{CMD_REF:name}}` as `` `name` (Trellis command) `` instead of substituting the platform's command prefix. Use this whenever the rendered file is destined for `.agents/skills/`. Two configurators (Codex now, Gemini CLI 0.40+ via the workspace alias, future agentskills.io consumers) write into that path; if either uses the platform-specific renderer the rendered SKILL.md becomes byte-different and the second configurator silently overwrites the first.
+`configurators/shared.ts:resolvePlaceholdersNeutral` — same set of placeholders, but renders `{{CMD_REF:name}}` as `` `name` (omtre command) `` instead of substituting the platform's command prefix. Use this whenever the rendered file is destined for `.agents/skills/`. Two configurators (Codex now, Gemini CLI 0.40+ via the workspace alias, future agentskills.io consumers) write into that path; if either uses the platform-specific renderer the rendered SKILL.md becomes byte-different and the second configurator silently overwrites the first.
 
 ### Template wrapping
 
@@ -80,7 +80,7 @@ These build the `Map<relPath, content>` that a `collect<Platform>Templates()` re
 
 `configurators/shared.ts:SubAgentType` — `"implement" | "check"`. `research` is intentionally excluded — research doesn't depend on an active task; it traverses the spec tree.
 
-`configurators/shared.ts:buildPullBasedPrelude` — returns the standard "Required: Load Trellis Context First" block. Used by class-2 platforms whose hook can't inject the sub-agent prompt (Gemini, Qoder, Codex, Copilot). The prelude tells the sub-agent to: (1) read `Active task: <path>` from the dispatch prompt; (2) fall back to `task.py current --source`; (3) ask the user. See `platform-integration.md` "Active task discovery on class-2 platforms (issue #225)" for why all three layers are needed.
+`configurators/shared.ts:buildPullBasedPrelude` — returns the standard "Required: Load omtre Context First" block. Used by class-2 platforms whose hook can't inject the sub-agent prompt (Gemini, Qoder, Codex, Copilot). The prelude tells the sub-agent to: (1) read `Active task: <path>` from the dispatch prompt; (2) fall back to `task.py current --source`; (3) ask the user. See `platform-integration.md` "Active task discovery on class-2 platforms (issue #225)" for why all three layers are needed.
 
 `configurators/shared.ts:detectSubAgentType` — returns `"implement"` / `"check"` / `null` from a filename like `omtre-implement.md`. Strips `.md`, `.toml`, `.prompt.md`. Returns `null` for `omtre-research` and unknown names — they skip the prelude.
 
@@ -106,7 +106,7 @@ The internal `mapLegacyToolToCopilot` table is the source of truth for the mappi
 
 ### 1. Scope / Trigger
 
-A platform used to be described twice: `configure<Platform>()` wrote its files to disk and `collectTemplates` returned the same set as a map for `trellis update` to diff. Two descriptions of one thing disagree eventually, and a one-sided edit ships silently — 0.5.5 wrote `.agents/skills/omtre-start/SKILL.md` from `configureCodex` with no matching `collectTemplates` entry, so upgraders' `trellis update` deleted the old skill dir and never regenerated the new one (`migrations/manifests/0.5.7.json`).
+A platform used to be described twice: `configure<Platform>()` wrote its files to disk and `collectTemplates` returned the same set as a map for `omtre update` to diff. Two descriptions of one thing disagree eventually, and a one-sided edit ships silently — 0.5.5 wrote `.agents/skills/omtre-start/SKILL.md` from `configureCodex` with no matching `collectTemplates` entry, so upgraders' `omtre update` deleted the old skill dir and never regenerated the new one (`migrations/manifests/0.5.7.json`).
 
 There is now exactly one description. This section is the contract for it, and it is a *code-spec* trigger on two counts: the per-category write helpers that let a configurator enumerate files a second time were deleted, and the init/update agreement is a cross-layer contract enforced by a test rather than by types.
 
@@ -148,7 +148,7 @@ export function collectPlatformTemplates(id: AITool): Map<string, string> | unde
 
 **Map value** — the file's final content *before* the `python3` → `python` rewrite. Do not call `replacePythonCommandLiterals` per entry; `renderTemplateMap` does it for the whole map on both paths.
 
-**`collectTemplates` purity** — it takes no `cwd`, and that is deliberate: it cannot read or write the project, so `trellis update` gets the same answer whatever the project looks like. It may read bundled templates off the package's own directory (`claude.ts`, `opencode.ts` walk theirs).
+**`collectTemplates` purity** — it takes no `cwd`, and that is deliberate: it cannot read or write the project, so `omtre update` gets the same answer whatever the project looks like. It may read bundled templates off the package's own directory (`claude.ts`, `opencode.ts` walk theirs).
 
 **`configure` derivation** — `fromTemplates(collect…)` gives `configure = (cwd) => writeTemplateMap(cwd, collect…())`. 18 of 21 platforms use it.
 
@@ -177,18 +177,18 @@ Every row is a build failure, not a runtime one. All live in `test/configurators
 | `configure` creates an empty directory | "created empty directories not named in `CONFIGURE_ONLY_EMPTY_DIRS`" |
 | Running `configure` twice changes any byte | "`<id>` is not idempotent" |
 | Platform declared in `SHARED_HOOKS_BY_PLATFORM` but its config template never invokes the hook | `test/templates/shared-hooks.test.ts` — see `platform-integration.md` |
-| Registry entry omits `collectTemplates` | No failure. `collectPlatformTemplates` returns `undefined`, `trellis update` skips the platform, and `getConfiguredPlatforms` can never detect it. Silent, which is why every platform has one today |
+| Registry entry omits `collectTemplates` | No failure. `collectPlatformTemplates` returns `undefined`, `omtre update` skips the platform, and `getConfiguredPlatforms` can never detect it. Silent, which is why every platform has one today |
 
 Two exemptions exist, both named constants with a comment:
 
-- `CONFIGURE_ONLY_PATHS = {".claude/hooks/statusline.py"}` — opt-in only, kept out of `collectTemplates` on purpose and separately locked by `regression.test.ts` "[statusline-opt-in] statusline.py is not in claude's collected templates". **Known, deliberately unfixed consequence**: init records the file in `.template-hashes.json`, then `pruneOrphanManifestKeys` drops it as an orphan (it is in neither `collectTemplates` nor a migration), so an opted-in user's statusline is frozen after their first `trellis update` and left behind by `trellis uninstall`.
+- `CONFIGURE_ONLY_PATHS = {".claude/hooks/statusline.py"}` — opt-in only, kept out of `collectTemplates` on purpose and separately locked by `regression.test.ts` "[statusline-opt-in] statusline.py is not in claude's collected templates". **Known, deliberately unfixed consequence**: init records the file in `.template-hashes.json`, then `pruneOrphanManifestKeys` drops it as an orphan (it is in neither `collectTemplates` nor a migration), so an opted-in user's statusline is frozen after their first `omtre update` and left behind by `omtre uninstall`.
 - `CONFIGURE_ONLY_EMPTY_DIRS = { codex: [".codex/skills"] }` — the one empty directory.
 
 ### 5. Good / Base / Bad Cases
 
-- **Good** — a new platform ships `collect<Platform>Templates()` and one `fromTemplates(...)` line in `PLATFORM_FUNCTIONS`. `configure` is derived; `trellis update` tracks every file from the first release; nothing can drift because there is nothing to drift from.
+- **Good** — a new platform ships `collect<Platform>Templates()` and one `fromTemplates(...)` line in `PLATFORM_FUNCTIONS`. `configure` is derived; `omtre update` tracks every file from the first release; nothing can drift because there is nothing to drift from.
 - **Base** — a platform needs a residual. It exports both, `configure` calls `writeTemplateMap(cwd, collect…())` first, and the residual runs after with a comment naming what a map cannot express. `configureZcode` (`zcode.ts:76-89`) is the smallest example: one write call, one notice.
-- **Bad** — `configure` opens its own `writeFile` for "just one more file". It is now invisible to `trellis update`: never hash-tracked, never updated, never uninstalled. This is the 0.5.5 codex bug verbatim, and the reverse assertion exists to catch exactly it.
+- **Bad** — `configure` opens its own `writeFile` for "just one more file". It is now invisible to `omtre update`: never hash-tracked, never updated, never uninstalled. This is the 0.5.5 codex bug verbatim, and the reverse assertion exists to catch exactly it.
 
 ### 6. Tests Required
 
@@ -221,7 +221,7 @@ export function collectFooTemplates(): Map<string, string> {
 }
 ```
 
-The file set is written down twice. `config.json` is on disk but untracked, so `trellis update` will never update it and `trellis uninstall` will leave it behind.
+The file set is written down twice. `config.json` is on disk but untracked, so `omtre update` will never update it and `omtre uninstall` will leave it behind.
 
 #### Correct
 
@@ -246,14 +246,14 @@ No `configureFoo` at all. If Foo later needs a residual, it grows a `configureFo
 
 ## Placeholder substitution semantics
 
-Resolution happens **at template-write time** (`trellis init`, `trellis update`). There are no runtime placeholders — by the time a hook script or agent definition is written to disk, every `{{…}}` is gone.
+Resolution happens **at template-write time** (`omtre init`, `omtre update`). There are no runtime placeholders — by the time a hook script or agent definition is written to disk, every `{{…}}` is gone.
 
 ### Substitution table
 
 | Placeholder | Source | Resolved by | Notes |
 |-------------|--------|-------------|-------|
 | `{{PYTHON_CMD}}` | `getPythonCommandForPlatform()` | `resolvePlaceholders`, `resolvePlaceholdersNeutral`, `replacePythonCommandLiterals` (line-wise, applied additionally on every write) | Init resolves once after probing host; tests must `resetResolvedPythonCommand()` |
-| `{{CMD_REF:name}}` | `ctx.cmdRefPrefix` | `resolvePlaceholders` (per-platform) / `resolvePlaceholdersNeutral` (`` `name` (Trellis command) ``) | Use neutral form for any `.agents/skills/` write |
+| `{{CMD_REF:name}}` | `ctx.cmdRefPrefix` | `resolvePlaceholders` (per-platform) / `resolvePlaceholdersNeutral` (`` `name` (omtre command) ``) | Use neutral form for any `.agents/skills/` write |
 | `{{EXECUTOR_AI}}` | `ctx.executorAI` | both renderers | Description of the AI executor for prompt prose |
 | `{{USER_ACTION_LABEL}}` | `ctx.userActionLabel` | both renderers | UI label, e.g. "in chat" |
 | `{{CLI_FLAG}}` | `ctx.cliFlag` | both renderers | E.g. `claude`, `codex`, used in `--platform` examples |
@@ -279,7 +279,7 @@ Configurators must respect these. They are not enforced by types; tests in `test
 - **`.agents/skills/` writes use `resolvePlaceholdersNeutral`.** See `platform-integration.md` "Rule: `.agents/skills/` writes use `resolvePlaceholdersNeutral()`". Per-platform skill roots (`.claude/skills/`, `.qoder/skills/`, etc.) keep using `resolvePlaceholders`.
 - **Class-2 agent definitions carry the pull-based prelude.** `applyPullBasedPreludeMarkdown` / `applyPullBasedPreludeToml` must run on every class-2 platform's `omtre-implement` and `omtre-check` definitions (research is intentionally exempt).
 - **Pull-based prelude wording is the same on every class-2 platform.** They all call `buildPullBasedPrelude`. A platform that hand-rolls its own prelude breaks the cross-platform contract documented in `platform-integration.md` "Active task discovery on class-2 platforms".
-- **`start.md` is filtered only on `agentCapable && hasHooks` platforms.** `filterCommands` is private; `resolveCommands` / `resolveAllAsSkills` / `resolveAllAsSkillsNeutral` apply it. The filter intentionally keeps `start` when `hasHooks=false` (Codex / ZCode / OpenCode / Reasonix) — those platforms have no SessionStart-style hook to inject opening context, so users need an invocable `start`. Configurators must not bypass these resolvers and call `getCommandTemplates()` directly — that re-introduces `start` on hook-bearing platforms that don't need it. Inversely, **a configurator must not re-implement its own "filter start" rule** — that's how the 0.5.5 → 0.6.4 Codex special-case helper (`resolveCodexTrellisStartSkill`) leaked into the codebase and stayed there for three release lines. Pi is the only approved prompt fallback exception, and it still obtains `start` through `resolveCommands` with the Pi context adjusted to `hasHooks: false`.
+- **`start.md` is filtered only on `agentCapable && hasHooks` platforms.** `filterCommands` is private; `resolveCommands` / `resolveAllAsSkills` / `resolveAllAsSkillsNeutral` apply it. The filter intentionally keeps `start` when `hasHooks=false` (Codex / ZCode / OpenCode / Reasonix) — those platforms have no SessionStart-style hook to inject opening context, so users need an invocable `start`. Configurators must not bypass these resolvers and call `getCommandTemplates()` directly — that re-introduces `start` on hook-bearing platforms that don't need it. Inversely, **a configurator must not re-implement its own "filter start" rule** — that's how the 0.5.5 → 0.6.4 Codex special-case helper (`resolveCodexOmtreStartSkill`) leaked into the codebase and stayed there for three release lines. Pi is the only approved prompt fallback exception, and it still obtains `start` through `resolveCommands` with the Pi context adjusted to `hasHooks: false`.
 - **Skill / command descriptions live in `SKILL_DESCRIPTIONS` / `COMMAND_DESCRIPTIONS`.** Adding a workflow skill or palette command requires adding the description here; the wrapper helpers throw at init if the description is missing.
 - **Bundled skills already own frontmatter.** `wrapWithSkillFrontmatter` must not be applied to `resolveBundledSkills` output. `collectSkillTemplates` takes bundled files as a separate third argument for this reason.
 - **Hooks dir entries come from `collectSharedHooks(hooksPath, platform)`.** The `platform` arg drives the per-platform inclusion list from `SHARED_HOOKS_BY_PLATFORM` — configurators must not pass an arbitrary file list of their own, because that table is also what `shared-hooks.test.ts` checks the platform's hook config against. Class-2 platforms are simply absent from `inject-subagent-context.py`'s entry.

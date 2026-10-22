@@ -290,7 +290,9 @@ program
 program
   .command("migrate")
   .description(
+    // omtre:upstream-attribution:start
     "One-time migration of an existing Trellis (0.6.x) project to .omtre/",
+    // omtre:upstream-attribution:end
   )
   .option("--dry-run", "Preview the migration plan without modifying any files")
   .option("-y, --yes", "Skip interactive confirmation prompt")

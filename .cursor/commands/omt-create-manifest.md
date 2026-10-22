@@ -53,7 +53,7 @@ Organize entries into sections:
 | `breaking` | Any breaking API/behavior change? Default `false` for patch |
 | `recommendMigrate` | Any file rename/delete migrations? Default `false` for patch |
 | `migrations` | List of `rename`/`rename-dir`/`delete` actions. Usually `[]` for patch |
-| `notes` | Brief guidance for users (e.g., "run `trellis update` to sync") |
+| `notes` | Brief guidance for users (e.g., "run `omtre update` to sync") |
 
 ### Step 6: Create Manifest
 
