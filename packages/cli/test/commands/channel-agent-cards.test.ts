@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHECK_AXES,
+  findAgentFile,
   loadAgent,
   resolveCheckAxisCard,
 } from "../../src/commands/channel/agent-loader.js";
@@ -147,4 +148,66 @@ describe("loadAgent line endings", () => {
       });
     }
   });
+});
+
+// Containment must compare realpaths on both sides. A cwd reached through a
+// symlinked prefix (macOS `/var -> /private/var`, a checkout behind a link)
+// otherwise never prefix-matches its own cards, and dispatch refuses with
+// "card not found" even though the card is right there.
+describe("findAgentFile containment", () => {
+  const CARD = [
+    "---",
+    "name: implement",
+    "provider: claude",
+    "---",
+    "",
+    "body",
+  ].join("\n");
+
+  function tmp(prefix: string): string {
+    return fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), prefix));
+  }
+
+  it.skipIf(process.platform === "win32")(
+    "resolves a card when cwd is reached through a symlink",
+    () => {
+      const real = tmp("alias-real-");
+      const linkParent = tmp("alias-link-");
+      const alias = path.join(linkParent, "repo");
+      fs.mkdirSync(path.join(real, ".omtre", "agents"), { recursive: true });
+      fs.writeFileSync(
+        path.join(real, ".omtre", "agents", "implement.md"),
+        CARD,
+      );
+      fs.symlinkSync(real, alias, "dir");
+      try {
+        expect(findAgentFile("implement", alias)).toBe(
+          path.join(alias, ".omtre", "agents", "implement.md"),
+        );
+      } finally {
+        fs.rmSync(linkParent, { recursive: true, force: true });
+        fs.rmSync(real, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "still refuses an agents dir that is itself a symlink outside the repo",
+    () => {
+      const repo = tmp("agents-link-repo-");
+      const outside = tmp("agents-link-outside-");
+      fs.mkdirSync(path.join(repo, ".omtre"), { recursive: true });
+      fs.writeFileSync(path.join(outside, "implement.md"), CARD);
+      fs.symlinkSync(outside, path.join(repo, ".omtre", "agents"), "dir");
+      try {
+        expect(findAgentFile("implement", repo)).toBeNull();
+        expect(
+          findAgentFile("implement", repo, [fs.realpathSync(outside)]),
+        ).toBe(path.join(repo, ".omtre", "agents", "implement.md"));
+      } finally {
+        fs.rmSync(repo, { recursive: true, force: true });
+        fs.rmSync(outside, { recursive: true, force: true });
+      }
+    },
+  );
 });

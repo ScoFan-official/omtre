@@ -56,7 +56,19 @@ export function findAgentFile(
       `Agent name '${name}' is not allowed (must match ${SAFE_AGENT_NAME.source})`,
     );
   }
+  // Resolve ancestor symlinks on the comparison root, not on the candidates:
+  // a cwd reached through a symlinked prefix (macOS `/var -> /private/var`,
+  // or a checkout behind a symlink) otherwise never prefix-matches its own
+  // cards. `.omtre/agents` itself stays lexical on purpose — resolving it
+  // would auto-trust an agents-dir symlink, which remains a trusted-roots
+  // decision.
   const agentsRoot = path.resolve(cwd, PATHS.AGENTS);
+  let agentsRootReal: string;
+  try {
+    agentsRootReal = path.join(fs.realpathSync(cwd), PATHS.AGENTS);
+  } catch {
+    agentsRootReal = agentsRoot;
+  }
   const candidates = [
     path.join(agentsRoot, `${name}.md`),
     path.join(agentsRoot, name, "AGENT.md"),
@@ -67,7 +79,7 @@ export function findAgentFile(
     // `.omtre/agents` reached through a trusted `.omtre` symlink.
     const real = fs.existsSync(p) ? fs.realpathSync(p) : p;
     const inAgentsRoot =
-      real === agentsRoot || real.startsWith(agentsRoot + path.sep);
+      real === agentsRootReal || real.startsWith(agentsRootReal + path.sep);
     const inTrustedRoot = trustedRoots.some(
       (root) => real === root || real.startsWith(root + path.sep),
     );
