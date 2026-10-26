@@ -1,0 +1,139 @@
+:root {
+  --vp-font-family-base:
+    "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --vp-font-family-mono:
+    "SFMono-Regular", "SF Mono", "Cascadia Code", "Roboto Mono", Menlo,
+    Consolas, monospace;
+  --vp-c-brand-1: #1f6feb;
+  --vp-c-brand-2: #2f81f7;
+  --vp-c-brand-3: #58a6ff;
+  --vp-c-brand-soft: rgba(47, 129, 247, 0.12);
+  --vp-home-panel: #ffffff;
+  --home-panel: var(--vp-home-panel);
+  --home-line: rgba(27, 31, 36, 0.1);
+  --home-line-strong: rgba(27, 31, 36, 0.17);
+  --vp-code-block-bg: #0d1117;
+}
+
+.dark {
+  --vp-c-brand-1: #58a6ff;
+  --vp-c-brand-2: #79c0ff;
+  --vp-c-brand-3: #a5d6ff;
+  --vp-c-brand-soft: rgba(88, 166, 255, 0.13);
+  --vp-home-panel: #0f141b;
+  --home-panel: var(--vp-home-panel);
+  --home-line: rgba(240, 246, 252, 0.1);
+  --home-line-strong: rgba(240, 246, 252, 0.17);
+  --vp-c-bg: #0b0f14;
+  --vp-c-bg-alt: #0d1117;
+  --vp-c-bg-soft: #111820;
+  --vp-c-bg-elv: #141b24;
+  --vp-c-divider: rgba(240, 246, 252, 0.1);
+  --vp-c-gutter: rgba(240, 246, 252, 0.06);
+}
+
+body {
+  text-rendering: optimizeLegibility;
+}
+
+.VPDoc .content-container {
+  max-width: 780px;
+}
+
+.vp-doc h1 {
+  letter-spacing: -0.035em;
+}
+
+.vp-doc h2 {
+  padding-top: 1.6rem;
+  letter-spacing: -0.025em;
+}
+
+.vp-doc h3 {
+  letter-spacing: -0.015em;
+}
+
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.78;
+}
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+  margin: 1.2rem 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.vp-doc tr:nth-child(2n) {
+  background: var(--vp-c-bg-soft);
+}
+
+.vp-doc th,
+.vp-doc td {
+  padding: 0.62rem 0.78rem;
+  border-color: var(--vp-c-divider);
+  font-size: 0.86rem;
+  vertical-align: top;
+}
+
+.vp-doc :not(pre) > code {
+  padding: 0.14rem 0.34rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.28rem;
+  background: var(--vp-c-bg-soft);
+  font-size: 0.86em;
+}
+
+.vp-doc div[class*="language-"] {
+  border: 1px solid #30363d;
+  border-radius: 0.55rem;
+  box-shadow: none;
+}
+
+.vp-doc .custom-block {
+  border-radius: 0.55rem;
+  font-size: 0.92rem;
+}
+
+.vp-doc .custom-block p {
+  line-height: 1.7;
+}
+
+.vp-doc .mermaid {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.6rem;
+  background: var(--vp-c-bg-soft);
+}
+
+.VPHome {
+  padding-bottom: 0 !important;
+}
+
+.VPFooter {
+  border-top: 1px solid var(--vp-c-divider) !important;
+}
+
+.VPFooter .message,
+.VPFooter .copyright {
+  font-size: 0.78rem !important;
+}
+
+@media (max-width: 640px) {
+  .vp-doc table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .vp-doc th,
+  .vp-doc td {
+    min-width: 9rem;
+  }
+}

@@ -120,6 +120,13 @@ const PERMANENT_EXACT_FILES = new Set([
   "packages/cli/NOTICE",
   // Active planning map: decisions and historical notes, not product surface.
   ".omtre/tasks/10-19-omtre-standalone/map.md",
+  // User-facing migration guide: the upstream name is required to tell 0.6.x
+  // users which project the migration applies to.
+  "docs-site/advanced/migration.md",
+  // Deterministically generated from CLI help and page metadata. The only
+  // upstream token comes from the migrate command or the migration page.
+  "docs-site/reference/_cli.generated.md",
+  "docs-site/public/llms.txt",
 ]);
 
 const PERMANENT_DIR_PREFIXES = [

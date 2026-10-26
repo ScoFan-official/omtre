@@ -209,3 +209,6 @@ packages/cli/NOTICE
 packages/cli/assets/
 packages/core/LICENSE
 packages/core/NOTICE
+
+# VitePress local build cache
+docs-site/.vitepress/cache/

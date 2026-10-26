@@ -2,6 +2,8 @@
   <img src="../assets/hero.svg" alt="omtre — the contract-enforced workflow harness">
 </p>
 
+> **User documentation has moved.** Start with the [omtre documentation](https://scofan-official.github.io/omtre/) for installation, the first task, daily usage and platform limits. This file remains the maintainer-oriented inventory for the skills pack, marketplace and vendored catalog.
+
 <p align="center">
   <strong>The agent skill pack with a workflow spine.</strong>
 </p>

@@ -18,8 +18,10 @@
 </p>
 
 <p align="center">
-  English · <a href="./README.zh-CN.md">简体中文</a> · <a href="./docs/pack.md">Skills &amp; marketplace</a> · <a href="./docs/design.md">Design</a> · <a href="./CHANGELOG.md">Changelog</a>
+  English · <a href="./README.zh-CN.md">简体中文</a> · <a href="https://scofan-official.github.io/omtre/">Documentation</a> · <a href="./docs/pack.md">Skills &amp; marketplace</a> · <a href="./docs/design.md">Design</a> · <a href="./CHANGELOG.md">Changelog</a>
 </p>
+
+> **New to omtre?** Start with the [documentation](https://scofan-official.github.io/omtre/) and complete one real task with the [first-use walkthrough](https://scofan-official.github.io/omtre/start/install-and-first-task.html). The docs state platform differences and known limits explicitly.
 
 ## Install
 

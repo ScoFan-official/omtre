@@ -26,9 +26,13 @@ Feature requests are welcome! Please open an issue with:
 ### Improving Documentation
 
 Documentation improvements are always appreciated:
+
 - Fix typos or unclear explanations
 - Add examples
 - Improve README or guide docs
+- Improve the Chinese documentation site under `docs-site/`
+
+Read the [documentation contribution guide](https://scofan-official.github.io/omtre/resources/contributing.html) before adding or restructuring pages.
 
 ### Contributing Code
 
@@ -42,9 +46,9 @@ Code contributions are welcome for:
 
 ### Prerequisites
 
-- Node.js 18.0.0+
+- Node.js 18.17.0+
 - pnpm
-- Python 3 (for hooks)
+- Python 3.9+ (for hooks)
 - Bash (for scripts)
 
 ### Getting Started
@@ -71,10 +75,10 @@ Code contributions are welcome for:
 
 ```bash
 pnpm lint               # ESLint for TypeScript + legacy-name gate
-pnpm lint:py            # Type checking for Python (basedpyright)
-pnpm lint:all           # Run both
+pnpm --filter omtre lint:py # Type checking for Python (basedpyright)
 pnpm typecheck          # TypeScript type checking
 pnpm check:legacy-names # Brand/name gate
+pnpm docs:verify        # Content, CLI-reference, quickstart and site build checks
 ```
 
 > **Note:** Pre-commit hooks will automatically run `eslint --fix` and `prettier --write` on staged `.ts` files.
@@ -91,6 +95,7 @@ omtre/
 ├── catalog/                # Vendored catalog assets (do not patch in place)
 ├── .claude/                # Claude Code config (project's own) ←
 ├── .omtre/                 # omtre workflow (project's own) ←
+├── docs-site/              # Chinese user documentation (VitePress)
 ├── docs/                   # Product and maintainer documentation
 └── scripts/                # Repository tooling
 ```

@@ -213,6 +213,41 @@ describe("scripts/check-legacy-names.mjs", () => {
     expect(failRes.stderr).toContain(`README.md:1: ${DOT_LEGACY}`);
   });
 
+  it("allows the migration guide and generated docs references while scanning other docs-site pages", () => {
+    const root = makeTempRoot();
+    fs.mkdirSync(path.join(root, ".omtre"), { recursive: true });
+
+    writeFile(
+      root,
+      "docs-site/advanced/migration.md",
+      `# Migrate from ${TITLE_LEGACY} 0.6.x\n`,
+    );
+    writeFile(
+      root,
+      "docs-site/reference/_cli.generated.md",
+      `migrate an existing ${TITLE_LEGACY} project\n`,
+    );
+    writeFile(
+      root,
+      "docs-site/public/llms.txt",
+      `- Migrate from ${TITLE_LEGACY} 0.6.x\n`,
+    );
+
+    const passRes = runGate(root);
+    expect(passRes.status, `stderr:\n${passRes.stderr}`).toBe(0);
+
+    writeFile(
+      root,
+      "docs-site/start/unrelated.md",
+      `Leaked ${TITLE_LEGACY} branding\n`,
+    );
+    const failRes = runGate(root);
+    expect(failRes.status).toBe(1);
+    expect(failRes.stderr).toContain(
+      `docs-site/start/unrelated.md:1: ${TITLE_LEGACY}`,
+    );
+  });
+
   it("allows historical task directory slugs while still scanning active task content", () => {
     const root = makeTempRoot();
     const activeSlug = `10-21-${LEGACY}-follow-up`;

@@ -18,8 +18,10 @@
 </p>
 
 <p align="center">
-  <a href="./README.md">English</a> · 简体中文 · <a href="./docs/pack.zh-CN.md">技能与市场</a> · <a href="./docs/design.md">设计</a> · <a href="./CHANGELOG.md">更新日志</a>
+  <a href="./README.md">English</a> · 简体中文 · <a href="https://scofan-official.github.io/omtre/">完整文档</a> · <a href="./docs/pack.zh-CN.md">技能与市场</a> · <a href="./docs/design.md">设计</a> · <a href="./CHANGELOG.md">更新日志</a>
 </p>
+
+> **第一次使用 omtre？** 请从[中文文档站](https://scofan-official.github.io/omtre/)开始，按[安装与第一个任务](https://scofan-official.github.io/omtre/start/install-and-first-task.html)完成一次真实业务小功能。文档会明确标注平台差异和当前限制。
 
 ## 安装
 

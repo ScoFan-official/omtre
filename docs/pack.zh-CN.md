@@ -2,6 +2,8 @@
   <img src="../assets/hero.svg" alt="omtre — 面向 AI 编码代理的合约式工作流 harness">
 </p>
 
+> **用户文档已迁入独立站点。** 安装、第一个任务、日常使用和平台差异请从 [omtre 中文文档](https://scofan-official.github.io/omtre/)开始。本文件继续作为技能包、市场与 vendored 目录的维护者清单。
+
 <p align="center">
   <strong>有工作流脊梁的 agent 技能包。</strong>
 </p>

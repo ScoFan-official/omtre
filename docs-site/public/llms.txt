@@ -1,0 +1,71 @@
+# omtre 文档
+
+> 面向 AI 编码代理的仓库内工作流。中文文档，对应 omtre 1.0.0。
+> 完整页面以 Markdown 描述，并链接到 GitHub Pages 上的 HTML 版本。
+
+## 首页
+
+- [omtre 文档](https://scofan-official.github.io/omtre/): 从第一个任务开始理解规范、任务、检查和项目记忆。
+
+## 开始使用
+
+- [认识 omtre](https://scofan-official.github.io/omtre/start/what-is-omtre.html): 理解 omtre 解决的问题、它在仓库中的位置，以及它明确不负责的事情。
+- [安装与第一个任务](https://scofan-official.github.io/omtre/start/install-and-first-task.html): 从安装 omtre 到完成一个真实业务小功能、通过验证并完成归档的完整路径。
+- [工作原理](https://scofan-official.github.io/omtre/start/how-it-works.html): 看清一次 omtre 任务从会话开始到归档，哪些内容被注入、哪些动作会被脚本阻断。
+- [日常使用](https://scofan-official.github.io/omtre/start/everyday-use.html): 安装完成后，用几个高频入口推进任务、检查质量、升级和排查问题。
+- [真实场景](https://scofan-official.github.io/omtre/start/real-world-scenarios.html): 把 omtre 用到新项目、已有项目、跨层功能、重构、重复缺陷、Review 反馈和团队试点中。
+
+## 核心工作流
+
+### 核心工作流
+
+- [任务与 PRD](https://scofan-official.github.io/omtre/guide/tasks.html): 掌握 omtre 任务的创建、状态、产物、父子关系和归档边界。
+- [规范系统](https://scofan-official.github.io/omtre/guide/specs.html): 写出 Agent 能执行、团队能审查的规范，而不是一库空泛口号。
+- [项目记忆与日志](https://scofan-official.github.io/omtre/guide/workspace-memory.html): 理解 omtre 的开发者身份、workspace journal、跨会话恢复和隐私边界。
+- [质量检查与提交](https://scofan-official.github.io/omtre/guide/quality-and-commit.html): 分清 Agent 审查、验证契约和人工 Review，正确完成提交与归档。
+
+### 运行与维护
+
+- [多平台接入](https://scofan-official.github.io/omtre/guide/platforms.html): 在 Claude Code、Codex、Qoder、Cursor、Copilot 等平台接入 omtre，并理解平台差异。
+- [升级、回滚与卸载](https://scofan-official.github.io/omtre/guide/upgrade-and-remove.html): 正确区分 CLI、项目模板、临时消融和永久卸载，安全处理升级冲突。
+
+## 理解与配置
+
+### 理解与配置
+
+- [架构总览](https://scofan-official.github.io/omtre/advanced/architecture.html): 理解 omtre CLI、核心库、模板、项目脚本、平台 hooks 与任务状态之间的边界。
+- [配置参考](https://scofan-official.github.io/omtre/advanced/configuration.html): omtre 1.0.0 的 config.yaml 常用字段、默认值、支持语法和安全影响。
+
+### 扩展 omtre
+
+- [自定义工作流](https://scofan-official.github.io/omtre/advanced/custom-workflow.html): 切换内置工作流模板，并通过 marketplace 提供团队自己的工作流契约。
+- [自定义命令](https://scofan-official.github.io/omtre/advanced/custom-commands.html): 理解 omtre 如何生成会话命令，以及如何添加不会在升级中丢失的平台自定义命令。
+- [自定义子代理](https://scofan-official.github.io/omtre/advanced/custom-agents.html): 创建运行时角色卡，理解它和平台原生子代理文件的区别与安全边界。
+- [Hooks](https://scofan-official.github.io/omtre/advanced/hooks.html): 理解平台注入 hooks、任务生命周期 hooks、关闭方式与常见故障。
+- [Skills 与规范模板](https://scofan-official.github.io/omtre/advanced/skills-and-marketplace.html): 选择内置技能、市场技能和规范模板，避免把资产数量当成能力保证。
+
+### 运行与恢复
+
+- [Channel 多代理协作](https://scofan-official.github.io/omtre/advanced/channel.html): 使用本机事件日志协调 Claude、Codex 和 ACP worker，理解能力与安全边界。
+- [omtre run 无人值守运行](https://scofan-official.github.io/omtre/advanced/unattended-run.html): 理解 frontier、worktree、验证、ledger 和交付门的真实能力与限制。
+- [从 Trellis 迁移](https://scofan-official.github.io/omtre/advanced/migration.html): 把 Trellis 0.6.x 项目一次性迁移到 .omtre/，理解备份、预检和失败恢复。
+- [消融与恢复](https://scofan-official.github.io/omtre/advanced/ablate-and-restore.html): 临时移除项目内 omtre 表面，理解恢复事务、冲突预检和与卸载的区别。
+- [故障排查](https://scofan-official.github.io/omtre/advanced/troubleshooting.html): 按证据排查 omtre 初始化、hooks、任务、验证、升级、Channel 和运行器问题。
+
+## 参考
+
+- [CLI 命令](https://scofan-official.github.io/omtre/reference/cli.html): omtre 1.0.0 顶层命令与可用参数的自动生成参考。
+- [命令与技能速查](https://scofan-official.github.io/omtre/reference/commands-and-skills.html): 快速查找 omtre 的用户入口、内置技能、子代理和常见平台差异。
+- [关键文件路径](https://scofan-official.github.io/omtre/reference/paths.html): 查询 omtre 项目、平台与用户级运行数据的真实路径和提交边界。
+- [task.json Schema](https://scofan-official.github.io/omtre/reference/task-schema.html): omtre 1.0.0 任务元数据的字段、写入者和状态边界。
+- [JSONL 上下文格式](https://scofan-official.github.io/omtre/reference/jsonl-context.html): 正确编写 implement.jsonl 与 check.jsonl，把稳定规范和研究文件交给子代理。
+- [平台支持矩阵](https://scofan-official.github.io/omtre/reference/platform-matrix.html): 22 个平台的文件路径、hooks、命令、子代理与验证深度对照。
+- [FAQ](https://scofan-official.github.io/omtre/reference/faq.html): omtre 安装、任务、规范、平台、升级、安全和团队接入的高频问题。
+
+## 资源
+
+- [Skills](https://scofan-official.github.io/omtre/resources/skills.html): 选择适合 omtre 的工程、规划、研究、设计和运维技能，控制安装范围。
+- [规范模板](https://scofan-official.github.io/omtre/resources/spec-templates.html): 使用 omtre marketplace 的规范模板启动项目，并知道模板之后必须自己维护。
+- [使用案例](https://scofan-official.github.io/omtre/resources/use-cases.html): omtre 自身可核验的工作流实践，以及如何把这些模式应用到你的仓库。
+- [参与贡献](https://scofan-official.github.io/omtre/resources/contributing.html): 编写、验证和提交 omtre 文档，以及从哪里开始参与产品贡献。
+- [更新日志](https://scofan-official.github.io/omtre/resources/changelog.html): omtre 独立版本线与当前文档对应的版本。详细发布历史以仓库 CHANGELOG 为准。

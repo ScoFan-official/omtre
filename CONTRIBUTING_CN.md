@@ -26,9 +26,13 @@
 ### 改进文档
 
 文档改进永远受欢迎：
+
 - 修复错别字或表述不清的地方
 - 添加示例
 - 改进 README 或指南文档
+- 改进 `docs-site/` 下的中文文档站
+
+新增或重组页面前，请先阅读[文档贡献指南](https://scofan-official.github.io/omtre/resources/contributing.html)。
 
 ### 贡献代码
 
@@ -42,9 +46,9 @@
 
 ### 前置要求
 
-- Node.js 18.0.0+
+- Node.js 18.17.0+
 - pnpm
-- Python 3（用于 hooks）
+- Python 3.9+（用于 hooks）
 - Bash（用于脚本）
 
 ### 开始开发
@@ -71,10 +75,10 @@
 
 ```bash
 pnpm lint               # TypeScript ESLint 检查 + 旧名门禁
-pnpm lint:py            # Python 类型检查 (basedpyright)
-pnpm lint:all           # 同时运行以上两者
+pnpm --filter omtre lint:py # Python 类型检查 (basedpyright)
 pnpm typecheck          # TypeScript 类型检查
 pnpm check:legacy-names # 品牌/旧名门禁
+pnpm docs:verify        # 文档内容、CLI 参考、快速上手与站点构建检查
 ```
 
 > **注意：** 提交时 pre-commit hook 会自动对暂存的 `.ts` 文件运行 `eslint --fix` 和 `prettier --write`。
@@ -91,6 +95,7 @@ omtre/
 ├── catalog/                # vendored 目录资产（不要原地修改）
 ├── .claude/                # Claude Code 配置（项目自用）←
 ├── .omtre/                 # omtre 工作流（项目自用）←
+├── docs-site/              # 中文用户文档站（VitePress）
 ├── docs/                   # 产品与维护者文档
 └── scripts/                # 仓库工具
 ```
