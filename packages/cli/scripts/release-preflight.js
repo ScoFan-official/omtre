@@ -127,12 +127,12 @@ async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Six attempts covered ~50s, but registry propagation after a publish can take
-// longer; the 1.0.0 release failed its verify step that way. Test hook:
-// OMTRE_PREFLIGHT_RETRY_MS shrinks the delay so the retry path is exercised
-// without wall-clock waits.
+// Six attempts covered ~50s; the 1.0.0 verify step still saw a 404 at 52s
+// after the publish, so registry propagation exceeded that window. Seventeen
+// waits (~170s) leave a wider margin. Test hook: OMTRE_PREFLIGHT_RETRY_MS
+// shrinks the delay so the retry path is exercised without wall-clock waits.
 async function retry(label, fn) {
-  const attempts = 12;
+  const attempts = 18;
   const delayMs = Number(process.env.OMTRE_PREFLIGHT_RETRY_MS ?? 10_000);
   let lastError;
   for (let i = 1; i <= attempts; i += 1) {
