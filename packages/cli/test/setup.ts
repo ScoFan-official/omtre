@@ -1,3 +1,10 @@
+// Pin the locale for every test process and its children: several assertions
+// match git's stderr text, which localizes when the developer's shell runs a
+// non-English locale (the pre-commit hook then fails on a clean tree).
+process.env.LC_ALL = "C";
+process.env.LANG = "C";
+process.env.LANGUAGE = "C";
+
 // Strip host-shell session env vars so the OpenCode / Omtre context
 // resolvers under test fall through to platform-input-derived keys
 // instead of picking up whatever the dev's terminal happens to export.
