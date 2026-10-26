@@ -40,7 +40,7 @@
  * version/tag mismatch. Version equality is checked first; npm existence
  * decides per-package skip.
  */
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -109,8 +109,15 @@ export function npmVersionExists(pkgName, version) {
 }
 
 function npmViewJSON(args) {
-  const out = execSync(
-    `npm view ${args} --json --registry=https://registry.npmjs.org/`,
+  const out = execFileSync(
+    "npm",
+    [
+      "view",
+      ...args,
+      "--json",
+      "--prefer-online",
+      "--registry=https://registry.npmjs.org/",
+    ],
     { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"], timeout: 15_000 },
   ).trim();
   return out ? JSON.parse(out) : null;
@@ -120,8 +127,13 @@ async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Six attempts covered ~50s, but registry propagation after a publish can take
+// longer; the 1.0.0 release failed its verify step that way. Test hook:
+// OMTRE_PREFLIGHT_RETRY_MS shrinks the delay so the retry path is exercised
+// without wall-clock waits.
 async function retry(label, fn) {
-  const attempts = 6;
+  const attempts = 12;
+  const delayMs = Number(process.env.OMTRE_PREFLIGHT_RETRY_MS ?? 10_000);
   let lastError;
   for (let i = 1; i <= attempts; i += 1) {
     try {
@@ -132,7 +144,7 @@ async function retry(label, fn) {
       console.error(
         `${YELLOW}! ${label} not visible yet; retrying (${i}/${attempts})${RESET}`,
       );
-      await sleep(10_000);
+      await sleep(delayMs);
     }
   }
   throw lastError;
@@ -322,15 +334,17 @@ async function verifyNpm({ packageFilter }) {
 
   for (const pkg of packages) {
     await retry(`${pkg.name}@${v.cliVersion}`, () => {
-      const version = npmViewJSON(`${pkg.name}@${v.cliVersion} version`);
+      const version = npmViewJSON([`${pkg.name}@${v.cliVersion}`, "version"]);
       if (version !== v.cliVersion) {
-        fail(
+        // Throw, do not fail(): fail() exits the process and would skip
+        // every remaining retry while the registry replicas catch up.
+        throw new Error(
           `${pkg.name}@${v.cliVersion} is not visible on the public npm registry.`,
         );
       }
-      const taggedVersion = npmViewJSON(`${pkg.name}@${tag} version`);
+      const taggedVersion = npmViewJSON([`${pkg.name}@${tag}`, "version"]);
       if (taggedVersion !== v.cliVersion) {
-        fail(
+        throw new Error(
           `${pkg.name}@${tag} resolves to ${taggedVersion ?? "nothing"}, expected ${v.cliVersion}.`,
         );
       }
