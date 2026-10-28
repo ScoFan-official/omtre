@@ -35,27 +35,27 @@ const steps = [
   {
     number: "01",
     title: "会话开始",
-    copy: "注入项目规范索引、当前任务和最近工作状态。",
+    copy: "注入项目规范索引、当前活跃任务与跨会话工作记忆。",
   },
   {
     number: "02",
     title: "计划",
-    copy: "把需求写成 PRD；复杂任务再补设计、执行计划和上下文清单。",
+    copy: "把需求固化为 PRD 边界契约；复杂任务补齐技术设计与验证命令清单。",
   },
   {
     number: "03",
     title: "实现",
-    copy: "在任务边界内修改代码。实现不会自动提交或推送。",
+    copy: "在 PRD 约定的文件范围内编码。是否提交和推送仍由人、工作流和宿主权限控制。",
   },
   {
     number: "04",
     title: "检查",
-    copy: "按规范审查，并运行仓库真实存在的 lint、类型检查和测试。",
+    copy: "按规范审查 diff；如果任务登记了验证命令，归档时脚本会重放并检查退出码。",
   },
   {
     number: "05",
     title: "收尾",
-    copy: "人工确认 diff，提交、归档任务，再记录本次会话。",
+    copy: "人工确认 diff 并先提交业务代码，再归档任务、记录会话日志。",
   },
 ];
 </script>
@@ -64,6 +64,18 @@ const steps = [
   <div class="home-shell">
     <section class="hero-section">
       <div class="hero-copy">
+        <div class="hero-brand">
+          <img
+            class="brand-wordmark brand-wordmark-light"
+            :src="withBase('/brand/wordmark-light.webp')"
+            alt="omtre"
+          />
+          <img
+            class="brand-wordmark brand-wordmark-dark"
+            :src="withBase('/brand/wordmark-dark.webp')"
+            alt=""
+          />
+        </div>
         <a
           class="release-pill"
           :href="`https://github.com/ScoFan-official/omtre/releases/tag/cli-v${version}`"
@@ -79,8 +91,8 @@ const steps = [
           <span class="accent">都沿着项目约定进行。</span>
         </h1>
         <p class="hero-lead">
-          omtre 把规范、任务和项目记忆留在仓库里。换一个会话、换一个代理，
-          它仍然知道该怎么做、这次在做什么、上次留下了什么。
+          omtre 把规范约束、任务上下文与项目记忆沉淀在 Git 仓库中。更换会话或切换编码代理，
+          它依然清楚该遵循什么约定、这次改动边界在哪、上次沉淀了哪些事实。
         </p>
         <div class="hero-actions">
           <a class="action-primary" :href="withBase('/start/install-and-first-task.html')">
@@ -166,8 +178,8 @@ const steps = [
         <p class="eyebrow">Repo-native state</p>
         <h2>事实留在仓库里，不藏在聊天记录里</h2>
         <p>
-          omtre 用一个 <code>.omtre/</code> 主轴承载团队规范、任务产物、个人日志和运行脚本。
-          审查者看到的材料，与代理工作时读取的材料是同一份。
+          omtre 用单一 <code>.omtre/</code> 主轴承载团队规范、任务产物、个人日志和验证脚本。
+          审查者在 Code Review 时看到的依据，与代理工作时读取的是同一套仓库文件。
         </p>
         <a :href="withBase('/guide/specs.html')">了解规范系统 <span aria-hidden="true">→</span></a>
       </div>
@@ -190,19 +202,19 @@ const steps = [
       <div class="boundary-card boundary-stable">
         <MaturityBadge level="stable" />
         <h3>仓库内工作流</h3>
-        <p>规范、任务、日志、验证脚本和归档都有真实文件与自动化测试。</p>
+        <p>规范与任务状态以仓库文件保存；任务登记过的验证命令可由脚本重放。</p>
         <a :href="withBase('/start/how-it-works.html')">工作原理</a>
       </div>
       <div class="boundary-card boundary-mixed">
         <MaturityBadge level="mixed" />
         <h3>22 个平台适配</h3>
-        <p>同一套核心布局，但 hooks、命令与子代理由宿主决定，深度并不相同。</p>
+        <p>核心 <code>.omtre/</code> 结构共享；hooks、slash commands 与子代理能否工作，由具体宿主能力决定。</p>
         <a :href="withBase('/reference/platform-matrix.html')">平台矩阵</a>
       </div>
       <div class="boundary-card boundary-advanced">
         <MaturityBadge level="advanced" />
         <h3>无人值守运行</h3>
-        <p>worktree、验证和交付门已实现，真实长期无人运行仍需试点与人工把关。</p>
+        <p>worktree、验证和交付门已实现；长期无人值守仍需试点，运行器不会自动合并 PR。</p>
         <a :href="withBase('/advanced/unattended-run.html')">运行边界</a>
       </div>
     </section>
@@ -212,8 +224,8 @@ const steps = [
         <p class="eyebrow">Bring your own agent</p>
         <h2>不绑定模型，也不要求更换编辑器</h2>
         <p>
-          omtre 为 22 个编码代理生成平台文件。建议从你的团队实际使用的 1–2 个宿主开始，
-          不要把“生成配置文件”当成“所有平台已完成端到端验证”。
+          omtre 为 22 个编码代理生成平台配置。建议从团队日常主力使用的 1–2 个平台切入；
+          生成配置文件不等于各平台已完成端到端验证。
         </p>
         <a :href="withBase('/guide/platforms.html')">选择你的平台 <span aria-hidden="true">→</span></a>
       </div>
@@ -276,6 +288,19 @@ const steps = [
   pointer-events: none;
 }
 
+.hero-brand {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin-bottom: 1.2rem;
+}
+
+.brand-wordmark {
+  display: block;
+  width: auto;
+  height: 32px;
+}
+
 .release-pill {
   display: inline-flex;
   gap: 0.5rem;
@@ -318,7 +343,7 @@ const steps = [
 
 .accent {
   display: inline-block;
-  color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-2);
 }
 
 .hero-lead {

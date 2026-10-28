@@ -68,21 +68,44 @@ for (const link of pagePaths) {
     errors.push(`${rel}: missing "## 下一步" section.`);
   }
   const h1Matches = [];
+  const badges = [];
   let inFence = false;
   for (const line of text.split(/\r?\n/)) {
     if (/^```/.test(line)) {
       inFence = !inFence;
       continue;
     }
-    if (!inFence && /^# /.test(line)) h1Matches.push(line);
+    if (inFence) continue;
+    if (/^# /.test(line)) h1Matches.push(line);
+    for (const match of line.matchAll(/<MaturityBadge\s+level="([^"]+)"\s*\/>/g)) {
+      badges.push(match[1]);
+    }
   }
   if (h1Matches.length !== 1) {
     errors.push(`${rel}: expected exactly one H1, found ${h1Matches.length}.`);
   } else if (meta.title && h1Matches[0].slice(2).trim() !== meta.title) {
     errors.push(`${rel}: H1 does not match frontmatter title.`);
   }
+  if (badges.length !== 1) {
+    errors.push(
+      `${rel}: expected exactly one MaturityBadge, found ${badges.length}.`,
+    );
+  } else if (meta.maturity && badges[0] !== meta.maturity) {
+    errors.push(`${rel}: MaturityBadge does not match frontmatter maturity.`);
+  }
   if (/\b(TODO|TBD|FIXME)\b|待补充|占位页/.test(text)) {
     errors.push(`${rel}: contains an unfinished placeholder marker.`);
+  }
+
+  const bannedPhrases = [
+    { pattern: /这一页只做一件事/, label: "这一页只做一件事 (AI boilerplate opening)" },
+    { pattern: /一句话概括[：:]/, label: "一句话概括 (superficial summary marker)" },
+    { pattern: /你已经知道.*接下来不要/, label: "你已经知道……接下来不要 (patronizing tone)" },
+  ];
+  for (const { pattern, label } of bannedPhrases) {
+    if (pattern.test(text)) {
+      errors.push(`${rel}: contains banned AI template phrase "${label}".`);
+    }
   }
 
   for (const match of text.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {

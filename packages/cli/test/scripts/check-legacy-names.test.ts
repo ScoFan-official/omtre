@@ -213,6 +213,17 @@ describe("scripts/check-legacy-names.mjs", () => {
     expect(failRes.stderr).toContain(`README.md:1: ${DOT_LEGACY}`);
   });
 
+  it("ignores local agent and tool state directories", () => {
+    const root = makeTempRoot();
+    fs.mkdirSync(path.join(root, ".omtre"), { recursive: true });
+    for (const dir of [".workbuddy", ".qoder", ".gitnexus", ".codegraph"]) {
+      writeFile(root, `${dir}/memory/notes.md`, `${TITLE_LEGACY}\n`);
+    }
+
+    const res = runGate(root);
+    expect(res.status, `stderr:\n${res.stderr}`).toBe(0);
+  });
+
   it("allows the migration guide and generated docs references while scanning other docs-site pages", () => {
     const root = makeTempRoot();
     fs.mkdirSync(path.join(root, ".omtre"), { recursive: true });

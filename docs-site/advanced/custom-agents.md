@@ -10,171 +10,90 @@ since: 1.0.0
 
 <MaturityBadge level="advanced" />
 
-omtre 有两类与“子代理”相关的文件：
+omtre 系统中存在两类名称相近但物理层级与消费者完全不同的“子代理”文件：
 
-| 类型 | 位置 | 谁读取 |
+| 代理类型 | 存放物理路径 | 消费与解析主体 | 技术职责与定位 |
+|---|---|---|---|
+| **仓库运行时角色卡** | `.omtre/agents/<name>.md` | `omtre run`、Channel 总线、本地状态机 | 团队共享的角色契约真源，定义 Worker 行为边界 |
+| **宿主原生子代理文件** | `.claude/agents/`、`.qoder/agents/` 等 | 具体 AI 编辑器或 CLI 宿主 | 供宿主主会话识别并启动进程隔离子代理 |
+
+修改平台原生目录下的文件绝不会自动同步给 `.omtre/agents/`，反之亦然。二者是“底层契约真源”与“上层宿主适配”的映射关系。
+
+## 核心内置角色与权限边界
+
+| 角色标识 | 核心工程职责 | 工具权限红线（坚决不可做） |
 |---|---|---|
-| 运行时角色卡 | `.omtre/agents/<name>.md` | Channel、`omtre run`、部分主会话流程 |
-| 平台原生子代理 | `.claude/agents/`、`.qoder/agents/` 等 | 宿主自己的子代理系统 |
+| `implement` | 在 PRD 严格划定的范围内编写业务源码与测试 | 擅自扩大需求边界、自动执行 `git commit` 或 `git push` |
+| `check` | 审查规范符合性与验收条件，执行命令验证重放 | 擅自静默修改业务代码、掩盖测试失败输出 |
+| `research` | 只读调研现有架构、依赖调用链并产出分析文档 | **绝对禁止修改任何产品代码**，仅允许产出 `research/*.md` |
+| `orchestrator` | 协调任务派发、检查 Worker 状态并汇报账本 | 越俎代庖直接编写业务代码 |
 
-它们不是同一层。修改平台文件不会自动改变运行时角色卡，反之亦然。
+针对复杂工程审查，系统支持将单一的 `check` 拆分为双轴检查：`check.standards.md`（编码风格与架构规约轴）与 `check.spec.md`（PRD 功能验收轴）。
 
-## 内置角色卡
+## 角色卡的数据结构与字段
 
-常见角色：
-
-| 角色 | 责任 | 不应做 |
-|---|---|---|
-| `implement` | 按任务产物实现代码 | 决定最终需求、自动提交 |
-| `check` | 审查规范与验收，运行验证 | 擅自改写需求 |
-| `research` | 只读调查并写研究产物 | 修改产品代码 |
-| `orchestrator` | 协调运行与派发 | 代替 worker 实现全部任务 |
-
-一些项目还使用 `check.standards.md` 和 `check.spec.md` 把检查分成两个轴。
-
-## 角色卡结构
+角色卡采用 Markdown + YAML Frontmatter 格式存储：
 
 ```markdown
 ---
-provider: qoder
-model: default
+provider: claude
+model: claude-opus-4-7
+effort: high
 ---
 
-# Implement
+# Implement Worker
 
-You are the implementation worker for one active Omtre task.
+你是本次 omtre 活动任务的实施子代理。
 
-## Read
+## 必读上下文清单
+1. 当前任务的 `prd.md`（需求范围与验收标准）
+2. 当前任务的 `design.md` 与 `implement.md`（若存在）
+3. `implement.jsonl` 中索引的项目规范与调研文件
+4. 任务相关的业务源码与测试用例
 
-1. The active task's `prd.md`
-2. `design.md` if present
-3. `implement.md` if present
-4. Files listed in `implement.jsonl`
-5. Relevant source and tests
-
-## Write
-
-- Implement only the task scope.
-- Add or update tests.
-- Do not commit, push, merge, or modify task status.
-- Report changed files, validation results, and remaining risks.
+## 动作红线
+- 仅修改 PRD 明确列为 In Scope 的文件；
+- 编码同时必须补齐对应单元测试；
+- 严禁执行 git commit、git push，严禁私自修改 task.json 状态；
+- 完成后必须运行任务绑定的验证契约命令并报告退出码。
 ```
 
-实际 frontmatter 字段取决于运行时。常见字段包括：
+Frontmatter 中的常用调度字段：
+- `provider`：当前运行时注册的接入方式，可选 `claude`、`codex`、`acp`；
+- `model`：Provider 能识别的模型代号；
+- `effort`：Provider 使用的推理强度，具体取值由对应 Provider 决定；
+- `acp_target`：使用 ACP 时要调用的目标，如 `codex`、`claude` 或 `grok-build`。
 
-- `provider`
-- `model`
-- `effort`
-- `acp_target`
-- `acp_effort`
+未知字段会被忽略；未知 `provider` 不会自动变成可用执行器。
 
-未知字段通常被忽略。名称应使用字母、数字、点、下划线或连字符。
+## 运行时角色卡解析拓扑
 
-## 运行时如何找到角色卡
-
-`omtre run` 和 Channel 的 `--agent <name>` 会从 `.omtre/agents/` 解析角色卡。支持两种常见布局：
+当 `omtre run` 或 Channel 总线调度 `--agent <name>` 时，解析引擎在 `.omtre/agents/` 下按以下优先级定位：
 
 ```text
-.omtre/agents/reviewer.md
-.omtre/agents/reviewer/AGENT.md
+1. .omtre/agents/<name>.md
+2. .omtre/agents/<name>/AGENT.md
 ```
 
-找不到角色卡时，派发应失败，而不是用一个任意代理替代。
+对于审查角色，若存在 `check.standards.md` 和 `check.spec.md`，引擎优先按具体轴派发；若不存在则自动回退至 `check.md`。
 
-## 检查轴的解析
+::: danger 严禁创建空角色卡占位
+**绝对不要创建空文件或仅写标题的角色卡来“占位”。** 空白角色卡会导致调度系统误认为该任务已有完整边界约束，从而抹除默认的安全守卫行为，导致 Agent 在缺乏提示词约束的裸状态下直接跑飞。
+:::
 
-如果存在：
+## 宿主原生子代理文件的管理
 
-```text
-.omtre/agents/check.standards.md
-.omtre/agents/check.spec.md
-```
+`omtre init` 为支持平台生成的子代理文件位于各平台目录内部（如 `.claude/agents/`）。定制这些文件时必须注意：
+1. **防止升级覆写**：平台生成的代理文件属于受管资产，`omtre update` 时可能会被官方新版本模板覆盖。若有团队特定定制，建议在 `update` 时使用 `--create-new` 进行差异对比；
+2. **上下文注入通道差异**：确认当前宿主是通过 Hook 自动推送上下文（如 Claude Code），还是依赖子代理自行通过工具读取任务目录（如 Qoder 的 Pull-based 模式）。
 
-运行时可以按轴选择更具体的卡；否则回退到 `.omtre/agents/check.md`。
+## 真正的安全隔离依赖系统权限
 
-不要创建空文件来“占位”。空角色卡比没有角色卡更危险，因为它让系统以为有明确边界。
-
-## 平台原生子代理
-
-初始化会在支持平台生成实现、检查、研究子代理。它们用于宿主主会话派发，通常包含：
-
-- 角色职责；
-- 读取任务的顺序；
-- JSONL 上下文要求；
-- 是否允许写文件；
-- 禁止再派生子代理等约束。
-
-修改这些文件需要同时考虑：
-
-- `omtre update` 是否会覆盖；
-- 平台是否支持该 frontmatter；
-- 工具权限是否真的被限制；
-- 上下文是由 hook 注入还是子代理自读。
-
-## 添加一个自定义角色
-
-1. 明确职责和不做的事；
-2. 选择是否有写权限；
-3. 指定读取顺序；
-4. 定义输出格式；
-5. 定义失败和升级路径；
-6. 在测试仓库实际派发；
-7. 记录支持的平台与 provider。
-
-示例：
-
-```markdown
----
-provider: acp
-acp_target: codex
-acp_effort: medium
----
-
-# Release reviewer
-
-Review the current task for release readiness. Read-only.
-
-## Checks
-
-- Run the task verification contract.
-- Confirm no secrets, generated artifacts, or unrelated files are staged.
-- Confirm the PR description states rollout and rollback.
-- Report blockers with file paths and exact commands.
-
-## Forbidden
-
-- Editing files.
-- Committing or pushing.
-- Approving its own changes.
-```
-
-## 安全边界
-
-角色卡中的“只读”或“禁止 push”是提示词约束。真正的工具权限取决于宿主。
-
-要做到机械限制：
-
-- 使用宿主的 sandbox / tool allowlist；
-- 限制 worker 的 Git 权限；
-- 在 CI 和远端仓库使用分支保护；
-- Channel 只在受信任本机使用；
-- 不把生产凭据注入 worker。
-
-## 什么时候值得自定义
-
-适合：
-
-- 团队有专门的安全、性能、可访问性检查；
-- 需要固定输出格式；
-- 需要把某个 provider 的模型与任务类型绑定；
-- 需要多个检查轴。
-
-不适合：
-
-- 只是想多一个“专家”名称；
-- 没有明确输入输出；
-- 角色会修改文件但没有版本化验证；
-- 同一职责已有平台原生机制。
+必须认识到：角色卡正文中写下的“只读”、“严禁执行 push”本质上是语言模型的**提示词约束（Soft Guidance）**。
+要实现物理级别的安全阻断：
+- **依赖宿主工具白名单**：在宿主配置中限制该子代理仅挂载只读工具（如仅允许 `Read`、`Grep`，禁用 `Write`、`Edit`、`Bash`）；
+- **依靠 Git 平台权限**：生产级分支必须在 GitHub/GitLab 远端开启受保护分支规则与强制 CI 检查；
+- **凭据最小化**：禁止向非必要 Worker 进程注入任何写权限的 Token 或部署密钥。
 
 ## 下一步
 

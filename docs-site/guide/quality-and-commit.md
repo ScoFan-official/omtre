@@ -10,196 +10,114 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-“检查通过”可以指很多不同的事。omtre 把几层质量证据分开，避免用一句 Agent 总结代替真实验证。
+大语言模型给出的“代码已全部通过检查”是一句缺乏刚性保证的文本描述。omtre 建立分层质量证据链，将基于规则的审查、确定性的本地进程执行验证与人工 Review 严格解耦，以机器可复现的退出码（Exit Code）作为工作交付的核心底线。
 
-## 四个层次
+## 质量验证的四个层级
 
-| 层次 | 证据 | 能否机械保证 |
-|---|---|---|
-| 规范审查 | 改动是否符合团队规则 | 部分，主要靠 Agent + 人 |
-| 任务符合性 | 是否满足 PRD、设计和执行计划 | 部分，靠检查角色与人 |
-| 命令验证 | lint、类型检查、测试的真实退出码 | 是，由验证契约重放 |
-| 交付审查 | 是否允许 push/PR/合并 | 分支保护、CI、人工 Review |
+| 层级 | 检验对象 | 证据形式 | 判定与执行主体 | 机械阻断能力 |
+|---|---|---|---|---|
+| 规范审查（Standards） | 架构与编码风格约定 | 静态规则命中报告 | 静态扫描器、Reviewer 子代理 | 弱（提示/建议） |
+| 任务符合性（Spec） | PRD 范围与验收标准对齐 | 功能与边界检查清单 | 检查子代理、工程师自测 | 中（人工比对） |
+| 本地验证契约（Contract） | 测试、构建与类型系统 | 独立子进程退出码 | Python 子进程隔离执行 | **有契约且未跳过时阻断** |
+| 交付准入（Delivery） | 集成风险与安全合规 | CI 流水线状态、PR 评审 | GitHub/GitLab CI、评审工程师 | **分支合并硬阻断** |
 
-omtre 不能自动证明需求正确。它只能让需求、改动和验证证据更容易被检查。
+## 本地验证契约（Verification Contract）的技术刚性
 
-## 任务验证契约
+验证契约是固化在 `task.json` 内的自动化命令清单，代表该任务被视为“完成”必须满足的可复现机器判据。
 
-一条验证记录包含：
-
-- 命令；
-- 期望退出码；
-- 超时时间。
-
-默认期望退出码为 `0`，默认超时为 600 秒。
-
-```bash
-python3 .omtre/scripts/task.py add-verify \
-  .omtre/tasks/<task-dir> \
-  "pnpm lint"
-
-python3 .omtre/scripts/task.py add-verify \
-  .omtre/tasks/<task-dir> \
-  "pnpm test" \
-  --timeout 900
+```json
+{
+  "verify": [
+    {"cmd": "pnpm lint", "expect_exit": 0, "timeout": 300},
+    {"cmd": "pnpm test:unit", "expect_exit": 0, "timeout": 600}
+  ]
+}
 ```
 
-查看或清空：
+### 命令契约的技术红线
+
+登记进入验证契约的命令必须满足以下执行要求：
+
+1. **单次非交互执行**：严禁携带 `--watch`、热更新或任何等待用户按键输入的标志。命令必须能够在非 TTY 管道环境中自主完成并退出。
+2. **退出码确定性**：程序必须以显式退出码结束，默认期望退出码为 `0`。任何未捕获异常、测试失败或语法错误必须产生非零返回码。
+3. **独立进程组与超时强杀**：omtre 底层通过独立的会话组（Process Session）拉起子进程执行命令。一旦命令超出 `timeout` 时限，系统将递归查杀整个进程树（Process Tree），杜绝由于孤儿守护进程常驻而造成管道挂起或自动化循环死锁。
+
+### 契约的注册与执行
 
 ```bash
+# 为指定任务追加验证命令
+python3 .omtre/scripts/task.py add-verify \
+  .omtre/tasks/<task-dir> \
+  "pnpm test:unit" \
+  --timeout 600
+
+# 立即在本地执行验证契约以观察退出码
 python3 .omtre/scripts/task.py run-verify .omtre/tasks/<task-dir>
+
+# 清除所有已登记命令
 python3 .omtre/scripts/task.py clear-verify .omtre/tasks/<task-dir>
 ```
 
-命令从仓库根目录执行，可以按项目需要登记多条。
+### 归档时的验证重放
 
-### 验证契约适合放什么
+在调用 `task.py archive` 归档任务时，系统**绝不相信**历史缓存的“上次测试成功”标志，而是在当前工作树就地完整重放所有验证契约命令：
 
-- 仓库已有的 lint、typecheck、test；
-- 特定包的测试命令；
-- 一个任务的回归测试；
-- 可重复的静态检查。
+- **任一命令退出码与预期不符**：归档中断，任务目录保持原地不动，状态维持在 `in_progress`。
+- **配置强制约束**：若 `.omtre/config.yaml` 开启了 `verify_required: true`，未登记任何验证命令的任务在尝试归档时将被直接拒绝；未开启时，缺少契约通常只给出警告。
+- **显式绕过约束**：`--skip-verify "<reason>"` 会在重放前直接放行并写入 `verify_skipped`。原因必须具备审计价值，不能把跳过当作常规路径。
 
-不要放：
+## 代码提交与任务归档的核心界限
 
-- 依赖生产凭证的命令；
-- 会修改外部状态的部署命令；
-- 需要人工判断的“发布前检查”；
-- 没有稳定退出码的交互程序。
+明确区分“业务代码提交”与“任务目录归档”是保障 Git 历史整洁与可追溯性的根本防线。
 
-## 无契约时会发生什么
+### 职责边界对照
 
-| 条件 | 归档行为 |
-|---|---|
-| 有契约且全部通过 | 允许归档 |
-| 有契约但任一失败 | 拒绝归档 |
-| 无契约，`verify_required: false` | 警告后允许 |
-| 无契约，`verify_required: true` | 拒绝归档 |
+| 操作环节 | 驱动命令 | 涉及文件范围 | 责任主体与语义 |
+|---|---|---|---|
+| 业务代码提交 | `git commit` | `src/**`, `tests/**`, `package.json` 等 | **工程师显式负责**。表达功能的业务逻辑增删与重构。 |
+| 任务状态归档 | `task.py archive` | `.omtre/tasks/<slug>` 迁移至 `.omtre/tasks/archive/...` | **工具链自动化执行**。仅负责任务状态、目录迁移与任务簿记提交；不提交业务代码。 |
+| 代码远端推送 | `git push` | 当前工作分支的所有本地提交 | **工程师显式负责**。将分支提交推送到代码托管平台。 |
 
-默认值取决于 `autonomy` 模式。团队试点建议显式配置：
+### 核心铁律
 
-```yaml
-verify_required: true
+1. **归档绝不替代业务代码提交**：在执行 `task.py archive` 之前，所有业务代码及新增测试用例必须已经通过 `git commit` 显式提交。严禁将未暂存或未提交的业务代码与任务元数据混在一起归档。
+2. **归档绝不会执行 `git push`**：`task.py archive` 的影响范围严格限制在本地文件系统与本地 Git 仓库，绝不会擅自向远程仓库发起任何网络推送（Push）。推送时机与 PR 创建流程完全交由工程师自主把控。
+
+### 标准交付时序
+
+```mermaid
+flowchart TD
+    A[完成代码编写与自测] --> B[git diff 审查变更范围]
+    B --> C[git commit 提交业务代码与测试用例]
+    C --> D[python3 task.py archive 执行验证与迁移]
+    D --> E[python3 add_session.py 记录会话日志]
+    E --> F[git push origin <branch> 推送并提 PR]
 ```
 
-这样“没有验证证据”不会被悄悄当成成功。
+## 提交前的自审清单
 
-## 显式跳过验证
-
-```bash
-python3 .omtre/scripts/task.py archive <task-dir> \
-  --skip-verify "The only change is a documentation typo; tests are unchanged."
-```
-
-- 原因必须非空；
-- 原因会写入任务的 `verify_skipped`；
-- 这不是无记录绕过；
-- 不应成为日常路径。
-
-如果 Agent 因为验证失败而建议跳过，停下来检查失败本身。跳过只适合“验证对该改动确实不适用”的情况。
-
-## 检查角色与两轴审查
-
-支持子代理的平台通常把检查分成两轴：
-
-- **规范轴（standards）**：对照项目规范，可修复机械问题；
-- **任务轴（spec）**：对照 PRD、设计和实现计划，只报告，不直接改写需求。
-
-收集两份报告后，人应看到：
-
-- 各自发现了什么；
-- 哪些已修复；
-- 哪些需要产品/架构判断；
-- 哪些验证命令通过或失败。
-
-不同平台的子代理能力和命名不同。若宿主不支持子代理，主轴应使用检查技能完成同样的审查范围。
-
-## 人工 Review 仍然必要
-
-自动化检查无法判断：
-
-- 需求是否真的解决了用户问题；
-- 可访问性、产品文案和交互是否合理；
-- 数据模型是否会在半年后造成不可逆问题；
-- 安全边界是否完整；
-- 复杂状态机是否有遗漏；
-- 代码是否值得维护。
-
-Review 应从证据出发：
+在敲下 `git commit` 之前，按以下命令核对工作区：
 
 ```bash
+# 查看改动文件列表，确保无无关脏文件或临时产物
 git status --short
-git diff --stat
+
+# 审查具体代码差异，确认无调试断点或硬编码凭据
+git diff --cached
 git diff
+
+# 本地复核验证契约是否全绿
 python3 .omtre/scripts/task.py run-verify .omtre/tasks/<task-dir>
 ```
 
-## 提交边界
-
-omtre 的原则是：只提交本次任务中你理解并确认的文件。
-
-### 提交前
-
-```bash
-git status --short
-git diff --cached
-git diff
-```
-
-分析两类文件：
-
-- **本次任务编辑**：可以按逻辑分组提交；
-- **未识别的脏文件**：不要用 `git add -A` 一起带走。
-
-### 推荐提交方式
-
-```bash
-git add src/orders/filter.ts src/orders/filter.test.ts
-git commit -m "feat(orders): add status filter"
-```
-
-多个独立逻辑可以分成多个提交，但不要把簿记文件和代码混在一起。
-
-### 禁止或需要确认的操作
-
-- `git commit --amend` 修改已共享提交；
-- `git push --force`；
-- 未确认就 push；
-- 把 secrets 或环境文件加入提交；
-- 使用 `--no-verify` 跳过仓库 hooks。
-
-## 归档会做什么
-
-`task.py archive` 会再次运行验证契约，并尝试创建一个只包含任务簿记的自动提交。
-
-正确顺序是：
-
-```text
-工作代码提交
-  -> task archive 提交
-  -> add_session journal 提交
-```
-
-如果归档移动成功但自动提交失败，任务可能已经在 archive 目录，需要人工补一次提交。不要把这种情况误判为任务丢失。
-
-## 前端任务的特殊门槛
-
-如果团队使用带前端设计审查契约的规范包，任务可能要求 `implement.md` 中存在设计审查段落后才允许归档。是否启用取决于项目安装的规范，不是所有 omtre 项目默认都有。
-
-## CI 仍是最终防线
-
-omtre 的本地验证契约不能替代：
-
-- CI 的干净环境测试；
-- 分支保护；
-- 代码所有者审查；
-- 安全扫描；
-- 发布流程检查。
-
-团队应把 omtre 视为本地反馈和证据层，而不是 CI 的替代。
+提交原则：
+- 一次提交只做一件逻辑完整的事。
+- 严禁使用 `git commit -a` 或无脑 `git add -A` 打包未审查的文件。
+- 绝不提交本地环境密钥、临时构建缓存或 IDE 专有配置。
 
 ## 下一步
 
-- [多平台接入](./platforms.md)
-- [omtre run 无人值守运行](../advanced/unattended-run.md)
-- [故障排查](../advanced/troubleshooting.md)
+- [任务与 PRD](./tasks.md)：了解任务状态流转与目录组织结构。
+- [工作区与开发者记忆](./workspace-memory.md)：掌握任务归档后会话日志（Journal）的写入方式。
+- [多平台接入](./platforms.md)：了解在不同 Agent 宿主环境中两轴审查的触发方式。
+- [无人值守执行](../advanced/unattended-run.md)：查看自动化任务调度中验证契约的执行策略。

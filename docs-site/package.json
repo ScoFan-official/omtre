@@ -8,9 +8,11 @@
     "dev": "vitepress dev",
     "build": "node scripts/generate-cli-reference.mjs && node scripts/generate-llms.mjs && vitepress build && node scripts/check-build.mjs",
     "preview": "vitepress preview",
-    "verify": "node scripts/generate-cli-reference.mjs --check && node scripts/generate-llms.mjs --check && node scripts/check-content.mjs && node scripts/verify-quickstart.mjs && vitepress build && node scripts/check-build.mjs"
+    "test:e2e": "pnpm build && playwright test",
+    "verify": "node scripts/generate-cli-reference.mjs --check && node scripts/generate-llms.mjs --check && node scripts/check-content.mjs && node scripts/check-brand-assets.mjs && node scripts/verify-quickstart.mjs && vitepress build && node scripts/check-build.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "mermaid": "11.17.2",
     "vitepress": "1.6.4",
     "vitepress-plugin-mermaid": "2.0.17",

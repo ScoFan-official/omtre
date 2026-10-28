@@ -10,144 +10,85 @@ since: 1.0.0
 
 <MaturityBadge level="advanced" />
 
-omtre 1.0.0 没有 `omtre command create` 之类的脚手架。自定义命令通过**平台原生文件**实现，omtre 负责内置命令的生成和更新。
+omtre 1.0.0 未提供抽象的“跨平台命令编译器”脚手架。所有的会话交互命令在物理上完全由**各 AI 宿主原生的配置文件**定义与承载。omtre 负责内置受管命令的生成与版本同步，团队的业务扩展命令则直接遵循对应编辑器的原生格式编写。
 
-## 内置会话命令
+## 平台原生文件与命令映射
 
-核心命令通常包括：
+内置会话入口由 `omtre init` 按宿主能力生成：
 
-| 命令 | 作用 |
-|---|---|
-| start | 打开会话或重载上下文 |
-| continue | 继续当前任务 |
-| finish-work | 提交后归档并记录会话 |
-
-不同平台的落点不同：
-
-```text
-.claude/commands/...
-.qoder/commands/omtre-continue.md
-.opencode/commands/...
-.github/prompts/...
-```
-
-部分平台没有原生命令原语，会把命令包装成技能或 prompt。不要用 Qoder 的文件路径去推断 Claude Code 的目录。
-
-## 命令与技能的区别
-
-| 类型 | 触发 | 适合 |
+| 交互意图 | 语义动作 | 典型宿主落点 |
 |---|---|---|
-| 命令 | 用户显式调用 | 会话边界、固定动作、需要参数的入口 |
-| 技能 | 语义触发或显式点名 | 可复用的工作流知识 |
-| 子代理 | 主会话派发 | 隔离上下文的实现、研究或检查 |
-| 生命周期 hook | 脚本事件 | 创建、启动、归档等机械时点 |
+| `start` | 初始化会话并注入活跃任务与阶段上下文 | 有 SessionStart 等入口的平台通常不生成；无自动入口的平台才生成命令或技能 |
+| `continue` | 任务中途恢复或进入下一阶段切片 | `.claude/commands/omt/continue.md`、`.qoder/commands/omtre-continue.md` |
+| `finish-work` | 驱动退出码验证、任务归档与日志沉淀 | `.claude/commands/omt/finish-work.md`、`.qoder/commands/omtre-finish-work.md` |
 
-如果一段内容只是告诉 Agent “遇到某类任务应该怎样做”，优先写技能；如果它必须由人明确触发，写命令。
+部分宿主（如 GitHub Copilot）无直接命令原语，映射为 `.github/prompts/*.prompt.md`；Codex 则映射为共享技能。不要使用某一平台的目录去推断其他宿主的物理结构。
 
-## 添加自定义命令
+## 命令与技能的边界界定
 
-### 1. 选择平台原生格式
+| 机制类型 | 物理形态 | 触发主体 | 适用场景 |
+|---|---|---|---|
+| **命令（Commands）** | 宿主原生快捷指令文件 | 开发者显式在输入框调用 | 明确的会话边界控制、固定管理流程入口 |
+| **技能（Skills）** | 结构化 Markdown 指南 | 大模型语义自动匹配或显式调用 | 领域知识、编码模式、特定架构规范指南 |
+| **子代理（Sub-agents）** | 进程隔离的角色定义卡 | 主会话运行时动态派发 | 需深度物理隔离的任务实现、技术调研与审查 |
+| **生命周期 Hooks** | 本地 Shell / 脚本触发点 | 任务状态机底层机械事件 | 创建、启动、归档等状态跃迁时的审计与通知 |
 
-先查看初始化后的实际命令文件：
+若一段逻辑的目的是告诉 Agent“如何处理某类特定技术”，应编写技能或规范；若目的是要求 Agent“立即执行一个固定、有输入参数的工程流程”，应编写命令。
 
-```bash
-find .qoder/commands -maxdepth 1 -type f | sort
-find .claude/commands -maxdepth 2 -type f | sort
-```
+## 编写团队自定义命令
 
-以现有文件的 frontmatter、名称和目录为准。
+### 1. 严格使用独立的命名空间
 
-### 2. 使用独立名称
+::: danger 命名空间冲突防护
+**严禁占用或覆盖 `omtre-*` 前缀。** 所有以 `omtre-*` 命名的文件均属于 CLI 受管清单。在执行 `omtre update` 时，受管文件会被官方模板重新检出同步，本地直接修改随时可能被覆写。
+团队自定义命令必须使用自定义命名空间（例如 `team-*`、`ops-*`）。
+:::
 
-示例（Qoder 风格，具体字段请按当前宿主验证）：
+### 2. 编写宿主原生命令示例
+
+以 Qoder 原生命令为例（存放于 `.qoder/commands/team-release-review.md`）：
 
 ```markdown
 ---
-name: omtre-team-review
-description: "Run the team's release readiness review"
+name: team-release-review
+description: "执行发布就绪度审查并运行全量测试"
 ---
 
-# Team release review
+# 团队发布审查工作流
 
-1. Read `.omtre/spec/release/checklist.md`.
-2. Run `pnpm lint && pnpm typecheck && pnpm test`.
-3. Report blockers without changing production configuration.
-4. Do not push or deploy.
+1. 读取 `.omtre/spec/release/checklist.md` 规范。
+2. 运行 `pnpm lint && pnpm typecheck && pnpm test`。
+3. 检查是否有未提交的脏文件或本地配置。
+4. 仅产出阻断项报告，严禁修改任何生产环境代码。
+5. 严禁执行 git push 或发布上线动作。
 ```
 
-Claude Code 等平台不使用相同 frontmatter；应复制其现有命令结构。
+而在 Claude Code 下，应遵循其 `.claude/commands/` 目录规范，避免生搬硬套 frontmatter。
 
-### 3. 避免与受管命令冲突
+## 升级过程中的冲突与受管状态
 
-不要覆盖：
+执行 `omtre update` 时，更新引擎遵循明确的边界：
+- **仅同步受管清单中的文件**：团队自建的 `team-*.md` 只要未与新版本模板同名，绝不会被静默删除；
+- **排查建议**：在升级全局包后，先运行 `omtre update --dry-run` 查看变更树，确保无误后再执行正式同步。
 
-- `omtre-start`
-- `omtre-continue`
-- `omtre-finish-work`
-- 平台为 omtre 生成的核心命令
+## 跨平台多宿主支持
 
-自定义命令使用自己的前缀，例如 `team-*`。
-
-### 4. 验证调用
-
-在宿主中：
-
-- 能发现命令；
-- `description` 正确显示；
-- 参数解析符合预期；
-- 不会自动触发危险操作；
-- 升级后仍然存在。
-
-## 升级时会发生什么
-
-`omtre update` 只处理受管文件与模板。自定义命令如果不在受管清单中，通常不会被删除。
-
-但不保证：
-
-- 同名路径不会被新模板使用；
-- 大版本升级不会改变命令格式；
-- 宿主升级不会改变 frontmatter 要求。
-
-升级前：
-
-```bash
-omtre update --dry-run
-```
-
-升级后直接测试自定义命令。
-
-## 跨平台命令
-
-同一个团队命令若要支持多个平台，需要分别生成各平台文件：
+若团队内成员混用不同编辑器，同一个自定义命令必须分别向各宿主目录输出对应的原生文件：
 
 ```text
-.qoder/commands/team-review.md
-.claude/commands/team-review.md
-.github/prompts/team-review.prompt.md
+.qoder/commands/team-review.md              # 供 Qoder 宿主解析
+.claude/commands/team-review.md             # 供 Claude Code 宿主解析
+.github/prompts/team-review.prompt.md       # 供 GitHub Copilot 宿主解析
 ```
 
-不要写一个 Omtre 独有的“抽象命令文件”，期待所有平台自动转换。1.0.0 的安装器转换的是内置模板，并不提供通用的自定义命令编译器。
+不存在某种由 omtre 中转解析的“万能命令语法糖”，各宿主的原生扩展格式由各平台独立解析。
 
-## 命令中的安全边界
+## 命令内部的安全红线
 
-命令可以要求 Agent 运行 shell 命令。写自定义命令时：
-
-- 默认不要包含 push、merge、deploy；
-- 使用 `--dry-run` 作为预览；
-- 不在正文中写 secrets；
-- 明确哪些命令需要人工确认；
-- 对生产环境操作使用平台权限，而不是提示词。
-
-## 测试
-
-对一个新命令至少检查：
-
-- [ ] 文件被正确发现
-- [ ] frontmatter 合法
-- [ ] 描述准确
-- [ ] 无破坏性默认行为
-- [ ] 参数有说明
-- [ ] 升级后仍可用
+命令赋予了开发者快速唤起 Agent 执行复合操作的能力，编写时必须遵守工程安全底线：
+- **禁止硬编码静默推送与部署**：命令正文中严禁包含无条件的 `git push`、`git merge` 或发布脚本，关键动作必须留有人工 Review 缝隙；
+- **禁止在命令中硬编码敏感凭证**：API Key、数据库密码与 Token 绝不能写入任何命令正文中；
+- **遵循退出码与 Dry-run 准则**：在涉及破坏性操作的命令中，优先强制使用 `--dry-run` 预览变更，以机器可复现的退出码验证结果。
 - [ ] 至少一个目标平台真实调用成功
 
 ## 下一步

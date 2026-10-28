@@ -44,19 +44,19 @@ autonomy: hands-off
 |---|---|
 | `gated` | 在关键门槛询问用户 |
 | `hands-off` | 自动推进，但用户可否决；也是缺省和非法值的回退 |
-| `supervised-delivery` | 在交付白名单允许时，运行器可推送任务分支并创建 ready PR |
+| `supervised-delivery` | 在交付白名单允许时，运行器可推送任务分支；远端为 GitHub 且 `gh` 可用时再创建 ready PR |
 
 自治模式不是“所有动作都自动执行”的开关，也不会绕过验证和 Git 保护。
 
-### 验证是否必需
+### 强制验证契约（verify_required）
 
 ```yaml
 verify_required: true
 ```
 
-不配置时，默认值随自治模式变化：`supervised-delivery` 倾向于要求验证契约，其它模式可能仅警告。
+**作者强烈建议**：团队试点与生产工程显式配置 `verify_required: true`。开启后，任务没有任何验证契约时会被拒绝归档；已登记契约执行失败时也会阻断。只有使用带原因的 `--skip-verify` 才能绕过本次检查。
 
-团队试点建议显式设为 `true`，避免把“没有验证证据”当成成功。
+若未显式配置，系统行为将随 `autonomy` 模式降级：除 `supervised-delivery` 会强制要求验证外，其他模式可能仅退化为警告放行，容易造成质量门禁失守。
 
 ### 会话与 journal
 

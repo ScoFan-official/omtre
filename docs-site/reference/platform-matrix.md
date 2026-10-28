@@ -10,17 +10,18 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-omtre 可以为 22 个编码代理和 IDE 生成平台文件。**生成文件不等于宿主端全链路验证。**下表区分文件交付方式与已知验证证据。
+omtre 具备为 22 个编码代理与 IDE 输出适配配置的能力。但必须确立核心工程事实：**配置文件生成通过，绝对不等于在具体宿主版本上已完成端到端黑盒验证。**
 
-## 先看结论
+各宿主在 Hook 生命周期、子代理派发协议、斜杠命令解析及终端子进程隔离性上能力各异。下表明确区分各平台的物理配置路径、交互通道与权威验证等级。
 
-- 团队应从实际使用的 1–2 个平台开始。
-- 文档标为“已验证”通常指路径、模板和更新幂等性有测试；宿主真实行为仍取决于你的版本。
-- 标为“约定”表示目录布局按平台惯例生成，可能需要人工核对。
-- `partial` 表示部分能力已知不完整。
-- 主 CI 以 Linux 为主；Windows/macOS 需要团队自行覆盖关键路径。
+## 评估与准入准则
 
-## 22 平台矩阵
+- **收敛主力平台**：团队应严格从当前主力使用的 1–2 个宿主切入，切忌一次性为未用环境生成全套目录；
+- **验证等级界定**：表中“已验证”代表配置路径、模板渲染与更新幂等性具备自动化测试覆盖；宿主实际运行表现仍取决于你本地安装的具体 IDE/CLI 版本；
+- **约定路径（Convention）说明**：标注为“约定”代表按该平台社区公开约定布局生成规则，宿主尚未开放深度 Hook 或全套子代理生命周期；
+- **环境差异**：主 CI 基于 Linux（Ubuntu + Node 20 + Python 3.9）；Windows 与 macOS 开发者需特别复核本地 Python 解释器与 PATH 变量。
+
+## 22 平台矩阵详表
 
 | 平台 | flag | 配置目录 | 命令 | 子代理 | Hooks | 验证深度 |
 |---|---|---|---|---|---|---|
@@ -42,7 +43,7 @@ omtre 可以为 22 个编码代理和 IDE 生成平台文件。**生成文件不
 | Reasonix | `--reasonix` | `.reasonix/` | 技能 | 子代理循环 | 无 | 约定 |
 | ZCode | `--zcode` | `.zcode/` | 集合命令 | 支持 | SessionStart / prompt / pre-tool | **partial**：命令与 MCP 路径部分为约定 |
 | Trae | `--trae` | `.trae/` | flat 命令 | pull-based | hooks | 约定路径 |
-| Oh My Pi | `--omp` | `.omp/` + `.agents/skills/` | flat 命令 | 支持 | 扩展 | 约定路径 |
+| Oh My Pi | `--omp` | `.omp/` | flat 命令 | 支持 | 扩展 | 约定路径 |
 | Grok Build | `--grok` | `.grok/` | flat 命令 | pull-based | 已知不消费 hook stdout | 约定路径 |
 | Kimi Code | `--kimi` | `.kimi-code/` + `.agents/skills/` | 命令转技能 | pull-based | 无项目级 hook | 约定路径 |
 | Snow CLI | `--snow` | `.snow/` | JSON 命令 | 支持 | SessionStart / prompt / subagent | 约定路径；hooks 可能硬编码 `python` |

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sidebar } from "../.vitepress/sidebar.mjs";
@@ -40,9 +40,11 @@ if (requireFile(homePath, "homepage")) {
   }
 }
 
+const pageRoutes = new Set();
 for (const sections of Object.values(sidebar)) {
   for (const section of sections) {
     for (const item of section.items ?? []) {
+      pageRoutes.add(item.link.slice(1));
       assertPage(item.link.slice(1), item.link);
     }
   }
@@ -60,8 +62,14 @@ if (existsSync(cliPath)) {
 }
 
 for (const [file, label] of [
-  ["omtre-mark.svg", "site mark"],
-  ["og.svg", "social image"],
+  ["favicon.ico", "favicon"],
+  ["favicon-32.png", "favicon PNG"],
+  ["apple-touch-icon.png", "Apple touch icon"],
+  ["brand/mark-light.svg", "light brand mark"],
+  ["brand/mark-dark.svg", "dark brand mark"],
+  ["brand/wordmark-light.webp", "light wordmark"],
+  ["brand/wordmark-dark.webp", "dark wordmark"],
+  ["brand/og.png", "social image"],
   ["llms.txt", "llms.txt"],
   ["sitemap.xml", "sitemap"],
 ]) {
@@ -71,6 +79,54 @@ for (const [file, label] of [
 const notFound = join(dist, "404.html");
 if (existsSync(notFound) && statSync(notFound).size < 1000) {
   errors.push("404.html looks empty.");
+}
+
+if (existsSync(dist)) {
+  const expectedHtml = new Set([
+    "index.html",
+    "404.html",
+    ...[...pageRoutes].map((route) => `${route}.html`),
+  ]);
+  const actualHtml = readdirSync(dist, { recursive: true })
+    .map((entry) => String(entry).replaceAll("\\", "/"))
+    .filter((entry) => entry.endsWith(".html"))
+    .sort();
+  for (const file of actualHtml) {
+    if (!expectedHtml.has(file)) {
+      errors.push(`Unexpected HTML page in build output: ${file}`);
+    }
+  }
+  for (const file of expectedHtml) {
+    if (!actualHtml.includes(file)) {
+      errors.push(`Expected HTML page is missing from build output: ${file}`);
+    }
+  }
+
+  const sitemapPath = join(dist, "sitemap.xml");
+  if (existsSync(sitemapPath)) {
+    const sitemap = readFileSync(sitemapPath, "utf8");
+    const sitemapRoutes = new Set(
+      [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => {
+        const pathname = new URL(match[1]).pathname;
+        const relative = pathname.replace(/^\/omtre\/?/, "");
+        return relative === "" ? "index.html" : relative;
+      }),
+    );
+    const expectedSitemap = new Set([
+      "index.html",
+      ...[...pageRoutes].map((route) => `${route}.html`),
+    ]);
+    for (const route of sitemapRoutes) {
+      if (!expectedSitemap.has(route)) {
+        errors.push(`Unexpected route in sitemap.xml: ${route}`);
+      }
+    }
+    for (const route of expectedSitemap) {
+      if (!sitemapRoutes.has(route)) {
+        errors.push(`Expected route is missing from sitemap.xml: ${route}`);
+      }
+    }
+  }
 }
 
 if (errors.length > 0) {

@@ -210,5 +210,12 @@ packages/cli/assets/
 packages/core/LICENSE
 packages/core/NOTICE
 
-# VitePress local build cache
+# VitePress local build cache and Playwright output
 docs-site/.vitepress/cache/
+docs-site/.vitepress/playwright-report/
+docs-site/.vitepress/test-results/
+docs-site/playwright-report/
+docs-site/test-results/
+
+# Local design workspace (final brand assets live in assets/brand)
+.creative-design/

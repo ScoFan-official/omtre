@@ -10,108 +10,107 @@ since: 1.0.0
 
 <MaturityBadge level="advanced" />
 
-`omtre run` 把 frontier 中的任务交给 worker，在独立 Git worktree 中实现和验证，并记录运行 ledger。它是自动化运行器，不是自动发布或自动合并系统。
+`omtre run` 是面向确定性任务批处理的自动化运行器。它从拓扑就绪的任务池（Frontier）中按依赖顺序提取工单，在独立的 Git Worktree 中派发 Worker 进行编码实现，并在本地沙箱中强制重放验证契约，最后将执行轨迹完整记录于运行账本（Ledger）中。
 
-::: warning 先完成普通会话闭环
-真实模型长期无人值守的可靠性仍需要团队试点。不要把首次接触 omtre 或高风险改动交给 `omtre run`。
+::: danger 架构清醒：自动化批处理执行器，绝非全自动盲推上线系统
+`omtre run` 的核心价值在于将低风险、强契约、单测完备的批量工单交由模型自动化尝试。**系统绝对不会自动合并 Pull Request，也绝对不会向 `main`/`master` 或生产保护分支直接推送代码。** 生产交付的终审权必须始终掌握在人类工程师的 PR Code Review 与 CI 门禁手中。
 :::
 
-## 前置条件
+## 运行准入前置条件
 
-任务必须满足：
+一个任务能够被 `omtre run` 消费，需要满足以下运行条件：
+1. **任务记录有效**：`.omtre/tasks/<task-dir>/task.json` 可读，且任务尚未完成或归档；运行器不会额外要求状态必须停在 `planning`；
+2. **分支契约明确**：已通过 `set-branch` 指定任务分支，且 `base_branch` 目标基线分支合法；
+3. **强制绑定验证契约**：任务必须登记有至少一条非交互的验证命令（如 `pnpm test`）。**无验证契约的任务在运行器中直接判负报错，绝不放行**；
+4. **角色卡解析成功**：能根据任务的 `roster` 或配置的 `worker_default` 在 `.omtre/agents/` 中定位到有效角色卡；
+5. **宿主执行器就绪**：指定的 Provider（如 Codex、Claude）在当前机器具有有效凭据与执行权限。
 
-- 有有效 `task.json`；
-- 有任务分支和目标分支；
-- 有可运行的验证契约；
-- dispatch 能从角色卡或 `worker_default` 解析 worker；
-- 项目脚本已提交到任务基线分支；
-- provider 在本机可用并有权限。
+## 检查就绪任务池（Frontier）
 
-验证契约缺失时，运行器会把结果视为失败，而不是跳过。
-
-## 检查 frontier
+在启动运行器前，先查询当前有哪些任务满足前置依赖、处于 Ready 可执行状态：
 
 ```bash
 python3 .omtre/scripts/task.py frontier
 ```
 
-Frontier 只会给出 blocker 已满足的任务。父子关系不代表顺序，硬依赖应写 `blocked_by`。
+Frontier 仅返回所有硬性依赖（`blocked_by`）已全部归档完成的任务。普通的任务树父子关系不代表执行先后顺序，若存在时序依赖，必须显式声明 `blocked_by`。
 
-## 先 dry-run
+## 严格执行 Dry-run 预检
+
+在实际唤起大模型消耗 Token 之前，始终先进行无副作用的计划预览：
 
 ```bash
+# 针对单张工单进行预检
 omtre run --ticket .omtre/tasks/<task-dir> --dry-run
+
+# 针对整个待执行任务池进行批量预检
 omtre run --until-empty --dry-run
 ```
 
-dry-run 会打印任务和计划动作，不应创建 ledger、worktree 或修改任务状态。
+`--dry-run` 仅输出调度决策路径与预计创建的工作树拓扑，**绝不创建 Git worktree，绝不调用模型 API，绝不修改任务状态，绝不写入运行账本**。
 
-## 运行一个任务
+## 运行模式与常用参数
+
+### 1. 单工单定向执行（--ticket 模式）
 
 ```bash
-omtre run --ticket .omtre/tasks/<task-dir> \
+omtre run --ticket .omtre/tasks/10-26-order-filter \
   --worker implement \
   --provider codex \
   --timeout 30m
 ```
 
-`--ticket` 模式可以使用：
+在单工单模式下，支持显式传入 `--worker`、`--provider` 与 `--model` 覆盖任务默认设置。
 
-- `--worker`
-- `--provider`
-- `--model`
-
-`--agent` 在 run 中不被接受；派发来自任务 roster、角色卡或 `--worker`。
-
-## 循环运行
+### 2. 连续批处理循环（--until-empty 模式）
 
 ```bash
 omtre run --until-empty \
   --board orders \
   --max-tickets 5 \
-  --max-failures 3
+  --max-failures 3 \
+  --timeout 30m
 ```
 
-| 参数 | 默认 | 说明 |
+| 参数 | 默认值 | 工程防护意义 |
 |---|---|---|
-| `--until-empty` | 否 | 持续取 ready ticket；不带时通常只跑一票 |
-| `--board` | 无 | 按 `meta.domain` 限制 |
-| `--max-tickets` | 5 | 每次运行尝试的任务上限 |
-| `--max-failures` | 3 | 同一任务连续失败上限 |
-| `--timeout` | 30m | 单 worker 超时 |
+| `--until-empty` | 关闭（默认单次） | 持续从 Frontier 中提取就绪工单，直到队列为空 |
+| `--board` | 全部 | 严格限制仅消费特定领域 Board（匹配 `meta.domain`）的任务 |
+| `--max-tickets` | 5 | 单次批处理运行的最大任务数上限，防止模型持续消耗资源 |
+| `--max-failures` | 3 | 单个任务允许失败重试的最大次数（Strike 上限），达标后自动挂起人工介入 |
+| `--timeout` | 30m | 单次 Worker 运行的最大超时硬上限，超时由本地进程强行杀灭 |
 
-loop 模式不接受单票 dispatch overrides；每个任务应从自己的 roster/角色卡解析。
+::: warning 循环模式禁止参数覆盖
+批处理循环模式（`--until-empty`）不接受命令行单票参数覆盖，每张工单的执行器与模型必须完全从自身角色卡或项目配置中解耦解析。
+:::
 
-## 内部流程
+## 运行器核心闭环状态机
 
 ```mermaid
 flowchart TD
-    F[选择 frontier head] --> W[创建/附加 worktree]
-    W --> A[登记上下文并 start]
-    A --> K[调用 worker]
-    K --> G{worker 有提交?}
-    G --> C[检查落地 diff]
-    C --> V[运行验证契约]
-    V --> D{交付门}
-    D -->|允许| P[push 任务分支 + 可选 PR]
-    D -->|deferred/refused| H[留给人工]
-    P --> R[archive]
-    H --> R
-    R --> L[写 ledger 并清理 worktree]
+    F[从 Frontier 提取 Head 工单] --> W[在 .runtime/worktrees/ 创建隔离工作树]
+    W --> A[加载上下文契约并启动任务]
+    A --> K[调用 Worker 模型生成改动]
+    K --> G{代码是否已产生有效 Diff?}
+    G -->|无任何改动| S1[记录失败 Strike]
+    G -->|有改动| V[在 Worktree 中强制重放验证契约]
+    V -->|退出码非0| S2[记录失败 Strike 并触发重试]
+    V -->|退出码为0| D{评估项目交付门 Delivery Gate}
+    D -->|匹配白名单允许交付| P[Git push 任务分支并可自动拉起 PR]
+    D -->|未配置或受保护| H[delivery_deferred：停止并保留分支，不归档]
+    P --> R[task.py archive 任务状态转入 completed]
+    H --> L[写入运行账本 Ledger 并安全清理 Worktree]
+    R --> L[写入运行账本 Ledger 并安全清理 Worktree]
 ```
 
-关键行为：
+核心物理机制：
+- **物理工作区隔离**：每个任务在 `.omtre/.runtime/worktrees/<task>/` 建立独立 Worktree，互不影响当前主仓库的工作树状态；
+- **机器退出码判据**：代码编写完成后，运行器在 Worktree 内独立子进程中执行绑定的 `run-verify`。任何非 0 退出码均直接判定本轮尝试失败；
+- **始终安全清理**：无论任务成功通过还是异常中断，运行器在退出时均会安全卸载并清理 Worktree，杜绝在磁盘残留大量僵尸工作树。
 
-- worktree 位于 `.omtre/.runtime/worktrees/`；
-- 验证失败会产生一次 strike；
-- worker 未提交时，运行器可能 stage 非簿记路径；
-- 归档前会再次处理验证和交付门；
-- 成功或失败后，worktree 通常都会清理；
-- 失败的 Channel 日志可能保留用于排查。
+## 交付门（Delivery Gate）机制与安全策略
 
-## 交付门
-
-交付门不是 CLI flag，而是项目配置和自治模式的组合：
+运行器在完成代码验证与归档后，绝不默认推送代码。是否允许向远端发起 Git push 由 `.omtre/config.yaml` 严格控制：
 
 ```yaml
 autonomy: supervised-delivery
@@ -120,93 +119,46 @@ delivery:
   protected_refs:
     - main
     - master
+    - "release/*"
   auto_push_refs:
     - "feature/*"
+    - "fix/*"
 ```
 
-检查顺序通常包括：
+交付门判定状态机：
 
-1. 当前自治模式是否允许交付；
-2. 目标是否为默认分支、tag 或保护 ref；
-3. 白名单配置是否合法；
-4. 目标 ref 是否匹配白名单。
-
-可能结果：
-
-| 结果 | 行为 |
+| 交付决策结果 | 系统行为与工程事实 |
 |---|---|
-| `delivery_deferred` | 保留任务分支，等待人工 |
-| `push_refused` | 拒绝 push |
-| `degraded_no_remote` | 无 remote，不 push，但可能继续归档 |
-| allowed | push 任务分支，并可创建 ready PR |
+| `allowed` | 目标分支严格命中 `auto_push_refs` 且非受保护分支，向远端推送任务分支；远端是 GitHub 且 `gh` 可用时创建 ready PR |
+| `delivery_deferred` | 目标分支不在白名单内。**保留本地任务分支与提交，停止本次运行且不归档任务，留待人工处理** |
+| `push_refused` | 目标分支命中了 `protected_refs`（如主干分支），阻断本次运行发起的推送 |
+| `degraded_no_remote` | 本地 Git 仓库未配置任何 remote 远端源，自动跳过推送，仅保留本地归档 |
 
-`omtre run` 不会：
+PR 创建发生在 push 成功之后。如果 `gh` 不可用、未登录或远端不是 GitHub，任务可能已经 push 但 PR 创建失败，运行会停在 `pr_open_failed` 且不归档；这时需要人工创建 PR。
 
-- merge PR；
-- push 默认分支或 tag；
-- 绕过远端分支保护；
-- 把一个草稿 PR 自动视为已交付。
+**核心红线**：
+- `omtre run` 绝对不会执行 `git merge`；
+- 绝对不会向默认分支（如 `main`）或 Git Tag 直接推送提交；
+- 远端分支保护（Branch Protection Rules）与审查权限始终由托管平台强制保障。
 
-PR 存在不等于已合并。
+## 运行审计账本（Run Ledger）
 
-## Ledger
-
-路径：
+运行器在每次执行时，均会在本地生成高精度的只追加（Append-only）审计日志流：
 
 ```text
-.omtre/.runtime/runs/run-<UTC>.jsonl
+.omtre/.runtime/runs/run-<UTC-TIMESTAMP>.jsonl
 ```
 
-常见动作：
+账本详细记录工单提取、Worktree 挂载、Worker 交互耗时、验证命令输出退出码及最终交付判定。在排查批处理中断时，首要查看终端打印出的对应 Ledger 路径。
 
-- `run_start`
-- `attempt_started`
-- `ticket_start`
-- `worktree`
-- `worker`
-- `verify`
-- `delivery`
-- `archived`
-- `attempt_finished`
-- `ticket_result`
-- `blocked`
-- `stop`
+## 敏感路径与熔断保护（Always-stop）
 
-Ledger 是运行时轨迹，不是对账真源。真实状态优先级仍是：
+当运行器检测到模型尝试修改以下敏感路径时，系统会立即触发最高级别安全熔断，强制终止当前工单：
+- `.omtre/domains/`（领域协议与全局路由定义）；
+- `.env*`、`*.pem`、`*.key`、`id_rsa*`（任何环境变量、密钥与私钥文件）；
+- 涉及凭证与证书的核心安全目录。
 
-```text
-Git 历史 > worklog > README 进度 > ledger
-```
-
-CLI 结束通常会打印 ledger 路径。
-
-## 失败与停止
-
-常见停止原因：
-
-- worker 失败；
-- 验证失败；
-- 连续失败达到上限；
-- dispatch 无法解析；
-- frontier 为空；
-- 命中 always-stop 路径；
-- 内部错误；
-- 交付被拒绝。
-
-always-stop 包括 `.omtre/domains/`、`.env`、私钥文件、凭据文件和 secrets 目录等。运行器应该停下，而不是继续修改这些区域。
-
-超过连续失败上限时，任务可能被标记为需要人工处理。
-
-## 真实可靠性
-
-当前测试覆盖了真实任务脚本、Git worktree 和 ledger，但完整运行测试中的 worker 往往是模拟替身，而不是真实 provider。
-
-因此上线前应做：
-
-- 使用真实 provider 的小任务端到端测试；
-- worker 超时和中断恢复；
-- 验证失败和重试演练；
-- 交付门拒绝测试；
+熔断会立即停止当前任务线，但 `always_stop` 本身只影响本次运行，不会改动 `task.json`。只有连续失败达到阈值或派发被拒绝时，运行器才会给任务写入 `triage=ready-for-human`，等待人工处理。
 - 无 remote、网络失败和权限失败；
 - 检查 ledger 与 Git/任务状态是否一致；
 - 人审多个自动生成 diff 的质量。

@@ -10,60 +10,54 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-`implement.jsonl` 和 `check.jsonl` 是任务级上下文清单，每行一个 JSON 对象。它们帮助支持的平台把稳定规范和研究材料交给对应角色。
+`implement.jsonl` 与 `check.jsonl` 是任务维度的轻量上下文清单文件，存放于任务目录中。清单采用标准 JSON Lines 格式（每行一个独立的 JSON 序列化对象），为支持子代理架构的平台提供**确定性、可审查、按需读取**的规则与前置材料索引。
 
-它们不是：
+::: warning 注入边界：默认只放规范与调研产物
+JSONL 清单通常应指向项目规范（`.omtre/spec/**`）或任务专属调研文档（`{TASK_DIR}/research/**`）。不建议把业务源码或源码目录写入清单：
+- **子代理具备按需代码检索能力**：Worker 进程自带文件搜索与代码阅读工具，能根据需求自主探索调用链；
+- **避免上下文膨胀与 Token 浪费**：将业务源码强行注入前置 Prompt，会导致每轮对话重复消耗成千上万无效 Token；
+- **防止死链与上下文腐化**：业务代码在重构中频繁变动，一旦文件重命名或移动，硬编码的 JSONL 路径立即失效；
+- **避免过早固化实现细节**：把未定型的源码作为上下文注入，容易让模型把旧实现当成唯一正确答案，降低重新设计架构的空间。
 
-- 源码索引；
-- 任务计划；
-- 所有项目规范的合集；
-- 在所有平台都必然存在的文件。
+`task.py validate` 会对不适合注入的源码条目给出警告；要把它当作团队约定，而不是脚本已经强制封死的边界。
+:::
 
-## 格式
+## 格式规范
 
 ```jsonl
-{"file":".omtre/spec/backend/index.md","reason":"Backend development conventions"}
-{"file":".omtre/spec/backend/api-conventions.md","reason":"API contract and error shape"}
-{"file":".omtre/tasks/10-26-order-filter/research/status-values.md","reason":"Existing status values and edge cases"}
+{"file": ".omtre/workflow.md", "reason": "Workflow contract"}
+{"file": ".omtre/spec/backend/api-module.md", "reason": "API module conventions"}
+{"file": ".omtre/tasks/10-26-user-login/research/token-expiry.md", "reason": "Upstream research findings"}
 ```
 
-字段：
+字段契约：
 
-| 字段 | 必填 | 说明 |
+| 字段 | 类型 | 是否必填 | 约束说明 |
+|---|---|---|---|
+| `file` | string | **是** | 必须是相对于仓库根目录的相对路径，**严禁使用本机绝对路径** |
+| `reason` | string | **推荐** | 阐明该材料对当前角色的决策价值，作为模型的引导线索 |
+| `type` | string | 否 | 当引用整个技术调研目录时声明为 `"directory"`，普通文件留空 |
+
+注：任务生成时的说明注释行或空文件不代表已配置上下文。在启用了子代理规范校验的平台上，空的 `implement.jsonl` 会在执行 `task.py start` 时被脚本机械阻断。
+
+## 两个清单的职责边界
+
+| 清单文件 | 消费角色 | 核心承载内容 |
 |---|---|---|
-| `file` | 是 | 仓库根相对路径 |
-| `reason` | 建议 | 为什么这个角色需要读取 |
-| `type` | 目录时可能需要 | `directory` |
+| `implement.jsonl` | `implement` 子代理 | 架构约束、API 响应契约、数据库迁移规则、技术调研结论 |
+| `check.jsonl` | `check` 审查子代理 | PRD 验收标准、质量红线、测试用例编写规范、安全防护规则 |
 
-种子说明行或空文件并不等于“已配置上下文”。支持的平台可能在清单为空时阻止 `start`。
+同一份领域规范（如 API 契约）可以同时出现在两份清单中，让编码与审查使用同一套评判基准。
 
-## 两个清单的分工
+## 允许与禁止注入清单对照
 
-| 文件 | 给谁 | 应包含 |
-|---|---|---|
-| `implement.jsonl` | 实现角色 | 规范、研究、接口约定、已知约束 |
-| `check.jsonl` | 检查角色 | 验收标准、质量规范、测试约定、风险清单 |
-
-同一个规范文件可以同时出现在两边；同一份研究也可能同时服务实现和检查。
-
-## 适合放什么
-
-- `.omtre/spec/**/index.md`
-- 具体规范文件
-- 任务 `research/*.md`
-- 外部接口契约的本地副本
-- 已验证的迁移或兼容说明
-
-## 不适合放什么
-
-- 即将修改的源码；
-- 整个仓库目录；
-- 生成产物和依赖目录；
-- secrets；
-- 与任务无关的全量规范；
-- 依赖本机绝对路径且不可移植的文件。
-
-源码应在实现阶段按需阅读，不需要预先登记为上下文清单。
+| 允许注入的内容（规则与背景） | 严禁注入的内容（源码与动态状态） |
+|---|---|
+| `.omtre/spec/**/index.md` 规范入口 | 项目业务源代码（`src/**/*.ts`、`lib/`） |
+| 具体分层规范文件（如 `error-handling.md`） | 整个工程源码树或根目录（`./`） |
+| 当前任务内的调研分析（`research/*.md`） | 依赖构建产物与缓存（`node_modules/`、`dist/`） |
+| 第三方 API 协议或外部 Schema 的本地备份 | 密码、私钥、Token 或未脱敏数据 |
+| 跨版本数据库字段兼容性备忘 | 与当前任务毫无关联的跨域规范 |
 
 ## 添加
 

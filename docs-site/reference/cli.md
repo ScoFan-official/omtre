@@ -31,13 +31,11 @@ omt --help
 | 历史检索 | `mem` | 搜索受支持的宿主会话 |
 | 迁移 | `migrate` | 把旧上游 0.6.x 项目迁移到 `.omtre/` |
 
-大多数日常任务通过 Agent 和 `.omtre/scripts/task.py` 完成，不需要手工调用所有 CLI。
+日常研发工作流主要通过 AI 宿主命令及本地原生脚本 `.omtre/scripts/task.py` 驱动，全局 CLI 聚焦于项目初始化、受管文件同步、环境运维与自动化运行。
 
-## 生成说明
+## 参数生成说明
 
-下方参数部分由当前构建的 CLI 帮助输出自动生成。修改命令参数后，必须重新生成并在 CI 中校验，不能只改 Markdown。
-
-生成器读取 `packages/cli/dist` 中的 CLI；本地开发文档前先执行一次根目录构建。
+下方参数参考由当前版本的 CLI `--help` 输出自动编译生成。严禁手工篡改生成的文本块；CLI 命令参数发生变更时，必须通过 `pnpm build && node docs-site/scripts/generate-cli-reference.mjs` 重新生成并通过 CI 校验。
 
 <!--@include: ./_cli.generated.md-->
 

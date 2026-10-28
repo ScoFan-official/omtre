@@ -10,171 +10,100 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-omtre 里有两种不同的 hooks，名称相似但职责不同：
+omtre 架构中包含两类执行环境与物理职责完全解耦的 Hook 机制，排查与扩展前必须首先厘清其触发主体：
 
-1. **平台 hooks**：宿主在会话开始、每轮输入或子代理启动时执行；
-2. **任务生命周期 hooks**：`.omtre/config.yaml` 在任务创建、启动、结束或归档后执行脚本。
+| Hook 分类 | 触发驱动主体 | 执行环境与通道 | 核心工程职责 |
+|---|---|---|---|
+| **平台 Hooks** | AI 编辑器 / CLI 宿主 | 宿主插件沙箱或子进程管道 | 会话启动、用户输入提交时拼装紧凑上下文并注入 Prompt |
+| **任务生命周期 Hooks** | 本地 `task.py` 脚本 | 操作系统本地 Shell 子进程 | 任务创建、启动、完成、归档等状态机跃迁时的事件审计与通知 |
 
-先分清是哪一种，再排查或修改。
+## 平台 Hooks：上下文动态装载
 
-## 平台 hooks
+平台 Hook 依赖宿主开放的扩展点，常见生命周期时点包括：
 
-典型时点：
+| 时点名称 | 触发时机 | 注入数据与行为 |
+|---|---|---|
+| `SessionStart` | 新会话建立或重载时执行一次 | 提取 `.developer` 凭据、Git 分支状态、当前活动任务与阶段索引 |
+| `UserPromptSubmit` | 开发者在聊天框发送每一轮输入时 | 提取 `.omtre/workflow.md` 中对应当前任务状态的 `[workflow-state:<status>]` 提示块 |
+| `SubagentStart` | 派发独立 Worker 子代理进程时 | 将当前任务的 `prd.md` 与 `implement.jsonl` 所列规范装载给 Worker |
+| `PreToolUse` | Agent 即将调用特定工具时 | 执行危险操作预拦截或向特定文件写入前注入只读保护 |
 
-| 时点 | 作用 |
-|---|---|
-| SessionStart | 注入开发者身份、Git 状态、活动任务与工作流索引 |
-| UserPromptSubmit | 每轮注入当前 workflow-state |
-| SubagentStart / 子代理注入 | 把任务产物和 JSONL 上下文交给子代理 |
-| PreToolUse | 某些平台用于保护敏感路径或补充上下文 |
+宿主生成的平台 Hook 存放于各自的适配目录中：
+- Claude Code：`.claude/hooks/`、`.claude/settings.json`
+- Cursor：`.cursor/hooks.json`
+- Qoder：`.qoder/hooks/`
+- OpenCode：`.opencode/plugins/`
 
-不是所有平台都有这些时点。Kilo、Antigravity 等可能需要主会话直接读取工作流；Codex 需要 hooks 功能开关与信任。
+::: tip 宿主能力决定 Hook 存在与否
+某些轻量平台或无 Hook 机制的 CLI 环境无需生成此类文件。无自动 Hook 的平台依赖开发者显式输入斜杠命令或由模型直接读取规范入口。
+:::
 
-## 常见文件
+## 任务生命周期 Hooks：状态机事件流
 
-```text
-.claude/hooks/
-.codex/hooks/
-.qoder/hooks/
-.cursor/hooks.json
-.opencode/plugins/
-.pi/extensions/
-.snow/hooks/
-```
-
-目录和文件名由平台模板生成。不要套用其它平台的路径。
-
-## 关闭 hooks
-
-```bash
-export OMTRE_HOOKS=0
-```
-
-部分脚本识别：
-
-```bash
-export OMTRE_DISABLE_HOOKS=1
-```
-
-Channel worker 可能在运行时自动关闭 omtre hooks，避免嵌套注入。
-
-关闭后：
-
-- 文件和任务仍在；
-- 自动上下文可能缺失；
-- Agent 需要显式读取 `.omtre/workflow.md` 和任务入口；
-- 这不是卸载。
-
-## 任务生命周期 hooks
-
-在 `.omtre/config.yaml` 中配置：
+当执行 `task.py create`、`task.py start` 或 `task.py archive` 等状态变更命令时，Python 脚本会在 `.omtre/config.yaml` 中检索并执行对应的生命周期钩子：
 
 ```yaml
 hooks:
   after_create:
-    - "./scripts/on-task-create.sh"
+    - "./scripts/notify-slack.sh"
   after_start:
-    - "./scripts/on-task-start.sh"
+    - "./scripts/check-local-env.sh"
   after_finish:
-    - "./scripts/on-task-finish.sh"
+    - "./scripts/cleanup-temp-cache.sh"
   after_archive:
-    - "./scripts/on-task-archive.sh"
+    - "./scripts/sync-jira-status.sh"
 ```
 
-执行条件：
+### 运行时契约与执行边界
+- **工作目录**：严格以项目仓库根目录作为 CWD（Current Working Directory）；
+- **上下文透传**：脚本运行时会自动注入 `TASK_JSON_PATH` 环境变量，指向当前被操作的 `task.json` 文件绝对路径；
+- **超时与容错机制**：单个 Hook 脚本超时时间通常限制为 60 秒。**生命周期 Hook 的退出码失败仅在终端打印警告，绝不阻断主状态机的流转**。因此，绝不能将生命周期 Hook 用作强制阻断任务归档的硬门禁（硬门禁应配置在验证契约 `verify` 中）。
 
-- 工作目录是仓库根；
-- 环境变量 `TASK_JSON_PATH` 指向任务记录；
-- 默认超时约 60 秒；
-- 失败通常只警告，不阻止主操作。
+::: danger 常见配置混淆：切勿写入 task.json
+**omtre 1.0.0 的任务生命周期 Hooks 统一从 `.omtre/config.yaml` 读取。** 严禁遵循过时的文档或第三方猜测将 `hooks` 写入个别任务的 `task.json` 中，核心工具链不会读取任务 JSON 内的 hooks 字段。
+:::
 
-这既是安全边界也是可靠性边界：不要依靠生命周期 hook 做必须成功的关键校验。
+## 环境变量逃生口（全局禁用 Hooks）
 
-## `task.json.hooks` 不是运行时入口
-
-1.0.0 的核心任务生命周期从 `.omtre/config.yaml` 读取 hooks。不要按照旧文档把 hooks 写进 `task.json` 并期待核心脚本执行。
-
-平台 hooks 的项目本地配置还可能存放在独立的 `hooks.local.json` 等文件，但核心脚本不会自动合并所有本地文件。以具体平台模板和脚本为准。
-
-## 常见故障
-
-### 上下文没有自动出现
-
-按顺序检查：
-
-1. 当前平台是否有 SessionStart 或等价能力；
-2. hooks 文件是否存在；
-3. 宿主是否信任当前项目；
-4. 企业策略是否禁用 hooks；
-5. Codex 是否启用 hooks 功能并完成审批；
-6. 是否有 `OMTRE_HOOKS=0`；
-7. hook 日志是否有 Python/路径错误。
-
-### 终端 Python 正确，hook 却失败
-
-Hook 子进程可能使用最小 PATH，解析到系统 Python，而不是你 shell 里的版本。
-
-检查：
+在排查编辑器启动卡死、网络挂起或 Hook 脚本报错时，**无需修改任何配置文件**，只需在终端导出环境变量：
 
 ```bash
-which python3
-/usr/bin/python3 --version
+# 全局临时阻断所有 omtre hooks 的触发
+export OMTRE_HOOKS=0
 ```
 
-在 hooks 日志中确认实际执行命令。macOS 系统 Python 可能较旧。
+部分旧版本脚本同时支持 `OMTRE_DISABLE_HOOKS=1`。在自动化运行器（`omtre run`）与 Channel Worker 内部，系统也会自动置位此变量以杜绝多层子代理的递归嵌套注入。
 
-### 每轮提示丢失
+关闭 Hook 后的系统表现：
+- 仓库内的规范、任务、代码与验证脚本保持原状；
+- 编辑器会话不再自动推送前置提示词，需引导 Agent 显式查阅 `.omtre/workflow.md`；
+- 该动作仅为临时调试手段，不是卸载。
 
-检查 `.omtre/workflow.md` 中对应状态块：
+## 典型故障排查指南
 
+### 1. 会话启动后没有任何上下文自动注入
+排查路径：
+1. 检查当前编辑器是否已信任该项目（未受信任的项目会被编辑器内核静默拦截所有 Hook 执行）；
+2. 检查环境变量是否残留了 `OMTRE_HOOKS=0`；
+3. 检查 `.claude/settings.json` 或平台配置中的 Hook 相对路径是否存在文件损坏；
+4. 检查 Hook 执行权限是否具备可执行位（`chmod +x`）。
+
+### 2. 终端 Python 正常，Hook 运行却报语法错误
+**根因定位**：IDE 宿主启动 Hook 子进程时往往采用受限的最小 `PATH` 环境，调用的可能是系统自带的陈旧 Python（如 macOS 的系统 Python），而非你终端里生效的 Python 3.9+。
+**处置方案**：在平台 Hook 脚本中将 `python3` 调用显式指定为绝对路径，或在 Hook 脚本首行打印 `which python3` 确认实际解析的解释器。
+
+### 3. 每轮输入后未能注入当前任务状态
+检查当前 `.omtre/workflow.md` 中是否存在与 `task.json.status` 完全同名的成对状态块：
 ```text
 [workflow-state:planning]
 ...
 [/workflow-state:planning]
 ```
+若工作流模板被误删或自定义了非法的状态名，提取正则匹配失败，系统会自动退化为通用提示。
 
-状态块缺失时，hook 可能退化为通用提示。检查任务状态是否与状态块匹配。
-
-### 子代理没有任务上下文
-
-检查：
-
-- 平台是否支持子代理注入；
-- `implement.jsonl` / `check.jsonl` 是否存在；
-- JSONL 路径是否存在；
-- 子代理角色卡是否要求自行读取；
-- 平台是否使用 hook-push 还是 pull-based 模式。
-
-### 自定义 hooks 被升级覆盖
-
-平台 hooks 属于受管模板。直接修改可能被 `omtre update` 覆盖。
-
-推荐：
-
-- 升级前 `update --dry-run`；
-- 把团队扩展放到独立脚本；
-- 用配置或平台设置调用独立脚本；
-- 不直接改受管 hook 主体。
-
-## 安全
-
-- hooks 在项目环境中执行代码，只应信任你审查过的仓库；
-- 不要在 hook 中读取或打印 secrets；
-- 生命周期 hook 失败通常不阻断，因此不能当强制安全门；
-- 生产操作应通过 CI/CD 权限控制；
-- 关闭 hooks 是排查手段，不是长期安全策略。
-
-## 调试清单
-
-- [ ] 确认是哪一种 hook
-- [ ] 确认平台与宿主版本支持
-- [ ] 检查项目信任状态
-- [ ] 检查 hooks 文件与设置
-- [ ] 检查 Python 解释器与 PATH
-- [ ] 检查 workflow 状态块
-- [ ] 检查任务与上下文文件
-- [ ] 用 `OMTRE_DEBUG=1` 或宿主日志获取细节
-- [ ] 在临时项目复现，避免破坏主工作区
+### 4. 平台 Hook 脚本在升级后被覆写
+平台 Hook 目录（如 `.claude/hooks/`）属于 CLI 受管模板。在执行 `omtre update` 时可能会被覆盖。
+**防范方案**：严禁直接在受管 Hook 文件体内堆砌业务脚本；将自定义逻辑抽离到独立脚本（如 `scripts/my-hook.sh`），在配置文件中单独引用。
 
 ## 下一步
 

@@ -10,9 +10,11 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-omtre 不是模型，也不是托管服务。它由一组安装在本机的 CLI、仓库内脚本、平台适配文件和可审查的 Markdown 状态组成。
+omtre 是一套面向 AI 编码代理的团队级工作流 Harness 与内置工程知识库。在物理实现上，系统通过共享相同的仓库文件体系解耦为两大子系统：**Agent Harness 负责生命周期状态机控制与机械门禁校验**，而**仓库知识体系负责承载规范（spec）、任务边界（tasks）、技术调研（research）与会话日志（journal）**。
 
-## 分层
+系统不依赖中心化托管服务或私有模型，完全由本地 CLI、原生运行脚本、平台薄适配层与受控的 Markdown 事实组成。
+
+## 系统分层与架构拓扑
 
 ```mermaid
 flowchart TD

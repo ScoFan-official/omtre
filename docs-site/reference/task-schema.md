@@ -10,9 +10,11 @@ since: 1.0.0
 
 <MaturityBadge level="stable" />
 
-`task.json` 是任务的机器可读记录。它由任务脚本维护，不建议手工编辑。
+`task.json` 是单次任务生命周期状态的机器可读真源（Source of Truth），存放于任务目录根节点 `.omtre/tasks/<task-dir>/task.json`。该文件由 `.omtre/scripts/task.py` 工具链严格读写维护。
 
-## 示例
+**核心红线**：严禁工程师或 Agent 直接手工编辑 `task.json` 的状态机字段（`status`）与验证契约（`verify`），所有状态跃迁必须经由原生脚本执行硬性校验后自动变更。
+
+## 数据结构示例
 
 ```json
 {

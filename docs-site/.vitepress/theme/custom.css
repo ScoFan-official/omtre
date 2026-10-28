@@ -45,6 +45,18 @@ body {
   letter-spacing: -0.035em;
 }
 
+html:not(.dark) .brand-wordmark-dark {
+  display: none;
+}
+
+html.dark .brand-wordmark-light {
+  display: none;
+}
+
+html.dark .brand-wordmark-dark {
+  display: block;
+}
+
 .vp-doc h2 {
   padding-top: 1.6rem;
   letter-spacing: -0.025em;

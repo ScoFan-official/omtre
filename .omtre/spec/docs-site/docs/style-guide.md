@@ -91,6 +91,25 @@ Open technical architecture pages with the system thesis, then immediately groun
 
 **Why**: Architecture docs should preserve the conceptual model, but the opening must quickly become a technical map. Audience labels and unsupported positioning prose make the page feel like a pitch instead of a technical contract.
 
+### Chinese Technical Voice & Prohibited AI Boilerplate (中文文风红线)
+
+Technical documentation is written by mature engineers for fellow engineers. Tone must remain steady, objective, concise, and technically rigorous. **Strictly ban AI boilerplate opening phrases and patronizing instructional tone**:
+
+- **Banned**: "这一页只做一件事", "这一页不是……而是……", "这一节主要介绍……" (typical translation/DeepSeek cliché openings).
+- **Banned**: "一句话概括：", "你已经知道……接下来……", "不要以为……", "到这里，你已经完成了……" (patronizing teaching tone).
+- **Required**: Open directly with technical facts, engineering purpose, and actionable criteria. State what the system does or what contract must be satisfied without meta-commentary about the document itself.
+
+### Technical Claim Review
+
+Reviewers verify claims against executable evidence, not against the confidence of the prose:
+
+- Every command and flag must exist in current `--help` output; generated CLI reference is read-only.
+- “Script blocks X” must name the actual condition. Verification can be bypassed with `--skip-verify`, and missing contracts depend on `verify_required`.
+- “Always”, “never”, “only”, and “guaranteed” require a deterministic implementation path. If the rule lives in a prompt or workflow instruction, say so.
+- Platform support must distinguish generated files from host-level end-to-end verification.
+- Statuses, defaults, archive behavior, and provider names come from code, not product assumptions.
+- A factual correction belongs in the same change as the content edit; rerun `pnpm docs:verify` and `CI=1 pnpm docs:e2e` before publishing.
+
 ### Lists
 
 **Use bullet lists for:**

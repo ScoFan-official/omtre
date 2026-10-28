@@ -77,6 +77,11 @@ const IGNORED_DIRS = new Set([
   "coverage",
   ".next",
   ".turbo",
+  // Local agent/tool state is gitignored and is not part of the product surface.
+  ".workbuddy",
+  ".qoder",
+  ".gitnexus",
+  ".codegraph",
 ]);
 
 const BINARY_EXTENSIONS = new Set([

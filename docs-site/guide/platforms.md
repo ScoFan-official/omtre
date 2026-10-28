@@ -10,193 +10,156 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-omtre 的核心状态相同，但不同平台通过不同方式加载 hooks、命令、技能和子代理。先选团队实际使用的 1–2 个平台，确认闭环，再扩展。
+omtre 通过统一的 `.omtre/` 主轴承载团队规范、任务生命周期与项目记忆，并向各 AI 编码宿主输出适配文件。然而，不同宿主对环境 Hooks、Slash Commands、技能扩展（Skills）与进程级子代理（Sub-agents）的原生支持程度存在巨大差异。
 
-## 选择平台
+在团队中推行时，必须从实际使用的 1–2 个核心宿主切入，验证端到端闭环后方可横向扩展。**切勿将“CLI 能够生成该平台配置文件”等同于“该平台已在当前宿主版本上完成端到端黑盒验证”。**
 
-| 平台 | flag | 主要配置目录 | 建议起点 |
-|---|---|---|---|
-| Claude Code | `--claude` | `.claude/` | hooks 与子代理能力较完整 |
-| Codex | `--codex` | `.codex/`、`.agents/skills/` | 注意 hooks 功能开关与信任确认 |
-| Qoder | `--qoder` | `.qoder/` | pull-based 子代理，按角色读取上下文 |
-| Cursor | `--cursor` | `.cursor/` | 使用 hooks 与子代理，注意宿主版本 |
-| GitHub Copilot | `--copilot` | `.github/` | SessionStart 行为需按当前宿主验证 |
-| OpenCode | `--opencode` | `.opencode/` | JS 插件提供启动与每轮上下文 |
-| Gemini CLI | `--gemini` | `.gemini/`、`.agents/skills/` | pull-based 子代理上下文 |
-| Kiro | `--kiro` | `.kiro/` | agent hooks 与技能/代理文件 |
-
-完整 22 项路径和验证深度见[平台支持矩阵](../reference/platform-matrix.md)。
-
-## 初始化
-
-只选择一个平台：
-
-```bash
-omtre init -u your-name --qoder
+```mermaid
+flowchart LR
+    CORE["<b>.omtre/ 核心</b><br/>规范 · 任务 · 记忆 · 脚本"]
+    CORE --> C["Claude Code<br/>hooks + 子代理"]
+    CORE --> X["Codex<br/>prompt hook / SubagentStart"]
+    CORE --> Q["Qoder<br/>pull-based 子代理"]
+    CORE --> O["其它平台<br/>命令 / 技能 / 约定文件"]
 ```
 
-同时选择多个：
+图示的是文件交付通道，不代表各宿主的运行时能力相同；具体深度以下方矩阵为准。
 
-```bash
-omtre init -u your-name --qoder --codex
+## 平台支持与核心适配通道
+
+| 平台 | 初始化标志 | 核心配置目录 | 宿主交互通道与架构深度 | 生产接入建议 |
+|---|---|---|---|---|
+| **Claude Code** | `--claude` | `.claude/` | 支持 SessionStart 等原生 hooks、子代理与自定义斜杠命令 | 首选主力平台，机制最完整；注意项目需配置受信任 |
+| **Codex** | `--codex` | `.codex/`、`.agents/skills/` | 基于 Prompt Hook / SubagentStart 派发；内联技能共享 | 检查 hooks 功能开关，注意安全沙箱提示 |
+| **Qoder** | `--qoder` | `.qoder/` | Pull-based 子代理架构；角色卡驱动按需读取 JSONL 清单 | 推荐平台；上下文隔离强，适合复杂任务 |
+| **Cursor** | `--cursor` | `.cursor/` | 扁平规则、命令与 hooks 适配 | 注意宿主各小版本对 hooks 的实现变更，升级后需复验 |
+| **GitHub Copilot** | `--copilot` | `.github/` | 静态 Prompt、Agent 与 Hooks 文件适配 | 模型对 SessionStart 的实际可见性需实测，勿盲信注入 |
+| **OpenCode** | `--opencode` | `.opencode/` | 基于 JS 插件拦截提供会话启动与轮次上下文 | 验证插件环境运行时权限与稳定性 |
+| **Gemini CLI** | `--gemini` | `.gemini/`、`.agents/skills/` | Pull-based 角色卡与子代理拉取机制 | 适合命令行纯文本交互流 |
+| **Kiro** | `--kiro` | `.kiro/` | Agent hooks 与平台技能规范定义 | 适用于支持对应规范的专用环境 |
+
+完整 22 个平台的具体路径、协议适配深度与测试状态见[平台支持矩阵](../reference/platform-matrix.md)。
+
+## 初始化与配置管理
+
+仅为团队实际使用的平台生成配置，避免在仓库内引入多余的未用模板：
+
+::: code-group
+
+```bash [单平台接入]
+# 仅生成 Qoder 平台配置与个人工作区
+omtre init -u <your-name> --qoder
 ```
 
-检查：
+```bash [多平台组合]
+# 同时为团队中的 Claude Code 与 Codex 用户生成对应平台入口
+omtre init -u <your-name> --claude --codex
+```
+
+```bash [存量项目增补平台]
+# 在已有 .omtre/ 的项目中增补 Cursor 适配，无需重复传 -u
+omtre init --cursor
+```
+
+:::
+
+检查当前仓库已启用并识别的平台清单：
 
 ```bash
 omtre platforms
 omtre platforms --json
 ```
 
-在已有 omtre 项目中增加一个平台：
+若当前 checkout 缺失 `.omtre/.developer` 凭据文件，`init` 会基于当前仓库受管状态建立个人工作区，并可生成入组引导任务（Joiner onboarding）。
 
-```bash
-omtre init --cursor
+## 平台的四层真实成熟度
+
+在技术评审与团队选型时，必须根据以下四层客观标准进行评估，不可轻信泛化的支持宣传：
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ 第 4 层: 生产长期验证 (真实业务仓库长期平稳运行)        │
+├────────────────────────────────────────────────────────┤
+│ 第 3 层: 宿主端黑盒实测 (在具体 IDE/CLI 版本完成闭环)   │
+├────────────────────────────────────────────────────────┤
+│ 第 2 层: 协议与模板就绪 (生成 hooks/commands/agents)   │
+├────────────────────────────────────────────────────────┤
+│ 第 1 层: 文件生成幂等 (CLI 单元测试保证生成路径正确)    │
+└────────────────────────────────────────────────────────┘
 ```
 
-不需要重新创建开发者身份时，可以不传 `-u`。具体行为取决于 `.developer` 是否存在。
+1. **第 1 层：文件生成幂等**：CLI 具备自动化测试，保证能正确在对应目录下创建文件，且多次运行不发生覆写损坏；
+2. **第 2 层：协议与模板就绪**：针对该平台编写了对应的语法模板（如 `.claude/commands/*.md` 或 `.qoder/rules/*.md`）；
+3. **第 3 层：宿主端黑盒实测**：工程师在特定宿主二进制版本中完整走通“创建任务 -> 注入规范 -> 修改测试 -> 退出码重放 -> 任务归档”完整链路；
+4. **第 4 层：生产长期验证**：团队在核心工程项目中跨版本稳定落地。
 
-## 各平台的第一步
+**作者建议**：团队评估时，必须在宿主中实际达到第 3 层要求方可落地。对于文档标注为 `convention` 或 `partial` 的边缘平台，一律视为草稿模板（Draft），必须先在练习仓库中进行可用性实测。
+
+## 平台底层机制详解
 
 ### Claude Code
-
-```bash
-omtre init -u your-name --claude
-```
-
-初始化会写入 `.claude/` 下的命令、技能、子代理与 hooks 配置。启动 Claude Code 时，项目需要被信任，hooks 才会执行。
-
-检查 `.claude/settings.json` 中生成的 hook 配置，并确认企业策略没有禁止 hooks。
-
-### Codex
-
-```bash
-omtre init -u your-name --codex
-```
-
-Codex 使用 `.codex/` 子代理与技能文件，同时在 `.agents/skills/` 提供共享技能。它主要依赖 prompt hook / SubagentStart 路径，而不是与 Claude Code 相同的 SessionStart 结构。
-
-如果 hooks 功能未启用或未信任，自动上下文可能不会发生。此时让 Agent 显式读取对应技能/工作流入口。
+初始化写入 `.claude/settings.json`、命令与技能。启动 Claude Code 时，宿主必须通过信任授权，Hook 才能正常触发执行。企业内网或特殊安全策略若禁用了 Hook 执行，会导致自动注入静默失效。
 
 ### Qoder
+Qoder 采用拉取式（Pull-based）子代理模型。omtre 生成的角色卡指导 Worker 进程自行调用终端工具读取当前活跃任务与 `implement.jsonl`，实现物理层面的上下文隔离，不占用主会话窗口。
 
-```bash
-omtre init -u your-name --qoder
-```
-
-Qoder 使用 `.qoder/commands/omtre-*.md`、`.qoder/skills/`、`.qoder/agents/` 和 hooks。子代理采用 pull-based 方式：角色卡要求子代理自行读取活动任务和 JSONL 清单。
+### Codex
+依赖 Prompt Hook 与 SubagentStart 派发机制，在 `.agents/skills/` 维护共享技能目录。若宿主未放开 Hook 权限，需引导 Agent 主动读取 `.omtre/workflow.md`。
 
 ### Cursor
-
-```bash
-omtre init -u your-name --cursor
-```
-
-初始化 `.cursor/` 下的扁平命令、技能、代理和 hooks。不同 Cursor 版本对 hooks 与子代理支持可能存在差异；升级宿主后应重新验证。
+初始化扁平结构。需注意 Cursor 处于高频迭代期，不同版本对 rules 与 hooks 的解析逻辑偶有变动。宿主升级后必须重新检验 SessionStart 注入是否生效。
 
 ### GitHub Copilot
+生成 `.github/` 下的提示词与代理文件。由于 Copilot 在部分 IDE 插件宿主中对外部输出的可见性存在裁剪，必须通过打印调试确认启动上下文是否切实进入了大模型窗口。
+
+## 环境变量与排障逃生口
+
+当怀疑 Hook 脚本运行异常、阻塞终端启动或造成卡死时，使用环境变量临时阻断：
 
 ```bash
-omtre init -u your-name --copilot
-```
-
-Copilot 使用 `.github/` 下的 prompt、agent、skill 和 hooks 文件。SessionStart 输出在当前 Copilot 宿主中的模型可见性需要实测，不要把“文件存在”当成“上下文一定被注入”。
-
-## 平台深度并不相同
-
-omtre 会为 22 个平台生成配置集合，但这不等于 22 个平台都完成过同等深度的端到端验证。
-
-| 层级 | 含义 |
-|---|---|
-| 文件生成已验证 | 文件路径、内容和更新幂等性有自动化测试 |
-| 协议已实现 | 有对应 hooks、命令或子代理加载路径 |
-| 宿主端已验证 | 在具体宿主版本中实际跑通过会话与任务闭环 |
-| 团队已生产使用 | 有真实项目和长期使用证据 |
-
-引入前至少确认第三层。对文档标注为 convention 或 partial 的平台，按 draft 处理并做小范围实测。
-
-## hooks 关闭与排查
-
-临时关闭 hooks：
-
-```bash
+# 临时禁用所有 omtre hooks 自动化注入
 export OMTRE_HOOKS=0
 ```
 
-部分脚本也识别 `OMTRE_DISABLE_HOOKS`。关闭后，任务和规范仍然存在，但自动注入可能失效，需要 Agent 主动读取入口。
+关闭 Hook 后，`.omtre/` 目录结构与规范文件依然完整，但上下文自动注入将停止。此时可要求 Agent 手动读取目标规范或直接在命令行执行 `task.py`。
 
-检查平台文件是否存在：
+只读核验平台目录结构，严禁使用盲目批量删除命令：
 
 ```bash
 find .qoder -maxdepth 3 -type f | sort
 find .claude -maxdepth 3 -type f | sort
 ```
 
-只读检查，不要使用会改变工作区的命令。
+## 跨平台协作架构
 
-## 团队加入已有项目
-
-新成员在自己的 checkout 中运行：
-
-```bash
-omtre init -u their-name --qoder
-```
-
-如果项目已有 `.omtre/` 而当前 checkout 没有 `.developer`，初始化可能生成 joiner onboarding 任务，用于阅读工作流和规范。确认这个任务是否必要；不需要可正常归档。
-
-`.developer` 是 gitignored 的个人身份文件，不应由团队提交一个共享身份。
-
-## 跨平台协作
-
-多个平台可以共享同一份 `.omtre/`：
+不同团队成员使用不同编辑器时，所有平台配置共享唯一的仓库核心：
 
 ```text
-.omtre/                共享核心
-├── spec/
-├── tasks/
-├── workspace/
-├── agents/
-└── scripts/
+.omtre/                         # 唯一团队共享核心
+├── spec/                       # 架构规范与质量契约
+├── tasks/                      # 活动任务与归档证据
+├── workspace/                  # 开发者个人隔离日志
+└── scripts/                    # 验证与状态流转原生脚本
 
-.claude/               平台适配
-.qoder/
-.cursor/
-.codex/
+.claude/                        # 平台薄适配层（供 Claude Code 读取）
+.qoder/                         # 平台薄适配层（供 Qoder 读取）
+.cursor/                        # 平台薄适配层（供 Cursor 读取）
+.codex/                         # 平台薄适配层（供 Codex 读取）
 ```
 
-注意：
+- **任务状态与规范同源**：无论何种平台派发的 Agent，查阅的均是同一份 `task.json` 与 `.omtre/spec/`；
+- **通道机制各异**：不同宿主派发子代理、调用工具命令的格式完全由各平台独立映射承载。
 
-- 任务状态和规范是共享事实；
-- 命令名、hook 机制和子代理派发方式不同；
-- 不同平台可能读取不同上下文文件；
-- 跨平台问题应先查看平台矩阵，不要假设行为一致。
+## 平台清理与卸载原则
 
-## 操作系统与运行环境
+严禁直接通过 `rm -rf` 手工删除平台目录，多宿主配置文件之间存在符号链接或共享依赖，暴力删除极易造成半残留损坏。
 
-主 CI 目前以 Linux、Node.js 20、Python 3.9 为主。Windows 和 macOS 已有部分现场使用与修复，但不是完整 CI 覆盖。
-
-关注点：
-
-- Python 可执行文件名称和版本；
-- hooks 是否使用终端同一解释器；
-- 路径空格和大小写；
-- 部分脚本对 `python` 与 `python3` 的硬编码；
-- 宿主自身对 hooks 的安全限制。
-
-团队试点应把实际操作系统列入验收，而不是只验证文件生成。
-
-## 卸载某个平台
-
-不要手工删除平台文件。omtre 管理跨多个文件和目录，手工删除容易残留。
-
-如需永久移除项目内所有 omtre 表面：
-
-```bash
-omtre uninstall --dry-run
-omtre uninstall
-```
-
-该操作会同时移除 `.omtre/`。只想临时比较时使用 [ablate / restore](../advanced/ablate-and-restore.md)。
+- **仅临时停用对比效果**：使用 [omtre ablate / restore](../advanced/ablate-and-restore.md) 创建外部快照；
+- **永久彻底清理所有受管文件**：
+  ```bash
+  omtre uninstall --dry-run
+  omtre uninstall
+  ```
 
 ## 下一步
 

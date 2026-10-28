@@ -22,7 +22,11 @@ export default withMermaid(
       "面向 AI 编码代理的仓库内工作流：用规范、任务和项目记忆让每次会话沿着团队约定推进。",
     base: "/omtre/",
     cleanUrls: false,
-    srcExclude: ["reference/_cli.generated.md"],
+    srcExclude: [
+      "reference/_cli.generated.md",
+      "test-results/**",
+      "playwright-report/**",
+    ],
     lastUpdated: true,
     ignoreDeadLinks: false,
     appearance: true,
@@ -30,8 +34,65 @@ export default withMermaid(
       hostname: siteUrl,
     },
     head: [
-      ["link", { rel: "icon", href: "/omtre/omtre-mark.svg" }],
-      ["meta", { name: "theme-color", content: "#0b0f14" }],
+      [
+        "link",
+        {
+          rel: "icon",
+          href: "/omtre/favicon.ico",
+          sizes: "16x16 32x32 48x48",
+        },
+      ],
+      [
+        "link",
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/omtre/brand/mark-light.svg",
+          media: "(prefers-color-scheme: light)",
+        },
+      ],
+      [
+        "link",
+        {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/omtre/brand/mark-dark.svg",
+          media: "(prefers-color-scheme: dark)",
+        },
+      ],
+      [
+        "link",
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/omtre/favicon-32.png",
+        },
+      ],
+      [
+        "link",
+        {
+          rel: "apple-touch-icon",
+          sizes: "180x180",
+          href: "/omtre/apple-touch-icon.png",
+        },
+      ],
+      [
+        "meta",
+        {
+          name: "theme-color",
+          content: "#ffffff",
+          media: "(prefers-color-scheme: light)",
+        },
+      ],
+      [
+        "meta",
+        {
+          name: "theme-color",
+          content: "#0b0f14",
+          media: "(prefers-color-scheme: dark)",
+        },
+      ],
       ["meta", { property: "og:type", content: "website" }],
       ["meta", { property: "og:locale", content: "zh_CN" }],
       ["meta", { property: "og:title", content: "omtre 文档" }],
@@ -43,7 +104,10 @@ export default withMermaid(
             "从第一个任务开始，理解并正确使用面向 AI 编码代理的 omtre 工作流。",
         },
       ],
-      ["meta", { property: "og:image", content: `${siteUrl}og.svg` }],
+      ["meta", { property: "og:image", content: `${siteUrl}brand/og.png` }],
+      ["meta", { property: "og:image:width", content: "1200" }],
+      ["meta", { property: "og:image:height", content: "630" }],
+      ["meta", { name: "twitter:card", content: "summary_large_image" }],
     ],
     define: {},
     markdown: {
@@ -59,7 +123,11 @@ export default withMermaid(
     },
     themeConfig: {
       omtreVersion: version,
-      logo: "/omtre-mark.svg",
+      logo: {
+        light: "/brand/mark-light.svg",
+        dark: "/brand/mark-dark.svg",
+        alt: "",
+      },
       siteTitle: "omtre 文档",
       nav,
       sidebar,
@@ -136,7 +204,18 @@ export default withMermaid(
       ],
     },
     mermaid: {
-      theme: "neutral",
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#eef5ff",
+        primaryTextColor: "#0b0f14",
+        primaryBorderColor: "#2f81f7",
+        lineColor: "#57606a",
+        secondaryColor: "#e8f7ee",
+        tertiaryColor: "#f6f8fa",
+        fontFamily:
+          "Inter, SF Pro Text, PingFang SC, Microsoft YaHei, sans-serif",
+        fontSize: "14px",
+      },
     },
     mermaidPlugin: {
       class: "mermaid",

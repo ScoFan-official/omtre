@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- omtre 品牌图形标（favicon mark）
+     圆角方形外框（命令行窗口/节点）+ 框内实心圆点
+     几何由 omtre-favicon-transparent.png 实测：外框 860x767，线宽 97，圆角 r≈175，
+     圆点圆心 (433.5,383.5) r=151。墨色 #0d1117，主蓝 #2f81f7。 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 767" width="860" height="767" role="img" aria-label="omtre mark">
+  <rect x="48.5" y="48.5" width="763" height="670" rx="127" ry="127"
+        fill="none" stroke="#0d1117" stroke-width="97"/>
+  <circle cx="433.5" cy="383.5" r="151" fill="#2f81f7"/>
+</svg>

@@ -10,115 +10,83 @@ since: 1.0.0
 
 <MaturityBadge level="stable" />
 
-规范模板提供目录结构和起始规则，减少从空文件开始的工作。它们不是项目事实，也不是一次安装后永久正确的契约。
+规范模板（Spec Template）是针对特定技术栈预先提炼的“架构约定与目录脚手架”，用于加速新工程在接入 omtre 时的冷启动过程，避免开发者面对空白目录无从下手。
 
-## 可用模板
+::: danger 模板不是代码事实
+规范模板代表的是行业通用模式，**绝不自动代表当前工程的具体事实**。安装模板后的第一要务是根据当前业务代码的真实调用链逐一核对，果断删除不适用的规则。**保留错误或泛化的空泛教条，远比没有规范更具破坏性。**
+:::
 
-| ID | 内容 |
-|---|---|
-| `agent-workflow` | issue tracker 约定、triage、领域文档、frontend craft 与设计审查契约 |
-| `electron-fullstack` | Electron + React + TypeScript + SQLite 的全栈规范 |
-| `nextjs-fullstack` | Next.js + oRPC + Drizzle + PostgreSQL |
-| `cf-workers-fullstack` | Cloudflare Workers + Hono + Drizzle + Turso |
+## 官方内置模板清单
 
-模板内容会随仓库演进。安装前查看 marketplace 索引和当前目录。
+| 模板 ID | 适配技术栈与核心定位 | 涵盖的核心规范与契约 |
+|---|---|---|
+| `agent-workflow` | omtre 自研 Agent 工程工作流 | 任务分级（Triage）、Issue 追踪约定、前端设计审查契约 |
+| `electron-fullstack` | Electron + React + TypeScript + SQLite | 主进程 / 渲染进程安全 IPC、本地 SQLite 迁移与打包规约 |
+| `nextjs-fullstack` | Next.js (App Router) + oRPC + Drizzle + PostgreSQL | 服务端动作权限校验、类型安全 RPC 契约、数据库迁移规则 |
+| `cf-workers-fullstack` | Cloudflare Workers + Hono + Drizzle + Turso | 边缘无状态计算、KV 缓存策略与分布式 SQL 限制 |
 
-## 查看市场
+模板结构随官方发布版本演进，可通过 Marketplace 索引实时查阅最新变动。
 
-```bash
-omtre init --registry gh:ScoFan-official/omtre/marketplace
-```
+## 安装策略与命令
 
-交互环境会显示可选模板。非交互环境应明确传入模板和策略。
-
-## 安装到新项目
+通过 `omtre init` 的 `--template` 参数引入目标技术栈的规范骨架：
 
 ```bash
-omtre init -u your-name --qoder \
+# 在新项目初始化时同步安装 Next.js 全栈规范
+omtre init -u <your-name> --qoder \
   --registry gh:ScoFan-official/omtre/marketplace \
   --template nextjs-fullstack
 ```
 
-## 追加到已有规范
+若项目已存在受管的 `.omtre/spec/` 目录，安装引擎提供明确的策略控制：
 
 ```bash
+# 推荐策略：仅追加缺失的分层文件，绝不覆盖本地已有规范
 omtre init \
   --registry gh:ScoFan-official/omtre/marketplace \
   --template agent-workflow \
   --append
 ```
 
-`--append` 只补充缺失文件，不覆盖已有文件。适合已有自己的规范库、只想引入代理工作流合约的项目。
-
-## 覆盖现有规范
-
-```bash
-omtre init \
-  --registry gh:ScoFan-official/omtre/marketplace \
-  --template agent-workflow \
-  --overwrite
-```
-
-::: danger 覆盖会删除现有 spec 目录
-`--overwrite` 是高影响操作。先提交或备份 `.omtre/spec/`，并确认模板与当前代码事实一致。
-:::
-
-## 自定义 registry
-
-```bash
-omtre init \
-  --registry gh:myorg/myrepo/team-specs \
-  --template backend-api \
-  --append
-```
-
-直接目录模式和 marketplace 模式不同：
-
-- 直接目录：下载目标目录作为规范；
-- marketplace：仓库包含索引，选择一个 template id。
-
-私有仓库需要访问凭据，由下载层处理。不要将 token 提交到项目。
-
-## 安装后的第一件事
-
-逐文件审查：
-
-1. 路径是否符合本仓库；
-2. 规则是否与真实代码一致；
-3. 是否有过时命令；
-4. 是否与已有规范冲突；
-5. 是否包含平台绝对承诺；
-6. 是否需要删除。
-
-删除错误规则比保留“看起来完整”的模板更重要。
-
-## 推荐的团队流程
-
-```text
-选择最接近的模板
-  -> 安装到试点仓库
-  -> 对照真实代码删改
-  -> 在一个任务中使用
-  -> 根据检查结果修订
-  -> 再推广到其它仓库
-```
-
-## 规范模板与工作流模板的区别
-
-| 类型 | 安装方式 | 内容 |
+| 安装参数 | 行为模式 | 工程风险与使用建议 |
 |---|---|---|
-| spec 模板 | `omtre init --template` | `.omtre/spec/` 规则 |
-| workflow 模板 | `omtre workflow --template` | `.omtre/workflow.md` 阶段契约 |
+| `--append` | 仅向 `.omtre/spec/` 中增补缺失的文件 | **最推荐**；保护已有定制，仅导入未覆盖的分层 |
+| `--overwrite` | 强制删除当前项目所有已有规范并全新覆写 | **极高危**；本地所有已沉淀的架构经验将被彻底抹杀 |
+| （缺省） | 遇到同名文件时终端弹出交互确认 | 适合本地人工单步审查 |
 
-spec 模板不会自动切换工作流；工作流切换也不会安装规范。
+## 引入企业私有规范注册表
 
-## 与升级的关系
+大型团队可在内网 Git 仓库中维护组织级的统一技术规范库：
 
-安装后的模板是项目文件，由项目拥有和修改。升级 omtre:
+```bash
+omtre init \
+  --registry git@gitlab.internal.corp:architecture/omtre-specs.git \
+  --template microservice-go \
+  --append
+```
 
-- 不会自动覆盖有本地修改的规范；
-- 不保证上游模板变化自动合并；
-- 需要人工决定是否同步新版本。
+访问受限的私有仓库依赖工程师本地已配置的 SSH 密钥或 Git 凭证，严禁将私有 Token 硬编码写入项目文件。
+
+## 规范模板与工作流模板的严格区别
+
+初学者极易混淆两类模板，其物理定位与控制面完全正交：
+
+| 维度 | 规范模板（Spec Template） | 工作流模板（Workflow Template） |
+|---|---|---|
+| **文件落盘位置** | `.omtre/spec/**` | `.omtre/workflow.md` |
+| **安装驱动命令** | `omtre init --template <id>` | `omtre workflow --template <id>` |
+| **本质作用** | 定义静态的架构约定、目录布局与设计契约 | 定义动态的任务生命周期状态机与 Prompt 注入块 |
+| **互斥关系** | 仅操作规范文件，**绝不自动更改工作流** | 仅操作工作流文件，**绝不自动修改或覆盖规范** |
+
+## 安装后的第一件事：删改而非盲信
+
+从 Marketplace 引入任何模板后，必须对照本地仓库完成闭环审查：
+1. **核对相对路径**：确认模板中的包名与目录结构是否与当前 monorepo / 项目完全一致；
+2. **核验命令真源**：检查模板中列出的 lint、typecheck、test 命令是否真实存在于本地 `package.json` 中；
+3. **剔除无用教条**：项目未用到的边缘组件规范直接整文件删除，保持规范高信噪比；
+4. **验证 Git 追踪**：将精修后的规范提交至 Git 版本控制，作为团队 Code Review 的同源依据。
+
+升级 omtre CLI 绝不会自动覆写项目内已修改的规范文件，业务规范的演进完全由项目自身主导。
 
 ## 下一步
 

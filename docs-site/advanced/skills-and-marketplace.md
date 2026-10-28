@@ -10,60 +10,45 @@ since: 1.0.0
 
 <MaturityBadge level="mixed" />
 
-omtre 周边有三类容易混淆的资产：
+omtre 生态中存在三类层次与职责截然不同的资产，在选型与引入前必须建立清晰的工程预期：
 
-| 类型 | 例子 | 运行时由谁加载 |
-|---|---|---|
-| 内置工作流技能 | brainstorm、before-dev、check、update-spec、break-loop | Agent 宿主 |
-| 运行时/引导技能 | omtre-meta、spec-bootstrap、session-insight、channel | Agent 宿主或用户显式调用 |
-| 市场技能与规范模板 | 设计、研究、测试、技术栈规范 | 安装后成为普通项目文件 |
+| 资产层级 | 典型代表 | 运行载体与生命周期 | 生产成熟度与使用建议 |
+|---|---|---|---|
+| **核心工作流技能** | `brainstorm`、`before-dev`、`check`、`update-spec`、`break-loop` | 由 omtre 官方受管维护，随工作流阶段调度 | **已深度验证**；属于工作流主循环的标配 |
+| **运行时/引导技能** | `omtre-meta`、`spec-bootstrap`、`session-insight`、`channel` | 开发者显式唤起或排障时调用 | **已验证**；按特定排障与脚手架场景按需使用 |
+| **市场技能与规范模板** | 架构设计、测试、具体框架规范（Next.js、Electron 等） | 从 Marketplace 检索并下载至本地仓库 | **社区/按需**；下载后即为本地普通文件，需人工审查 |
 
-资产多不等于全部经过同等验证。先选当前任务需要的，再扩展。
+::: warning 破除资产数量幻觉
+**“仓库包含 1,700+ 目录资产”描述的是上游收集的库存全集，绝对不等于 1,700 个已验证生产级能力。** 严禁在生产项目中全量或批量盲目安装市场资产。未经业务适配的通用技能只会成为干扰大模型决策的噪声。
+:::
 
-## 推荐技能集
-
-仓库提供技能清单，可通过外部 `skills` CLI 安装：
+## 技能安装与上下文膨胀陷阱
 
 ```bash
+# 推荐方式：仅为当前主力平台复制特定必需技能
 npx skills add ScoFan-official/omtre --agent qoder --copy
 ```
 
-安装前：
+### 为什么坚决不能全量安装技能？
+在现代 Agent 架构中，每个已启用的技能都会将其 `name` 与 `description` 强制注入到大模型的系统提示词或工具列表中：
+1. **意图争抢与调用漂移**：当安装了几十个描述相似的“审查”、“测试”技能时，大模型在推理时极易陷入工具匹配混乱，导致在不恰当的时机错误调用；
+2. **上下文窗口浪费**：上百个技能的元数据会常驻占用上万 Token 的基础上下文预算，极大挤占用于阅读业务源码的宝贵窗口；
+3. **安全与权限失控**：第三方市场技能正文可能包含要求运行特定终端命令的指令，未经人工审阅直接执行存在供应链安全风险。
 
-- 确认目标平台；
-- 固定仓库版本或 tag；
-- 检查许可证和来源；
-- 不要在生产仓库直接全量安装；
-- 不在团队范围推广未经审查的第三方内容。
+**作者建议**：严格维护团队内部的技能准入白名单，每个项目启用的额外技能数量严格控制在 3–5 个以内。
 
-## 内置技能
+## 规范模板（Spec Templates）的本质定位
 
-| 技能 | 何时使用 |
-|---|---|
-| omtre-brainstorm | 计划阶段澄清需求、推进 PRD |
-| omtre-before-dev | inline 工作流读取规范 |
-| omtre-check | 完成后审查与验证 |
-| omtre-update-spec | 把可复用经验回写规范 |
-| omtre-break-loop | 重复 bug 后的根因与预防分析 |
-| omtre-meta | 理解和定制本地 omtre 架构 |
-| omtre-spec-bootstrap | 从真实代码库生成首版规范 |
-| omtre-session-insight | 检索历史 AI 会话 |
-| omtre-channel | 操作本机多代理协作 |
+omtre 市场提供了多个主流技术栈的初始规范模板结构：
 
-这些名称在不同宿主中可能有前缀或包装方式，以安装后的实际文件为准。
+| 规范模板 ID | 涵盖技术栈 | 核心预设规范 |
+|---|---|---|
+| `agent-workflow` | omtre 自研 Agent 工作流 | 代理分层契约、任务分流（Triage）、前端设计审查规范 |
+| `electron-fullstack` | Electron + React + TypeScript | 主进程/渲染进程 IPC 隔离、安全沙箱、本地持久化规约 |
+| `nextjs-fullstack` | Next.js (App Router) + oRPC + PostgreSQL | 路由处理边界、Server Actions 权限、数据库迁移准则 |
+| `cf-workers-fullstack` | Cloudflare Workers + Hono + Turso | 边缘无状态计算、KV 缓存与分布式 SQL 限制 |
 
-## 规范模板
-
-omtre marketplace 提供可直接安装的规范结构：
-
-| 模板 | 技术栈 |
-|---|---|
-| `agent-workflow` | omtre 自身的代理工作流规范、issue tracker、triage、frontend contract |
-| `electron-fullstack` | Electron + React + TypeScript |
-| `nextjs-fullstack` | Next.js + oRPC + PostgreSQL |
-| `cf-workers-fullstack` | Cloudflare Workers + Hono + Turso |
-
-安装：
+安装规范模板至当前仓库：
 
 ```bash
 omtre init \
@@ -72,94 +57,55 @@ omtre init \
   --append
 ```
 
-`--append` 只添加缺失文件，适合已有 `.omtre/spec/` 的项目。
+### 模板安装策略说明
+- `--append`（强烈推荐）：仅向 `.omtre/spec/` 中增补缺失的分层文件，绝不覆盖本地已有规范；
+- `--overwrite`（极度危险）：强制清空并覆写本地所有已定制规范，仅在全新项目重置时使用。
 
-## 模板安装策略
+::: tip 规范模板是脚手架，不是代码事实
+**模板是通用的行业模式参考，绝不自动代表当前工程的具体事实。** 安装规范模板后，必须逐个文件审查：路径是否与当前工程目录结构匹配、命名风格是否与现有代码库一致，并果断删掉当前项目未用到的空泛条目。
+:::
 
-| 参数 | 行为 | 使用建议 |
-|---|---|---|
-| 无策略参数 | 交互询问 | 首次使用 |
-| `--append` | 只补缺失文件 | 已有规范时首选 |
-| `--overwrite` | 删除现有 spec 后安装 | 高风险，先备份 |
+## 搭建企业私有 Marketplace 注册表
 
-模板生成的是项目文件，之后由项目维护。不要把模板内容当作已经符合你的代码事实。
+大型研发组织可在内网 Git 仓库中维护团队专属的规范与工作流注册表，实现标准在内部多仓库间的快速复用。
 
-## 自定义 marketplace
-
-团队可以维护自己的 registry：
+创建 `marketplace.json` 索引清单：
 
 ```json
 {
   "version": 1,
   "templates": [
     {
-      "id": "team-backend-spec",
+      "id": "team-backend-standard",
       "type": "spec",
-      "name": "Team Backend Spec",
-      "description": "Backend conventions for our services",
+      "name": "Team Backend Standard",
+      "description": "企业统一后端服务架构规范与安全红线",
       "path": "specs/team-backend",
-      "tags": ["backend", "typescript"]
+      "tags": ["backend", "go", "microservice"]
     }
   ]
 }
 ```
 
-1.0.0 中 `init --template` 主要支持 `type: "spec"`。工作流通过 `omtre workflow` 的 marketplace 机制处理。
-
-安装自定义模板：
+团队成员通过内部 Git 地址安全检出：
 
 ```bash
 omtre init \
-  --registry gh:myorg/myrepo/marketplace \
-  --template team-backend-spec \
+  --registry git@gitlab.internal.corp:architecture/omtre-marketplace.git \
+  --template team-backend-standard \
   --append
 ```
 
-私有仓库需要相应的访问凭据，由底层下载器提供，不要把 token 写进仓库。
+访问受限的私有仓库依赖工程师本地的 SSH 密钥或 Git 凭据管理器，严禁在注册表配置中明文内嵌任何访问 Token。
 
-## 目录资产的数量边界
+## 团队规范模板审查清单
 
-仓库包含大量 vendored 技能、代理、命令与 MCP 配置。它们：
-
-- 可以按需安装；
-- 保留上游出处；
-- 不保证适用于你的平台；
-- 不保证与你当前模型和工具权限兼容；
-- 不构成安全审计结论。
-
-“有 1,700+ 资产”描述的是库存，不是 1,700 个已验证能力。
-
-## 技能安装后的噪声
-
-每个可被语义触发的技能都会把名称和描述加入宿主可用列表。安装过多会造成：
-
-- 匹配漂移；
-- 上下文膨胀；
-- 多个技能争抢同一意图；
-- 用户难以知道哪个规则生效。
-
-建议维护一个小型团队白名单，按任务类型逐步增加。
-
-## 规范模板质量检查
-
-安装后逐项检查：
-
-- 文件路径是否符合当前仓库；
-- 规则是否引用真实代码；
-- 是否与已有规范冲突；
-- 是否错误描述平台能力；
-- 是否包含过时命令；
-- 是否需要删除。
-
-模板是起点，不是团队约定本身。
-
-## 安全
-
-- 安装前审查来源与许可证；
-- MCP 配置通常需要凭证，不要提交 secrets；
-- 第三方技能可能要求运行 shell 命令；
-- 不要把市场资产当作可信代码；
-- 只从固定 tag 或内部镜像安装。
+从 Marketplace 引入任何模板后，在正式提交入库前必须核对：
+- [ ] 规范中的文件路径、包名是否与当前 monorepo / 目录结构绝对吻合；
+- [ ] 规范中的代码示例是否引用了真实业务中允许使用的依赖包；
+- [ ] 规范是否与已有的分层规则发生概念冲突；
+- [ ] 规范中提到的验证命令（如 lint/test）是否真实存在于 `package.json` 中；
+- [ ] 剔除所有与当前项目业务无关的占位性教条。
 
 ## 下一步
 

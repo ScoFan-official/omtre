@@ -66,6 +66,22 @@ jobs:
       - name: Verify documentation
         run: pnpm docs:verify
 
+      - name: Install Playwright Chromium
+        run: pnpm --dir docs-site exec playwright install --with-deps chromium
+
+      - name: Run documentation browser smoke tests
+        run: pnpm docs:e2e
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-playwright-diagnostics
+          path: |
+            docs-site/.vitepress/playwright-report
+            docs-site/.vitepress/test-results
+          if-no-files-found: ignore
+
       - name: Upload documentation artifact
         uses: actions/upload-artifact@v4
         with:
@@ -77,6 +93,8 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       contents: read
       pages: write
@@ -105,3 +123,48 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  production-smoke:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify published pages
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+
+          fetch() {
+            local path="$1"
+            local code=""
+            for _ in $(seq 1 18); do
+              code=$(curl -sSL --max-time 20 -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}" || true)
+              if [ "$code" = "200" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            echo "::error::${path} did not return HTTP 200 (last status: ${code:-network error})"
+            return 1
+          }
+
+          fetch "/"
+          fetch "/start/install-and-first-task.html"
+          fetch "/reference/platform-matrix.html"
+          fetch "/llms.txt"
+          fetch "/sitemap.xml"
+          fetch "/favicon.ico"
+          fetch "/brand/mark-dark.svg"
+          fetch "/brand/og.png"
+
+          for _ in $(seq 1 18); do
+            if curl -fsSL --max-time 20 "${BASE_URL%/}/" | grep -Fq "让每一次 AI 编码"; then
+              echo "Published documentation is reachable and rendered."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Published homepage did not contain the expected rendered content"
+          exit 1
